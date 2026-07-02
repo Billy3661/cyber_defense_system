@@ -2370,7 +2370,7 @@ def api_stats():
 
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
         return jsonify({"error": "AI is not configured. Please contact the administrator."}), 500
 
