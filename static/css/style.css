@@ -2745,8 +2745,8 @@ a:hover {
         padding: 0.5rem 0;
     }
     .nav-links { display: none !important; }
+    .nav-toggle { display: flex !important; }
     .nav-actions { gap: 0.4rem; flex-shrink: 0; }
-    .nav-actions .btn { font-size: 0.78rem; padding: 0.4rem 0.7rem; white-space: nowrap; }
     .nav-logo { flex-shrink: 0; }
     .logo-text { font-size: 1.1rem; }
 
@@ -3545,4 +3545,83 @@ a:hover {
 .quick-reply-btn:hover {
     background: rgba(46, 213, 115, 0.15);
     transform: translateY(-1px);
+}
+
+/* ─────────────────────────────────────────────
+   HAMBURGER & MOBILE MENU DRAWER
+   ───────────────────────────────────────────── */
+
+/* Hide hamburger on desktop */
+.nav-toggle { display: none; }
+
+/* Hamburger icon */
+.nav-toggle {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.nav-toggle.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-toggle.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile menu drawer */
+.mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 0.5rem 0;
+    width: 100%;
+}
+
+.mobile-menu.open { display: flex; }
+
+.mobile-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+    color: var(--accent);
+    background: rgba(46, 213, 115, 0.06);
+    border-left-color: var(--accent);
+}
+
+.mobile-nav-link .material-symbols-outlined {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+}
+
+.mobile-nav-link.active .material-symbols-outlined,
+.mobile-nav-link:hover .material-symbols-outlined {
+    color: var(--accent);
 }

@@ -19,9 +19,6 @@
     <!-- Navigation -->
     <nav class="navbar" id="mainNav">
         <div class="nav-container">
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" style="margin-right: 1rem;">
-                <span></span><span></span><span></span>
-            </button>
             <a href="{{ url_for('index') }}" class="nav-logo">
                 <span class="logo-icon material-symbols-outlined">swords</span>
                 <span class="logo-text">Secur<span class="logo-accent">ix</span></span>
@@ -29,7 +26,7 @@
 
             <div class="nav-links" id="navLinks">
                 <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">
-                    <span class="nav-icon material-symbols-outlined">home</span> Dashboard
+                    <span class="nav-icon material-symbols-outlined">home</span> Home
                 </a>
                 <a href="{{ url_for('scanner') }}" class="nav-link {% if request.endpoint == 'scanner' %}active{% endif %}">
                     <span class="nav-icon material-symbols-outlined">scanner</span> Scanner
@@ -55,11 +52,6 @@
             </div>
 
             <div class="nav-actions" style="display: flex; align-items: center; gap: 0.75rem;">
-                <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
-                    <span id="themeIcon" class="material-symbols-outlined">light_mode</span>
-                    <span id="themeLabel">Light</span>
-                </button>
-
                 {% if session.get('username') %}
                 <div class="user-status-widget" style="position: relative;">
                     <button class="user-badge" id="userMenuBtn" onclick="document.getElementById('userMenuDropdown').classList.toggle('hidden')" style="color: var(--text-primary); background: transparent; border: none; padding: 0.4rem; cursor: pointer; display: flex; align-items: center;">
@@ -84,8 +76,23 @@
                     <span>Sign In</span>
                 </a>
                 {% endif %}
+                <!-- Hamburger (mobile only) -->
+                <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                    <span></span><span></span><span></span>
+                </button>
             </div>
+        </div>
 
+        <!-- Mobile menu drawer -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="{{ url_for('index') }}" class="mobile-nav-link {% if request.endpoint == 'index' %}active{% endif %}"><span class="material-symbols-outlined">home</span> Home</a>
+            <a href="{{ url_for('scanner') }}" class="mobile-nav-link {% if request.endpoint == 'scanner' %}active{% endif %}"><span class="material-symbols-outlined">scanner</span> Scanner</a>
+            <a href="{{ url_for('email_analyzer') }}" class="mobile-nav-link {% if request.endpoint == 'email_analyzer' %}active{% endif %}"><span class="material-symbols-outlined">alternate_email</span> Email Analyzer</a>
+            <a href="{{ url_for('breach_checker') }}" class="mobile-nav-link {% if request.endpoint == 'breach_checker' %}active{% endif %}"><span class="material-symbols-outlined">vpn_key</span> Breach Checker</a>
+            <a href="{{ url_for('simulator') }}" class="mobile-nav-link {% if request.endpoint == 'simulator' %}active{% endif %}"><span class="material-symbols-outlined">phishing</span> Phishing Lab</a>
+            <a href="{{ url_for('threats') }}" class="mobile-nav-link {% if request.endpoint in ['threats','threat_detail'] %}active{% endif %}"><span class="material-symbols-outlined">warning</span> Threats</a>
+            <a href="{{ url_for('troubleshoot') }}" class="mobile-nav-link {% if request.endpoint in ['troubleshoot','troubleshoot_detail'] %}active{% endif %}"><span class="material-symbols-outlined">build</span> Troubleshoot</a>
+            <a href="{{ url_for('awareness') }}" class="mobile-nav-link {% if request.endpoint == 'awareness' %}active{% endif %}"><span class="material-symbols-outlined">school</span> Awareness</a>
         </div>
     </nav>
 
@@ -100,6 +107,23 @@
                 }
             }
         });
+
+        // Hamburger menu toggle
+        const navToggle = document.getElementById('navToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (navToggle && mobileMenu) {
+            navToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                mobileMenu.classList.toggle('open');
+                navToggle.classList.toggle('open');
+            });
+            document.addEventListener('click', function(e) {
+                if (!mobileMenu.contains(e.target) && !navToggle.contains(e.target)) {
+                    mobileMenu.classList.remove('open');
+                    navToggle.classList.remove('open');
+                }
+            });
+        }
     </script>
 
     <!-- Main content -->
@@ -136,13 +160,7 @@
                 <span>Secur<strong>ix</strong></span>
             </div>
             <p class="footer-tagline">Empowering you with cybersecurity knowledge to stay safe online.</p>
-            <div class="footer-links">
-                <a href="{{ url_for('index') }}">Dashboard</a>
-                <a href="{{ url_for('scanner') }}">Scanner</a>
-                <a href="{{ url_for('threats') }}">Threats</a>
-                <a href="{{ url_for('troubleshoot') }}">Troubleshoot</a>
-                <a href="{{ url_for('awareness') }}">Awareness</a>
-            </div>
+
             <p class="footer-copy">© 2026 Securix — For educational and awareness purposes.</p>
         </div>
     </footer>

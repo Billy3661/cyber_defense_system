@@ -229,17 +229,12 @@
             <button class="btn btn-outline" onclick="clearNetworkScan()" style="padding:0.65rem 1.2rem;">✕ Clear</button>
         </div>
 
-        <!-- Engine status badge (auto-detected) -->
-        <div id="engineBadge" style="display:flex; align-items:center; gap:8px; padding:0.6rem 1rem; border-radius:8px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.15); margin-bottom:0.75rem; font-size:0.8rem;">
-            <span class="material-symbols-outlined" style="font-size:1.1rem; color:var(--accent);">terminal</span>
-            <span id="engineLabel" style="font-weight:600; color:var(--text-primary);">Detecting scan engine…</span>
-            <span id="engineNote" style="color:var(--text-muted); font-size:0.75rem; margin-left:auto;"></span>
-        </div>
 
-        <div class="net-disclaimer">
+        <div class="net-disclaimer" style="margin-bottom:0.75rem;">
             <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; color:var(--warning);">policy</span>
             Only scan networks you own or have explicit permission to test. Unauthorized scanning may be illegal.
         </div>
+
 
         <!-- Scanning animation -->
         <div class="net-scan-animation hidden" id="netScanAnimation">
