@@ -3,62 +3,13 @@
    ========================================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
-    initTheme();
-    initNavToggle();
     initParticles();
     initStatsCounter();
 });
 
-// ── THEME TOGGLE ──────────────────────────────────────────────────────────────
-function initTheme() {
-    const html = document.documentElement;
-    const btn = document.getElementById("themeToggle");
-    const icon = document.getElementById("themeIcon");
-    const label = document.getElementById("themeLabel");
 
-    // Apply saved preference (default: dark)
-    const saved = localStorage.getItem("cdp-theme") || "dark";
-    applyTheme(saved);
 
-    btn?.addEventListener("click", () => {
-        const current = html.getAttribute("data-theme") === "light" ? "light" : "dark";
-        const next = current === "dark" ? "light" : "dark";
-        applyTheme(next);
-        localStorage.setItem("cdp-theme", next);
-    });
 
-    function applyTheme(theme) {
-        if (theme === "light") {
-            html.setAttribute("data-theme", "light");
-            if (icon) icon.textContent = "dark_mode";
-            if (label) label.textContent = "Dark";
-        } else {
-            html.removeAttribute("data-theme");
-            if (icon) icon.textContent = "light_mode";
-            if (label) label.textContent = "Light";
-        }
-    }
-}
-
-// Mobile Nav Menu Toggle
-function initNavToggle() {
-    const toggle = document.getElementById("navToggle");
-    const links = document.getElementById("navLinks");
-    if (!toggle || !links) return;
-
-    toggle.addEventListener("click", () => {
-        links.classList.toggle("active");
-        toggle.classList.toggle("active");
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener("click", (e) => {
-        if (!toggle.contains(e.target) && !links.contains(e.target)) {
-            links.classList.remove("active");
-            toggle.classList.remove("active");
-        }
-    });
-}
 
 // Background Animation — Binary Rain (1s and 0s)
 function initParticles() {
