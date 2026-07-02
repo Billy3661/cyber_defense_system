@@ -2398,7 +2398,7 @@ Do not use emojis unless appropriate for the tone. Focus on actionable security 
         messages.append({"role": "user", "content": user_message})
 
         # Direct HTTP request — bypasses SDK connection issues on cloud hosts
-        groq_response = requests.post(
+        groq_response = req.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {api_key}",
@@ -2420,7 +2420,7 @@ Do not use emojis unless appropriate for the tone. Focus on actionable security 
         reply_text = groq_response.json()["choices"][0]["message"]["content"]
         return jsonify({"response": reply_text})
 
-    except requests.exceptions.Timeout:
+    except req.exceptions.Timeout:
         return jsonify({"error": "AI took too long to respond. Please try again."}), 504
     except Exception as e:
         print(f"Chatbot error: {e}")
