@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Sign In — Securix{% endblock %}
+{% block description %}Log in to your Securix account to access the Link Scanner, system troubleshooter, and custom diagnostics.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 450px; margin: 4rem auto;">
+    <div class="quick-scan-card" style="padding: 2.5rem;">
+        <div class="section-badge" style="margin-bottom: 1.5rem;">Secure Access</div>
+        <h2 style="margin-bottom: 0.5rem; text-align: center;">Welcome Back</h2>
+        <p style="text-align: center; margin-bottom: 2rem; font-size: 0.9rem;">Sign in to access your security tools and diagnostics</p>
+
+        <!-- Flash messages for errors -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="background-color: {% if category == 'success' %}rgba(46, 213, 115, 0.15){% else %}rgba(239, 68, 68, 0.15){% endif %}; border: 1px solid {% if category == 'success' %}#2ed573{% else %}var(--error){% endif %}; color: {% if category == 'success' %}#2ed573{% else %}var(--error){% endif %}; box-shadow: {% if category == 'success' %}0 0 18px rgba(46, 213, 115, 0.3){% else %}none{% endif %}; padding: 0.75rem 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">{% if category == 'success' %}check_circle{% else %}error{% endif %}</span>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('login') }}" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="username" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Username</label>
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">person</span>
+                    <input type="text" id="username" name="username" class="scanner-main-input" placeholder="Enter your username" required style="padding-left: 3rem;" autocomplete="off" />
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="password" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Password</label>
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
+                    <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Enter your password" required style="padding-left: 3rem;" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem; padding: 0.9rem;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; margin-right: 4px;">lock</span> Sign In
+            </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: var(--text-secondary);">
+            Don't have an account? <a href="{{ url_for('register') }}" style="color: var(--accent); font-weight: 600;">Create one now →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

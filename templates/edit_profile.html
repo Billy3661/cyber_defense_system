@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile — Securix{% endblock %}
+{% block description %}Update your Securix account settings.{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 450px; margin: 4rem auto;">
+    <div class="quick-scan-card" style="padding: 2.5rem;">
+        <div class="section-badge" style="margin-bottom: 1.5rem;">Account Settings</div>
+        <h2 style="margin-bottom: 0.5rem; text-align: center;">Edit Profile</h2>
+        <p style="text-align: center; margin-bottom: 2rem; font-size: 0.9rem;">Update your username or password</p>
+
+        <!-- Flash messages for errors -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div style="background-color: {% if category == 'success' %}rgba(16, 185, 129, 0.15){% else %}rgba(239, 68, 68, 0.15){% endif %}; border: 1px solid {% if category == 'success' %}var(--success){% else %}var(--error){% endif %}; color: {% if category == 'success' %}var(--success){% else %}var(--error){% endif %}; padding: 0.75rem 1rem; border-radius: var(--border-radius); margin-bottom: 1.5rem; font-size: 0.85rem; text-align: center;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--accent); margin-bottom: 0.5rem;">
+                    {% if current_user and current_user.profile_image %}
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.profile_image) }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;" />
+                    {% else %}
+                        <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--accent);">person</span>
+                    {% endif %}
+                </div>
+                <label for="profile_image" class="btn btn-outline" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; cursor: pointer;">
+                    <span class="material-symbols-outlined" style="font-size: 1rem; margin-right: 4px;">photo_camera</span> Change Avatar
+                </label>
+                <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;" onchange="if(this.files[0]) { this.previousElementSibling.innerHTML = '<span class=\'material-symbols-outlined\' style=\'font-size: 1rem; margin-right: 4px;\'>check</span> File Selected'; }" />
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="username" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">New Username</label>
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">person</span>
+                    <input type="text" id="username" name="username" class="scanner-main-input" value="{{ session.get('username', '') }}" required style="padding-left: 3rem;" autocomplete="off" />
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="password" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">New Password <span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">(Leave blank to keep current)</span></label>
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
+                    <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Enter new password" style="padding-left: 3rem;" />
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem; padding: 0.9rem;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; margin-right: 4px;">save</span> Save Changes
+            </button>
+            <a href="{{ url_for('index') }}" class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: 0.5rem; padding: 0.9rem;">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

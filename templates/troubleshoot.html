@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Troubleshoot Guide — Securix{% endblock %}
+{% block description %}Step-by-step security troubleshooting guides for common cybersecurity issues and incidents.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Troubleshoot</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">build</span>Security Troubleshoot Center</h1>
+        <p class="page-subtitle">
+            Experiencing a security issue? Find your problem below and follow our
+            expert step-by-step guide to resolve it safely.
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Search -->
+    <div class="ts-search-wrap">
+        <span class="ts-search-icon material-symbols-outlined">search</span>
+        <input type="text" id="tsSearch" class="ts-search-input" placeholder="Search issues, e.g. 'ransomware', 'email', 'slow computer'..." />
+    </div>
+
+    <!-- Emergency Banner -->
+    <div class="emergency-banner" id="emergencyBanner">
+        <div class="emergency-icon material-symbols-outlined" style="color: var(--error);">report</div>
+        <div class="emergency-text">
+            <strong>Active Security Incident?</strong>
+            If you believe you are under active attack, immediately disconnect from the internet
+            and contact your IT team or a cybersecurity professional.
+        </div>
+        <a href="tel:+1-855-292-3937" class="emergency-btn">Get Help Now</a>
+    </div>
+
+    <!-- Guides Grid -->
+    <div class="guides-grid" id="guidesGrid">
+        {% for guide in guides %}
+        <a href="{{ url_for('troubleshoot_detail', guide_id=guide.id) }}" class="guide-card" id="guideCard{{ guide.id }}"
+           data-search="{{ guide.title.lower() }} {{ guide.category.lower() }} {{ guide.severity.lower() }}">
+            <div class="guide-card-header">
+                <span class="guide-icon material-symbols-outlined">{{ guide.icon }}</span>
+                <div class="guide-meta">
+                    <span class="guide-category">{{ guide.category }}</span>
+                    <span class="severity-badge severity-{{ guide.severity.lower() }}">{{ guide.severity }}</span>
+                </div>
+            </div>
+            <h3 class="guide-title">{{ guide.title }}</h3>
+            <div class="guide-steps-count">
+                <span class="steps-icon material-symbols-outlined">assignment</span>
+                {{ guide.steps|length }} step{{ 's' if guide.steps|length != 1 }} to resolution
+            </div>
+            <div class="guide-warnings">
+                {% for w in guide.warning_signs[:2] %}
+                <span class="warning-chip"><span class="material-symbols-outlined" style="font-size: 0.95rem; vertical-align: -2px; margin-right: 2px; color: var(--warning);">warning</span>{{ w }}</span>
+                {% endfor %}
+            </div>
+            <div class="guide-go">Start Guide →</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results hidden" id="noResults">
+        <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--text-muted);">help</span>
+        <h3>No guides found</h3>
+        <p>Try different search terms or <a href="/awareness">read our security awareness guide</a>.</p>
+    </div>
+
+    <!-- General Tips -->
+    <div class="general-tips-section">
+        <div class="section-header">
+            <div class="section-badge">Quick Reference</div>
+            <h2>General Security First-Aid</h2>
+        </div>
+        <div class="first-aid-grid">
+            <div class="first-aid-card" id="firstAidDisconnect">
+                <div class="first-aid-num">01</div>
+                <h4>Disconnect</h4>
+                <p>For active infections, immediately disconnect from the internet to prevent data exfiltration and spread.</p>
+            </div>
+            <div class="first-aid-card" id="firstAidDocument">
+                <div class="first-aid-num">02</div>
+                <h4>Document</h4>
+                <p>Screenshot and record all symptoms, error messages, and unusual behavior for forensic analysis.</p>
+            </div>
+            <div class="first-aid-card" id="firstAidScan">
+                <div class="first-aid-num">03</div>
+                <h4>Scan</h4>
+                <p>Run a full system scan with your antivirus and a second-opinion tool like Malwarebytes.</p>
+            </div>
+            <div class="first-aid-card" id="firstAidChange">
+                <div class="first-aid-num">04</div>
+                <h4>Change Credentials</h4>
+                <p>After remediation, change all passwords and enable MFA on all critical accounts.</p>
+            </div>
+            <div class="first-aid-card" id="firstAidReport">
+                <div class="first-aid-num">05</div>
+                <h4>Report</h4>
+                <p>Report incidents to your IT team, relevant authorities, and affected platforms to prevent spread.</p>
+            </div>
+            <div class="first-aid-card" id="firstAidRestore">
+                <div class="first-aid-num">06</div>
+                <h4>Restore</h4>
+                <p>After cleaning the system, restore from clean backups if any data was compromised or encrypted.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const searchInput = document.getElementById("tsSearch");
+const cards = document.querySelectorAll(".guide-card");
+const noResults = document.getElementById("noResults");
+
+searchInput.addEventListener("input", () => {
+    const q = searchInput.value.toLowerCase().trim();
+    let visible = 0;
+    cards.forEach(card => {
+        const match = !q || card.dataset.search.includes(q) || card.querySelector(".guide-title").textContent.toLowerCase().includes(q);
+        card.style.display = match ? "" : "none";
+        if (match) visible++;
+    });
+    noResults.classList.toggle("hidden", visible > 0);
+});
+</script>
+{% endblock %}

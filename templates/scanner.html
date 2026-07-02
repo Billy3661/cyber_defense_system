@@ -1,0 +1,1413 @@
+{% extends "base.html" %}
+{% block title %}Scanner — Securix{% endblock %}
+{% block description %}Scan URLs, files, and networks for threats, malware, and security vulnerabilities.{% endblock %}
+
+{% block content %}
+<style>
+    /* Mode and view toggle active states */
+    .btn-toggle {
+        background: transparent;
+        color: var(--text-muted);
+    }
+    .btn-toggle.active {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #fff !important;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+    }
+    .btn-view-mode {
+        background: transparent;
+        color: var(--text-muted);
+    }
+    .btn-view-mode.active {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: #fff !important;
+    }
+    /* SVG network topology classes */
+    @keyframes topo-flow {
+        to {
+            stroke-dashoffset: -20;
+        }
+    }
+    .topo-link {
+        stroke-dasharray: 6 4;
+        animation: topo-flow 1s linear infinite;
+    }
+    .topo-node {
+        cursor: grab;
+        transition: filter 0.2s;
+    }
+    .topo-node:active {
+        cursor: grabbing;
+    }
+    .topo-node:hover {
+        filter: drop-shadow(0 0 8px var(--accent));
+    }
+    .btn-topo-ctrl {
+        transition: all 0.2s;
+    }
+    .btn-topo-ctrl:hover {
+        background: rgba(59, 130, 246, 0.2) !important;
+        color: var(--accent) !important;
+    }
+</style>
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Scanner</div>
+        <h1 class="page-title">Security Scanner</h1>
+        <p class="page-subtitle">
+            Analyze URLs, suspicious files, and networks — powered by heuristic checks and live VirusTotal lookups.
+        </p>
+    </div>
+</div>
+
+<div class="container scanner-page">
+
+
+    <!-- Scanner Tabs -->
+    <div class="scanner-tabs">
+        <button class="scanner-tab active" id="tabUrl" onclick="switchTab('url')">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">link</span> URL Scanner
+        </button>
+        <button class="scanner-tab" id="tabFile" onclick="switchTab('file')">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">upload_file</span> File Scanner
+        </button>
+        <button class="scanner-tab" id="tabNetwork" onclick="switchTab('network')">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">router</span> LAN Scanner
+        </button>
+
+    </div>
+
+    <!-- URL Scanner Card -->
+    <div class="scanner-card" id="scannerCard">
+        <div class="scanner-header">
+            <div class="scanner-status-dot" id="scannerStatusDot"></div>
+            <span id="scannerStatusText">Ready to scan</span>
+        </div>
+
+        <div class="scanner-input-group">
+            <label for="scanUrl" class="scanner-label">Enter URL to Analyze</label>
+            <div class="scanner-input-row">
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined">link</span>
+                    <input
+                        type="text"
+                        id="scanUrl"
+                        class="scanner-main-input"
+                        placeholder="https://example.com/suspicious-page?redirect=..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+                    <button class="clear-btn" id="clearBtn" onclick="clearScan()" title="Clear">✕</button>
+                </div>
+                <button class="btn btn-primary scanner-btn" id="mainScanBtn" onclick="performScan()">
+                    <span id="scanBtnIcon" class="material-symbols-outlined">search</span>
+                    <span id="scanBtnText">Analyze URL</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Example URLs -->
+        <div class="example-urls">
+            <span class="example-label">Try examples:</span>
+            <button class="example-btn" onclick="setExample('https://google.com')"><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--success); vertical-align: -2px;">check_circle</span> google.com</button>
+            <button class="example-btn" onclick="setExample('http://paypal-security-login.xyz/verify?user=test@email.com&redirect=account')"><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--warning); vertical-align: -2px;">warning</span> Phishing URL</button>
+            <button class="example-btn" onclick="setExample('http://192.168.1.1/admin/login')"><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px;">report</span> IP-based URL</button>
+            <button class="example-btn" onclick="setExample('https://bit.ly/3suspicious')"><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--info); vertical-align: -2px;">link</span> URL Shortener</button>
+        </div>
+    </div>
+
+    <!-- File Scanner Card -->
+    <div class="scanner-card hidden" id="fileScannerCard">
+        <div class="scanner-header">
+            <div class="scanner-status-dot" id="fileScannerStatusDot"></div>
+            <span id="fileScannerStatusText">Ready to scan files</span>
+        </div>
+
+        <label class="scanner-label" style="margin-bottom: 1rem; display: block;">Upload File for Analysis</label>
+
+        <!-- Drop Zone -->
+        <div class="file-drop-zone" id="fileDropZone"
+             ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)"
+             onclick="document.getElementById('fileInput').click()">
+            <div class="file-drop-icon">
+                <span class="material-symbols-outlined" style="font-size: 3.5rem; background: linear-gradient(135deg, var(--accent), var(--info)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">cloud_upload</span>
+            </div>
+            <div class="file-drop-text">
+                <strong>Drop your file here</strong> or click to browse
+            </div>
+            <div class="file-drop-hint">Max 10MB · EXE, PDF, ZIP, DOC, JS and more</div>
+            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)" />
+        </div>
+
+        <div class="file-selected-info hidden" id="fileSelectedInfo">
+            <div class="file-info-row">
+                <span class="material-symbols-outlined" style="font-size: 2rem; color: var(--accent);">draft</span>
+                <div class="file-info-text">
+                    <div class="file-info-name" id="fileInfoName">—</div>
+                    <div class="file-info-size" id="fileInfoSize">—</div>
+                </div>
+                <button class="btn btn-primary scanner-btn" id="fileScanBtn" onclick="performFileScan()">
+                    <span id="fileScanBtnIcon" class="material-symbols-outlined">security</span>
+                    <span id="fileScanBtnText">Analyze File</span>
+                </button>
+                <button class="btn btn-outline" onclick="clearFileScan()" style="padding: 0.65rem 1rem; font-size: 0.9rem;">✕ Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Scanner Card (WiFi / LAN Discovery) -->
+    <div class="scanner-card hidden" id="networkScannerCard">
+        <div class="scanner-header">
+            <div class="scanner-status-dot" id="netScannerStatusDot"></div>
+            <span id="netScannerStatusText">Ready to discover network</span>
+        </div>
+
+        <label class="scanner-label" style="display:block; margin-bottom:1rem;">LAN Port Scanner &amp; Topology Map</label>
+
+        <!-- Scanner Mode Selector -->
+        <div class="net-scan-mode-toggle" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(255,255,255,0.03); padding: 0.35rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <button class="btn-toggle active" id="modeSubnetBtn" onclick="setNetScanMode('subnet')" style="flex: 1; padding: 0.5rem; border-radius: 6px; border: none; background: rgba(59,130,246,0.15); color: #fff; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Discover Subnet
+            </button>
+            <button class="btn-toggle" id="modeTargetBtn" onclick="setNetScanMode('target')" style="flex: 1; padding: 0.5rem; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">track_changes</span> Custom Target IP Scan
+            </button>
+        </div>
+
+        <!-- Subnet scan config group -->
+        <div id="subnetScanConfig">
+            <div class="net-options-row">
+                <div class="net-input-group" style="flex:1;">
+                    <label class="net-label">Scan Depth</label>
+                    <select id="netScanDepth" class="scanner-main-input" style="cursor:pointer; font-family:var(--font-mono);">
+                        <option value="ping">Ping Sweep (fastest)</option>
+                        <option value="common" selected>Common Ports</option>
+                        <option value="deep">Deep Port Scan</option>
+                    </select>
+                </div>
+                <div class="net-input-group" style="flex:1;">
+                    <label class="net-label">Subnet Hint (optional)</label>
+                    <div class="scanner-input-wrap">
+                        <span class="scanner-prefix material-symbols-outlined">router</span>
+                        <input type="text" id="netSubnet" class="scanner-main-input"
+                               placeholder="Auto-detect (leave blank)"
+                               autocomplete="off" spellcheck="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target host scan config group -->
+        <div id="targetScanConfig" class="hidden">
+            <div class="net-options-row">
+                <div class="net-input-group" style="flex:1;">
+                    <label class="net-label">Target IP Address</label>
+                    <div class="scanner-input-wrap">
+                        <span class="scanner-prefix material-symbols-outlined">dns</span>
+                        <input type="text" id="targetIpInput" class="scanner-main-input"
+                               placeholder="e.g. 192.168.1.1"
+                               autocomplete="off" spellcheck="false" />
+                    </div>
+                </div>
+                <div class="net-input-group" style="flex:1;">
+                    <label class="net-label">Target Ports</label>
+                    <div class="scanner-input-wrap">
+                        <span class="scanner-prefix material-symbols-outlined">settings_ethernet</span>
+                        <input type="text" id="targetPortsInput" class="scanner-main-input"
+                               placeholder="e.g. 22,80,443 or 1-100 (default: common)"
+                               autocomplete="off" spellcheck="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.25rem; flex-wrap:wrap;">
+            <button class="btn btn-primary scanner-btn" id="netScanBtn" onclick="performNetworkScan()" style="flex:1;min-width:160px;">
+                <span id="netScanBtnIcon" class="material-symbols-outlined">radar</span>
+                <span id="netScanBtnText">Discover Network</span>
+            </button>
+            <button class="btn btn-outline" onclick="clearNetworkScan()" style="padding:0.65rem 1.2rem;">✕ Clear</button>
+        </div>
+
+        <!-- Engine status badge (auto-detected) -->
+        <div id="engineBadge" style="display:flex; align-items:center; gap:8px; padding:0.6rem 1rem; border-radius:8px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.15); margin-bottom:0.75rem; font-size:0.8rem;">
+            <span class="material-symbols-outlined" style="font-size:1.1rem; color:var(--accent);">terminal</span>
+            <span id="engineLabel" style="font-weight:600; color:var(--text-primary);">Detecting scan engine…</span>
+            <span id="engineNote" style="color:var(--text-muted); font-size:0.75rem; margin-left:auto;"></span>
+        </div>
+
+        <div class="net-disclaimer">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; color:var(--warning);">policy</span>
+            Only scan networks you own or have explicit permission to test. Unauthorized scanning may be illegal.
+        </div>
+
+        <!-- Scanning animation -->
+        <div class="net-scan-animation hidden" id="netScanAnimation">
+            <div class="radar-ring"></div>
+            <div class="radar-ring" style="animation-delay:0.5s;"></div>
+            <div class="radar-ring" style="animation-delay:1s;"></div>
+            <span class="material-symbols-outlined" style="font-size:2rem;color:var(--accent);">wifi_tethering</span>
+            <div class="net-scan-label" id="netScanLabel">Probing subnet...</div>
+        </div>
+
+        <!-- Results -->
+        <div class="net-results hidden" id="netResults">
+            <!-- View toggles for list vs topology -->
+            <div class="net-view-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; margin-top:1rem; flex-wrap:wrap; gap:0.5rem;">
+                <span class="net-results-header" style="margin:0; display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="color:var(--accent);">lan</span>
+                    <span id="netResultsTitle">Scan Results</span>
+                </span>
+                <div style="display:flex; gap:0.5rem; background:rgba(255,255,255,0.03); padding:0.25rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+                    <button class="btn-view-mode active" id="viewGridBtn" onclick="setNetViewMode('grid')" style="padding:0.35rem 0.75rem; border:none; background:rgba(59,130,246,0.15); color:white; border-radius:4px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:500;">
+                        <span class="material-symbols-outlined" style="font-size:0.95rem;">grid_view</span> List Grid
+                    </button>
+                    <button class="btn-view-mode" id="viewTopoBtn" onclick="setNetViewMode('topo')" style="padding:0.35rem 0.75rem; border:none; background:transparent; border-radius:4px; font-size:0.8rem; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:500;">
+                        <span class="material-symbols-outlined" style="font-size:0.95rem;">hub</span> Topology Map
+                    </button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+                <div class="net-summary" id="netSummary"></div>
+                <button class="btn btn-outline" id="btnExportNetReport" onclick="exportNetworkPDF()" style="gap:0.4rem; padding:0.45rem 0.9rem; font-size:0.85rem;" disabled>
+                    <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle;">download_2</span> Export Report (PDF)
+                </button>
+            </div>
+
+            <!-- Hosts grid -->
+            <div class="net-hosts-grid" id="netHostsGrid"></div>
+
+            <!-- Network Topology Map Container -->
+            <div id="netTopoContainer" class="net-topo-container hidden" style="position:relative; width:100%; height:450px; background:rgba(15,23,42,0.6); border-radius:12px; border:1px solid rgba(255,255,255,0.08); overflow:hidden; margin-bottom:1.5rem;">
+                <div style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); padding:6px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.75rem; color:var(--text-muted);">
+                    Interactive Topology Map (Drag nodes, click to inspect)
+                </div>
+                <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:0.25rem;">
+                    <button class="btn-topo-ctrl" onclick="zoomTopo(1.1)" title="Zoom In" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; width:28px; height:28px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">+</button>
+                    <button class="btn-topo-ctrl" onclick="zoomTopo(0.9)" title="Zoom Out" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; width:28px; height:28px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">-</button>
+                    <button class="btn-topo-ctrl" onclick="resetTopoZoom()" title="Reset Zoom" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; padding:0 8px; height:28px; border-radius:4px; cursor:pointer; font-size:0.72rem; display:flex; align-items:center; justify-content:center;">Reset</button>
+                </div>
+                <svg id="netTopoSvg" style="width:100%; height:100%; cursor:grab; user-select:none;"></svg>
+            </div>
+
+            <!-- Open Ports Table (shown when a host is selected) -->
+            <div class="net-ports-panel hidden" id="netPortsPanel">
+                <div class="net-ports-header">
+                    <span class="material-symbols-outlined" style="color:var(--accent);">dns</span>
+                    <span id="netPortsTitle">Open Ports</span>
+                    <button onclick="document.getElementById('netPortsPanel').classList.add('hidden')" class="btn-close-ports">×</button>
+                </div>
+                <table class="net-ports-table" id="netPortsTable">
+                    <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Risk</th><th>Remedy</th></tr></thead>
+                    <tbody id="netPortsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Scan Progress -->
+    <div class="scan-progress-container hidden" id="scanProgress">
+        <div class="scan-progress-header">
+            <span class="scan-progress-title"><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">science</span>Running Security Analysis...</span>
+        </div>
+        <div class="checks-list" id="checksList"></div>
+        <div class="scan-progress-bar-wrap">
+            <div class="scan-progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-container hidden" id="resultsContainer">
+        <!-- Verdict Banner -->
+        <div class="verdict-banner" id="verdictBanner">
+            <div class="verdict-icon material-symbols-outlined" id="verdictIcon"></div>
+            <div class="verdict-info">
+                <div class="verdict-label">Scan Verdict</div>
+                <div class="verdict-text" id="verdictText"></div>
+                <div class="verdict-url" id="verdictUrl"></div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" id="downloadPdfBtn" onclick="downloadScanPdf()" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span>
+                        Download PDF Report
+                    </button>
+                </div>
+            </div>
+            <div class="verdict-score-wrap">
+                <div class="verdict-score" id="verdictScore">
+                    <svg class="score-ring" viewBox="0 0 120 120">
+                        <circle class="score-ring-bg" cx="60" cy="60" r="50"/>
+                        <circle class="score-ring-fill" id="scoreRingFill" cx="60" cy="60" r="50"
+                            stroke-dasharray="314" stroke-dashoffset="314"/>
+                    </svg>
+                    <div class="score-number" id="scoreNumber">0</div>
+                    <div class="score-label">Risk</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check Results Grid -->
+        <div class="checks-results-grid" id="checksGrid"></div>
+
+        <!-- Recommendations -->
+        <div class="recommendations-panel" id="recommendationsPanel"></div>
+
+        <!-- Rescan Button -->
+        <div class="rescan-row">
+            <button class="btn btn-outline" onclick="clearScan()">← Scan Another URL</button>
+        </div>
+    </div>
+
+    <!-- Info Cards (only visible on URL tab) -->
+    <div class="info-cards-grid" id="urlInfoCards">
+        <div class="info-card" id="infoHowItWorks">
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">science</span>How It Works</h3>
+            <ul>
+                <li>Checks for HTTPS encryption</li>
+                <li>Cross-references known malicious domains</li>
+                <li>Detects URL shorteners</li>
+                <li>Scans for suspicious phishing keywords</li>
+                <li>Analyzes domain extension (TLD)</li>
+                <li>Detects raw IP addresses as hosts</li>
+                <li>Checks for excessive subdomains</li>
+                <li>Measures URL length anomalies</li>
+                <li>Detects encoded/obfuscated characters</li>
+                <li>Verifies DNS resolution</li>
+            </ul>
+        </div>
+        <div class="info-card" id="infoTips">
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--success);">shield</span>Stay Safe Online</h3>
+            <ul>
+                <li>Always verify URLs before clicking</li>
+                <li>Hover over links to preview destinations</li>
+                <li>Be suspicious of shortened URLs</li>
+                <li>Check for HTTPS before entering data</li>
+                <li>Look for subtle domain misspellings</li>
+                <li>Never enter passwords on HTTP sites</li>
+                <li>Use a password manager</li>
+                <li>Enable multi-factor authentication</li>
+                <li>Report phishing to your email provider</li>
+                <li>When in doubt, don't click it</li>
+            </ul>
+        </div>
+        <div class="info-card" id="infoLimitations">
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">warning</span>Limitations</h3>
+            <ul>
+                <li>Heuristic analysis — not 100% accurate</li>
+                <li>New malicious sites may not be flagged</li>
+                <li>Shortened URLs hide final destination</li>
+                <li>Some legitimate sites may score poorly</li>
+                <li>Always combine with other security tools</li>
+                <li>Use VirusTotal for comprehensive scans</li>
+            </ul>
+            <a href="https://www.virustotal.com" target="_blank" rel="noopener" class="external-link">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">open_in_new</span>Check VirusTotal for deeper analysis
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CHECKS_META = [
+    { label: "HTTPS Secure Connection" },
+    { label: "Known Malicious Domain" },
+    { label: "URL Shortener" },
+    { label: "Suspicious Keywords" },
+    { label: "Suspicious TLD" },
+    { label: "IP Address as Host" },
+    { label: "Excessive Subdomains" },
+    { label: "URL Length" },
+    { label: "Encoded / Special Characters" },
+    { label: "DNS Resolution" },
+    { label: "URLhaus Threat Check" },
+    { label: "VirusTotal Reputation Check" },
+];
+
+const RECOMMENDATIONS = {
+    "Malicious": [
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--error);">report</span>Do NOT visit this URL under any circumstances.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--accent);">shield</span>Block this domain in your firewall/security software.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">campaign</span>Report this URL to your IT security team.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--warning);">lock</span>If you've already visited it, run a full malware scan immediately.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">key</span>Change any passwords that may have been entered on this site.`,
+    ],
+    "Suspicious": [
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--warning);">warning</span>Exercise extreme caution before visiting this URL.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--accent);">search</span>Verify the domain belongs to a legitimate organization.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">phone</span>Contact the sender through a known, trusted channel to verify.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--text-muted);">laptop_mac</span>Use a sandboxed browser or virtual machine if you must visit.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">key</span>Never enter credentials on this site.`,
+    ],
+    "Potentially Risky": [
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--warning);">info</span>Proceed with caution — some risk indicators detected.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">check_circle</span>Verify the domain reputation independently.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--accent);">lock</span>Ensure the site uses HTTPS before entering any data.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">visibility</span>Watch for unusual behavior after visiting.`,
+    ],
+    "Likely Safe": [
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">check_circle</span>No major threats detected — appears safe based on our checks.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--accent);">lock</span>Always verify HTTPS is active before submitting sensitive data.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">lightbulb</span>Remember: no automated tool is 100% accurate.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">shield</span>Stay vigilant even on seemingly safe websites.`,
+    ],
+};
+
+function setExample(url) {
+    document.getElementById("scanUrl").value = url;
+    document.getElementById("scanUrl").focus();
+}
+
+function clearScan() {
+    document.getElementById("scanUrl").value = "";
+    document.getElementById("resultsContainer").classList.add("hidden");
+    document.getElementById("scanProgress").classList.add("hidden");
+    document.getElementById("scannerStatusDot").className = "scanner-status-dot";
+    document.getElementById("scannerStatusText").textContent = "Ready to scan";
+    document.getElementById("mainScanBtn").disabled = false;
+    document.getElementById("scanBtnIcon").textContent = "search";
+    document.getElementById("scanBtnText").textContent = "Analyze URL";
+}
+
+async function performScan() {
+    const urlInput = document.getElementById("scanUrl");
+    const url = urlInput.value.trim();
+    if (!url) { urlInput.focus(); return; }
+
+    const btn = document.getElementById("mainScanBtn");
+    const progressEl = document.getElementById("scanProgress");
+    const resultsEl = document.getElementById("resultsContainer");
+    const checksList = document.getElementById("checksList");
+    const progressBar = document.getElementById("progressBar");
+
+    // Reset
+    resultsEl.classList.add("hidden");
+    checksList.innerHTML = "";
+    progressBar.style.width = "0%";
+
+    // Status
+    document.getElementById("scannerStatusDot").className = "scanner-status-dot scanning";
+    document.getElementById("scannerStatusText").textContent = "Scanning...";
+    btn.disabled = true;
+    document.getElementById("scanBtnIcon").textContent = "";
+    document.getElementById("scanBtnText").innerHTML = '<span class="spinner"></span> Analyzing...';
+
+    // Animate progress
+    progressEl.classList.remove("hidden");
+    const checks = [...CHECKS_META];
+    for (let i = 0; i < checks.length; i++) {
+        const li = document.createElement("div");
+        li.className = "check-item scanning";
+        li.innerHTML = `<span class="check-spinner">⟳</span> ${checks[i].label}`;
+        checksList.appendChild(li);
+        progressBar.style.width = `${((i + 1) / checks.length) * 100}%`;
+        await sleep(120);
+    }
+
+    // Call API
+    try {
+        const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        progressEl.classList.add("hidden");
+        renderResults(data);
+    } catch (err) {
+        progressEl.classList.add("hidden");
+        alert("Scan failed. Please check your connection and try again.");
+    }
+
+    document.getElementById("scannerStatusDot").className = "scanner-status-dot done";
+    document.getElementById("scannerStatusText").textContent = "Scan complete";
+    btn.disabled = false;
+    document.getElementById("scanBtnIcon").textContent = "search";
+    document.getElementById("scanBtnText").textContent = "Analyze URL";
+}
+
+let currentScanData = null;
+
+function renderResults(data) {
+    currentScanData = data;
+    const container = document.getElementById("resultsContainer");
+
+    // Verdict Banner
+    const banner = document.getElementById("verdictBanner");
+    banner.style.borderColor = data.verdict_color;
+    banner.style.boxShadow = `0 0 40px ${data.verdict_color}30`;
+    document.getElementById("verdictIcon").textContent = data.verdict_icon;
+    document.getElementById("verdictText").textContent = data.verdict;
+    document.getElementById("verdictText").style.color = data.verdict_color;
+    document.getElementById("verdictUrl").textContent = data.url;
+
+    // Score Ring
+    const score = data.risk_percent;
+    const circumference = 314;
+    const offset = circumference - (score / 100) * circumference;
+    const fill = document.getElementById("scoreRingFill");
+    fill.style.stroke = data.verdict_color;
+    fill.style.strokeDashoffset = offset;
+    document.getElementById("scoreNumber").textContent = score;
+    document.getElementById("scoreNumber").style.color = data.verdict_color;
+
+    // Checks Grid
+    const grid = document.getElementById("checksGrid");
+    grid.innerHTML = data.checks.map(c => `
+        <div class="check-result-card check-${c.status}">
+            <div class="check-result-icon">
+                ${c.status === "pass" ? '<span class="material-symbols-outlined" style="color: var(--success);">check_circle</span>' : c.status === "fail" ? '<span class="material-symbols-outlined" style="color: var(--error);">cancel</span>' : c.status === "info" ? '<span class="material-symbols-outlined" style="color: var(--accent);">info</span>' : '<span class="material-symbols-outlined" style="color: var(--warning);">warning</span>'}
+            </div>
+            <div class="check-result-body">
+                <div class="check-result-label">${c.label}</div>
+                <div class="check-result-detail">${c.detail}</div>
+            </div>
+        </div>
+    `).join("");
+
+    // Recommendations
+    const recs = RECOMMENDATIONS[data.verdict] || RECOMMENDATIONS["Likely Safe"];
+    document.getElementById("recommendationsPanel").innerHTML = `
+        <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">assignment</span>Recommendations</h3>
+        <ul class="rec-list">
+            ${recs.map(r => `<li>${r}</li>`).join("")}
+        </ul>`;
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function downloadScanPdf() {
+    if (!currentScanData) return;
+    try {
+        const btn = document.getElementById("downloadPdfBtn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Generating...';
+
+        const res = await fetch("/api/report/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "scan",
+                data: currentScanData
+            })
+        });
+
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `cyberdefense_scan_report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } else {
+            alert("Failed to generate PDF report.");
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    } catch (err) {
+        alert("Error downloading PDF: " + err.message);
+        document.getElementById("downloadPdfBtn").disabled = false;
+    }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+document.getElementById("scanUrl")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") performScan();
+});
+
+// ── AUTO-DETECT SCAN ENGINE ──
+(async function loadEngineStatus() {
+    try {
+        const r = await fetch("/api/scanner-engine");
+        const d = await r.json();
+        const badge = document.getElementById("engineBadge");
+        const label = document.getElementById("engineLabel");
+        const note  = document.getElementById("engineNote");
+        if (badge && label) {
+            badge.style.borderColor = d.color + "30";
+            badge.style.background  = d.color + "10";
+            label.textContent = d.label;
+            label.style.color = d.color;
+            if (note) note.textContent = d.note;
+        }
+    } catch(e) { /* silent */ }
+})();
+
+// ── TAB SWITCHING ──
+function switchTab(tab) {
+    const urlCard  = document.getElementById("scannerCard");
+    const fileCard = document.getElementById("fileScannerCard");
+    const netCard  = document.getElementById("networkScannerCard");
+    const tabUrl   = document.getElementById("tabUrl");
+    const tabFile  = document.getElementById("tabFile");
+    const tabNet   = document.getElementById("tabNetwork");
+    const infoCards = document.getElementById("urlInfoCards");
+
+    [urlCard, fileCard, netCard].forEach(c => c?.classList.add("hidden"));
+    [tabUrl, tabFile, tabNet].forEach(t => t?.classList.remove("active"));
+
+    if (tab === "url") {
+        urlCard.classList.remove("hidden");
+        tabUrl.classList.add("active");
+        infoCards?.classList.remove("hidden");
+    } else if (tab === "file") {
+        fileCard.classList.remove("hidden");
+        tabFile.classList.add("active");
+        infoCards?.classList.add("hidden");
+    } else {
+        netCard.classList.remove("hidden");
+        tabNet.classList.add("active");
+        infoCards?.classList.add("hidden");
+    }
+    document.getElementById("resultsContainer").classList.add("hidden");
+    document.getElementById("scanProgress").classList.add("hidden");
+    document.getElementById("netResults")?.classList.add("hidden");
+}
+
+// ── NETWORK SCANNER ──
+const NET_SCAN_LABELS = [
+    "Detecting local subnet...",
+    "Probing active IP addresses...",
+    "Querying local ARP table...",
+    "Resolving MAC addresses...",
+    "Analyzing vendor OUI records...",
+    "Scanning open ports...",
+    "Fingerprinting devices...",
+    "Classifying risk levels...",
+    "Generating network structure...",
+    "Finalizing visual topology..."
+];
+
+let netScanMode = "subnet"; // subnet | target
+let netViewMode = "grid"; // grid | topo
+let latestScanData = null;
+
+function setNetScanMode(mode) {
+    netScanMode = mode;
+    const subnetBtn = document.getElementById("modeSubnetBtn");
+    const targetBtn = document.getElementById("modeTargetBtn");
+    const subnetConfig = document.getElementById("subnetScanConfig");
+    const targetConfig = document.getElementById("targetScanConfig");
+    const scanBtnText = document.getElementById("netScanBtnText");
+
+    if (mode === "subnet") {
+        subnetBtn.classList.add("active");
+        targetBtn.classList.remove("active");
+        subnetConfig.classList.remove("hidden");
+        targetConfig.classList.add("hidden");
+        scanBtnText.textContent = "Discover Network";
+    } else {
+        targetBtn.classList.add("active");
+        subnetBtn.classList.remove("active");
+        targetConfig.classList.remove("hidden");
+        subnetConfig.classList.add("hidden");
+        scanBtnText.textContent = "Scan Target Host";
+    }
+}
+
+function setNetViewMode(mode) {
+    netViewMode = mode;
+    const gridBtn = document.getElementById("viewGridBtn");
+    const topoBtn = document.getElementById("viewTopoBtn");
+    const hostsGrid = document.getElementById("netHostsGrid");
+    const topoContainer = document.getElementById("netTopoContainer");
+
+    if (mode === "grid") {
+        gridBtn.classList.add("active");
+        topoBtn.classList.remove("active");
+        hostsGrid.classList.remove("hidden");
+        topoContainer.classList.add("hidden");
+    } else {
+        topoBtn.classList.add("active");
+        gridBtn.classList.remove("active");
+        topoContainer.classList.remove("hidden");
+        hostsGrid.classList.add("hidden");
+        if (latestScanData) {
+            renderTopology(latestScanData);
+        }
+    }
+}
+
+async function performNetworkScan() {
+    const btn = document.getElementById("netScanBtn");
+    btn.disabled = true;
+    document.getElementById("netScanBtnIcon").textContent = "";
+    document.getElementById("netScanBtnText").innerHTML = '<span class="spinner"></span> Scanning...';
+    document.getElementById("netScannerStatusDot").className = "scanner-status-dot scanning";
+    document.getElementById("netResults").classList.add("hidden");
+    document.getElementById("btnExportNetReport").disabled = true;
+
+    // Show radar animation with rotating labels
+    const anim = document.getElementById("netScanAnimation");
+    const label = document.getElementById("netScanLabel");
+    anim.classList.remove("hidden");
+    
+    let labelInterval = null;
+    let li = 0;
+    label.textContent = NET_SCAN_LABELS[0];
+    labelInterval = setInterval(() => {
+        label.textContent = NET_SCAN_LABELS[li % NET_SCAN_LABELS.length];
+        document.getElementById("netScannerStatusText").textContent = NET_SCAN_LABELS[li % NET_SCAN_LABELS.length];
+        li++;
+    }, 1500);
+
+    try {
+        let res;
+        if (netScanMode === "subnet") {
+            const depth  = document.getElementById("netScanDepth").value;
+            const subnet = document.getElementById("netSubnet").value.trim();
+            res = await fetch("/api/scan-network", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ scan_depth: depth, subnet })
+            });
+        } else {
+            const targetIp = document.getElementById("targetIpInput").value.trim();
+            const ports = document.getElementById("targetPortsInput").value.trim();
+            if (!targetIp) {
+                clearInterval(labelInterval);
+                alert("Please enter a target IP address.");
+                anim.classList.add("hidden");
+                btn.disabled = false;
+                document.getElementById("netScanBtnIcon").textContent = "radar";
+                document.getElementById("netScanBtnText").textContent = "Scan Target Host";
+                document.getElementById("netScannerStatusDot").className = "scanner-status-dot";
+                document.getElementById("netScannerStatusText").textContent = "Ready";
+                return;
+            }
+            res = await fetch("/api/scan-target-ip", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ target_ip: targetIp, ports })
+            });
+        }
+
+        clearInterval(labelInterval);
+        const data = await res.json();
+        anim.classList.add("hidden");
+
+        if (data.error) {
+            alert("Scan error: " + data.error);
+        } else {
+            if (netScanMode === "subnet") {
+                latestScanData = data;
+            } else {
+                // Adapt single target IP response structure to match the discovered hosts list structure
+                latestScanData = {
+                    subnet: data.ip + "/32",
+                    ssid: "Target Host Scan",
+                    server_ip: "Local Origin",
+                    hosts_scanned: data.ports_scanned,
+                    active_count: 1,
+                    active_hosts: [{
+                        ip: data.ip,
+                        hostname: data.hostname,
+                        mac: "N/A",
+                        vendor: "Target Host",
+                        alive: true,
+                        open_ports: data.open_ports,
+                        open_count: data.open_count,
+                        risk: data.risk,
+                        risk_color: data.risk_color,
+                        device_type: "Target Host",
+                        device_icon: "track_changes"
+                    }]
+                };
+            }
+            renderNetworkResults(latestScanData);
+            document.getElementById("btnExportNetReport").disabled = false;
+        }
+    } catch (err) {
+        if (labelInterval) clearInterval(labelInterval);
+        anim.classList.add("hidden");
+        alert("Network scan failed: " + err.message);
+    }
+
+    document.getElementById("netScannerStatusDot").className = "scanner-status-dot done";
+    document.getElementById("netScannerStatusText").textContent = "Scan complete";
+    btn.disabled = false;
+    document.getElementById("netScanBtnIcon").textContent = "radar";
+    document.getElementById("netScanBtnText").textContent = netScanMode === "subnet" ? "Discover Network" : "Scan Target Host";
+}
+
+function renderNetworkResults(data) {
+    document.getElementById("netScanAnimation").classList.add("hidden");
+    document.getElementById("netResults").classList.remove("hidden");
+    document.getElementById("netResultsTitle").innerHTML = `Discovered Hosts — ${data.subnet} <span style="color:var(--accent); font-size:0.9rem; margin-left:0.5rem; background:rgba(59,130,246,0.1); padding:0.2rem 0.6rem; border-radius:50px;"><span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-2px; margin-right:4px;">wifi</span>${data.ssid}</span>`;
+
+    // Summary strip
+    document.getElementById("netSummary").innerHTML = `
+        <div class="net-summary-grid">
+            <div class="net-stat"><div class="net-stat-val">${data.hosts_scanned}</div><div class="net-stat-lbl">${netScanMode === 'subnet' ? 'IPs Probed' : 'Ports Scanned'}</div></div>
+            <div class="net-stat"><div class="net-stat-val" style="color:var(--accent)">${data.active_count}</div><div class="net-stat-lbl">Active Hosts</div></div>
+            <div class="net-stat"><div class="net-stat-val" style="color:var(--text-muted); font-size:0.85rem; font-family:monospace;">${data.server_ip || '—'}</div><div class="net-stat-lbl">Scan Origin</div></div>
+        </div>`;
+
+    // Host cards grid
+    const grid = document.getElementById("netHostsGrid");
+    if (data.active_hosts.length === 0) {
+        grid.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2rem; grid-column:1/-1;">
+            <span class="material-symbols-outlined" style="font-size:2.5rem; display:block; margin-bottom:0.5rem; color:var(--success);">wifi_off</span>
+            No active hosts found on <strong>${data.subnet}</strong>
+        </div>`;
+    } else {
+        grid.innerHTML = data.active_hosts.map(h => {
+            const portBadge = h.open_count > 0
+                ? `<span class="host-port-count" style="color:${h.risk_color}; font-weight: 600;">${h.open_count} port${h.open_count > 1 ? 's' : ''} open</span>`
+                : `<span class="host-port-count" style="color:var(--success);">No open ports</span>`;
+            const riskPill = `<span class="host-risk-pill" style="color:${h.risk_color}; border-color:${h.risk_color}40; background:${h.risk_color}12;">${h.risk}</span>`;
+            
+            window.hostOpenPorts = window.hostOpenPorts || {};
+            window.hostOpenPorts[h.ip] = h.open_ports;
+            
+            const deviceIcon = h.device_icon || 'computer';
+            const displayName = h.hostname !== h.ip ? h.hostname : (h.vendor !== 'Unknown Vendor' ? h.vendor : 'Workstation');
+            const macVendorInfo = h.mac && h.mac !== 'Unknown' && h.mac !== 'N/A' ? `${h.mac} (${h.vendor})` : (h.mac === 'N/A' ? '' : (h.mac || ''));
+
+            return `<div class="net-host-card" onclick="showHostPorts('${h.ip}', '${h.hostname.replace(/'/g, "\\'")}')">
+                <div class="host-card-header">
+                    <span class="material-symbols-outlined" style="font-size:1.8rem; color:var(--accent);">${deviceIcon}</span>
+                    ${riskPill}
+                </div>
+                <div class="host-ip">${h.ip}</div>
+                <div class="host-name" title="${h.hostname}" style="font-size:0.8rem; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayName}</div>
+                <div style="display:flex; align-items:center; gap:4px; margin-top:3px;">
+                    <span class="material-symbols-outlined" style="font-size:0.85rem; color:var(--text-muted);">memory</span>
+                    <span style="font-size:0.67rem; color:var(--text-muted); font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${h.os || 'Unknown OS'}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:4px; margin-top:2px;">
+                    <span class="material-symbols-outlined" style="font-size:0.85rem; color:var(--accent);">devices</span>
+                    <span style="font-size:0.68rem; color:var(--accent); font-weight:500;">${h.device_type || 'Standard Device'}</span>
+                </div>
+                <div class="host-mac" style="font-size: 0.63rem; color: var(--text-muted); font-family: monospace; margin-top: 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${macVendorInfo}</div>
+                ${portBadge}
+                <div class="host-card-footer">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px;">zoom_in</span> View ports
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    if (netViewMode === "topo") {
+        renderTopology(data);
+    }
+
+    document.getElementById("netResults").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function showHostPorts(ip, hostname) {
+    const openPorts = window.hostOpenPorts[ip] || [];
+    document.getElementById("netPortsPanel").classList.remove("hidden");
+    document.getElementById("netPortsTitle").textContent = `${ip} — ${hostname !== ip ? hostname : 'Open Ports'}`;
+    const tbody = document.getElementById("netPortsBody");
+    if (openPorts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--success); padding:1rem;">
+            <span class="material-symbols-outlined" style="vertical-align:-3px; margin-right:4px;">verified</span>
+            No open ports detected — host appears secure.
+        </td></tr>`;
+    } else {
+        tbody.innerHTML = openPorts.map(p => `
+            <tr>
+                <td style="font-family:monospace; font-weight:700; color:var(--accent);">${p.port}</td>
+                <td><span style="color:var(--success); font-weight:600;">● OPEN</span></td>
+                <td>${p.service}</td>
+                <td><span style="color:${p.risk_color}; font-weight:700; font-size:0.78rem; background:${p.risk_color}15; padding:0.15rem 0.55rem; border-radius:50px; border:1px solid ${p.risk_color}40;">${p.risk}</span></td>
+                <td style="font-size: 0.75rem; color: var(--text-secondary); max-width: 250px; line-height: 1.3;">${p.remedy || ''}</td>
+            </tr>`).join("");
+    }
+    document.getElementById("netPortsPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function clearNetworkScan() {
+    document.getElementById("netResults").classList.add("hidden");
+    document.getElementById("netScanAnimation").classList.add("hidden");
+    document.getElementById("netPortsPanel").classList.add("hidden");
+    document.getElementById("netScannerStatusDot").className = "scanner-status-dot";
+    document.getElementById("netScannerStatusText").textContent = "Ready to discover network";
+    document.getElementById("netHostsGrid").innerHTML = "";
+    latestScanData = null;
+    document.getElementById("btnExportNetReport").disabled = true;
+}
+
+// ── NETWORK TOPOLOGY MAP LOGIC ──
+let topoZoom = 1;
+let topoPanX = 0;
+let topoPanY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+function zoomTopo(factor) {
+    topoZoom *= factor;
+    updateTopoTransform();
+}
+
+function resetTopoZoom() {
+    topoZoom = 1;
+    topoPanX = 0;
+    topoPanY = 0;
+    updateTopoTransform();
+}
+
+function updateTopoTransform() {
+    const g = document.getElementById("netTopoGroup");
+    if (g) {
+        g.setAttribute("transform", `translate(${topoPanX}, ${topoPanY}) scale(${topoZoom})`);
+    }
+}
+
+function renderTopology(data) {
+    const svg = document.getElementById("netTopoSvg");
+    svg.innerHTML = ""; // Clear SVG content
+
+    // Create container group for zoom and pan support
+    const mainGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    mainGroup.id = "netTopoGroup";
+    svg.appendChild(mainGroup);
+
+    const rect = svg.getBoundingClientRect();
+    const width = rect.width || 750;
+    const height = rect.height || 450;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    const hosts = data.active_hosts || [];
+    const nodes = [];
+
+    // Center Node (Origin / Server)
+    const originIp = data.server_ip && data.server_ip !== "—" ? data.server_ip : "192.168.1.1";
+    nodes.push({
+        id: "origin",
+        ip: originIp,
+        label: "Scan Server",
+        x: cx,
+        y: cy,
+        icon: "terminal",
+        color: "var(--accent)",
+        isOrigin: true
+    });
+
+    // Peripheral Nodes organized radially
+    const radius = Math.min(width, height) * 0.35;
+    hosts.forEach((h, idx) => {
+        const theta = (2 * Math.PI * idx) / hosts.length;
+        const name = h.hostname !== h.ip ? h.hostname : (h.vendor !== 'Unknown Vendor' ? h.vendor : 'Host');
+        nodes.push({
+            id: h.ip,
+            ip: h.ip,
+            label: name,
+            x: cx + radius * Math.cos(theta),
+            y: cy + radius * Math.sin(theta),
+            icon: h.device_icon || "computer",
+            color: h.risk_color || "#10b981",
+            rawHost: h
+        });
+    });
+
+    // Link Lines
+    const linksGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    mainGroup.appendChild(linksGroup);
+
+    nodes.forEach(n => {
+        if (!n.isOrigin) {
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", cx);
+            line.setAttribute("y1", cy);
+            line.setAttribute("x2", n.x);
+            line.setAttribute("y2", n.y);
+            line.setAttribute("stroke", "rgba(59, 130, 246, 0.4)");
+            line.setAttribute("stroke-width", "1.5");
+            line.setAttribute("class", "topo-link");
+            line.id = `link-${n.id.replace(/\./g, "-")}`;
+            linksGroup.appendChild(line);
+        }
+    });
+
+    // Render Nodes Group
+    const nodesGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    mainGroup.appendChild(nodesGroup);
+
+    nodes.forEach(n => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("class", "topo-node");
+        g.setAttribute("transform", `translate(${n.x}, ${n.y})`);
+        g.id = `node-${n.id.replace(/\./g, "-")}`;
+
+        // Outer Glow/Base circle
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("r", n.isOrigin ? "26" : "20");
+        circle.setAttribute("fill", "#0f172a");
+        circle.setAttribute("stroke", n.color);
+        circle.setAttribute("stroke-width", "2.5");
+        g.appendChild(circle);
+
+        // Icon inside circle
+        const textIcon = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textIcon.setAttribute("class", "material-symbols-outlined");
+        textIcon.setAttribute("text-anchor", "middle");
+        textIcon.setAttribute("y", n.isOrigin ? "8" : "6");
+        textIcon.setAttribute("fill", "#fff");
+        textIcon.setAttribute("font-size", n.isOrigin ? "22px" : "18px");
+        textIcon.textContent = n.icon;
+        g.appendChild(textIcon);
+
+        // IP Label
+        const textIp = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textIp.setAttribute("text-anchor", "middle");
+        textIp.setAttribute("y", n.isOrigin ? "44" : "36");
+        textIp.setAttribute("fill", "#f8fafc");
+        textIp.setAttribute("font-size", "10px");
+        textIp.setAttribute("font-weight", "bold");
+        textIp.textContent = n.ip;
+        g.appendChild(textIp);
+
+        // Name Label
+        const textLbl = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textLbl.setAttribute("text-anchor", "middle");
+        textLbl.setAttribute("y", n.isOrigin ? "56" : "46");
+        textLbl.setAttribute("fill", "#94a3b8");
+        textLbl.setAttribute("font-size", "8.5px");
+        textLbl.textContent = n.label;
+        g.appendChild(textLbl);
+
+        // Click Handler (Inspect Host)
+        if (!n.isOrigin) {
+            g.addEventListener("click", (e) => {
+                e.stopPropagation();
+                showHostPorts(n.rawHost.ip, n.rawHost.hostname);
+            });
+        }
+
+        // Drag node logic
+        let isDraggingNode = false;
+        g.addEventListener("mousedown", (e) => {
+            e.stopPropagation();
+            isDraggingNode = true;
+        });
+
+        svg.addEventListener("mousemove", (e) => {
+            if (isDraggingNode) {
+                const svgRect = svg.getBoundingClientRect();
+                // Translate mouse coordinates to local coordinate system taking zoom and pan into account
+                const x = (e.clientX - svgRect.left - topoPanX) / topoZoom;
+                const y = (e.clientY - svgRect.top - topoPanY) / topoZoom;
+                
+                g.setAttribute("transform", `translate(${x}, ${y})`);
+                
+                const link = document.getElementById(`link-${n.id.replace(/\./g, "-")}`);
+                if (link) {
+                    link.setAttribute("x2", x);
+                    link.setAttribute("y2", y);
+                }
+            }
+        });
+
+        window.addEventListener("mouseup", () => {
+            if (isDraggingNode) {
+                isDraggingNode = false;
+            }
+        });
+
+        nodesGroup.appendChild(g);
+    });
+
+    // Panning control on SVGs background
+    svg.addEventListener("mousedown", (e) => {
+        isPanning = true;
+        panStartX = e.clientX - topoPanX;
+        panStartY = e.clientY - topoPanY;
+    });
+
+    svg.addEventListener("mousemove", (e) => {
+        if (isPanning) {
+            topoPanX = e.clientX - panStartX;
+            topoPanY = e.clientY - panStartY;
+            updateTopoTransform();
+        }
+    });
+
+    window.addEventListener("mouseup", () => {
+        if (isPanning) {
+            isPanning = false;
+        }
+    });
+
+    updateTopoTransform();
+}
+
+async function exportNetworkPDF() {
+    if (!latestScanData) return;
+    try {
+        const btn = document.getElementById("btnExportNetReport");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Exporting...';
+
+        const res = await fetch("/api/report/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "network",
+                data: latestScanData
+            })
+        });
+
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `cyberdefense_network_report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } else {
+            alert("Failed to export PDF network report.");
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    } catch (err) {
+        alert("Error exporting PDF: " + err.message);
+        document.getElementById("btnExportNetReport").disabled = false;
+    }
+}
+
+// ── VIRUSTOTAL API KEY CONFIG ──
+function toggleVtConfig() {
+    const form = document.getElementById("vtConfigForm");
+    form.classList.toggle("hidden");
+}
+
+async function saveVtKey() {
+    const key = document.getElementById("vtApiKeyInput").value.trim();
+    const res = await fetch("/api/config/vt-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+        document.getElementById("vtConfigStatus").textContent = key
+            ? "✓ VirusTotal API key saved — live lookups & file uploads enabled."
+            : "API key cleared — falling back to heuristic checks.";
+        document.getElementById("vtConfigForm").classList.add("hidden");
+        document.getElementById("vtApiKeyInput").value = "";
+    }
+}
+
+async function clearVtKey() {
+    document.getElementById("vtApiKeyInput").value = "";
+    await fetch("/api/config/vt-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "" })
+    });
+    document.getElementById("vtConfigStatus").textContent = "No API key configured — currently using heuristic checks.";
+    document.getElementById("vtConfigForm").classList.add("hidden");
+}
+
+// ── WiGLE API KEY CONFIG ──
+function toggleWiggleConfig() {
+    const form = document.getElementById("wigleConfigForm");
+    form.classList.toggle("hidden");
+}
+
+async function saveWiggleKey() {
+    const key = document.getElementById("wigleApiKeyInput").value.trim();
+    const res = await fetch("/api/config/wigle-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+    if (data.status === "success") {
+        const statusEl = document.getElementById("wigleConfigStatus");
+        const panelEl = document.getElementById("wigleConfigPanel");
+        const btnEl = document.getElementById("wigleConfigToggleBtn");
+        
+        if (key) {
+            statusEl.innerHTML = "✓ API key active — real nearby networks enabled.";
+            panelEl.classList.add("vt-config-active");
+            btnEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">edit</span> Update Key';
+        } else {
+            statusEl.textContent = "No API key configured — using demo data. Paste your key to scan real networks near you.";
+            panelEl.classList.remove("vt-config-active");
+            btnEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">settings</span> Configure';
+        }
+        document.getElementById("wigleConfigForm").classList.add("hidden");
+        document.getElementById("wigleApiKeyInput").value = "";
+    }
+}
+
+async function clearWiggleKey() {
+    document.getElementById("wigleApiKeyInput").value = "";
+    await fetch("/api/config/wigle-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "" })
+    });
+    document.getElementById("wigleConfigStatus").textContent = "No API key configured — using demo data. Paste your key to scan real networks near you.";
+    document.getElementById("wigleConfigPanel").classList.remove("vt-config-active");
+    document.getElementById("wigleConfigToggleBtn").innerHTML = '<span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">settings</span> Configure';
+    document.getElementById("wigleConfigForm").classList.add("hidden");
+}
+
+async function startWifiScanManual() {
+    const latInput = document.getElementById("manualLat");
+    const lonInput = document.getElementById("manualLon");
+    const lat = parseFloat(latInput.value);
+    const lon = parseFloat(lonInput.value);
+    
+    if (isNaN(lat) || isNaN(lon)) {
+        alert("Please enter valid latitude and longitude coordinates.");
+        return;
+    }
+    
+    const prompt = document.getElementById("wifiGeoPrompt");
+    const anim   = document.getElementById("wifiScanAnimation");
+    const results= document.getElementById("wifiResults");
+    const dot    = document.getElementById("wifiStatusDot");
+    const statusTxt = document.getElementById("wifiStatusText");
+
+    prompt.classList.add("hidden");
+    results.classList.add("hidden");
+    anim.classList.remove("hidden");
+    dot.className = "scanner-status-dot scanning";
+    statusTxt.textContent = `Scanning coordinates (${lat.toFixed(4)}, ${lon.toFixed(4)})...`;
+
+    try {
+        const res = await fetch("/api/nearby-wifi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat, lon })
+        });
+        const data = await res.json();
+        anim.classList.add("hidden");
+        allWifiNetworks = data.networks || [];
+        renderWifiResults(data);
+        dot.className = "scanner-status-dot done";
+        statusTxt.textContent = `Found ${data.count} networks${data.demo ? " (demo)" : ""}`;
+    } catch(err) {
+        anim.classList.add("hidden");
+        prompt.classList.remove("hidden");
+        dot.className = "scanner-status-dot";
+        statusTxt.textContent = "Scan failed";
+        alert("WiFi scan failed: " + err.message);
+    }
+}
+
+// ── FILE SCANNER ──
+let selectedFile = null;
+
+function handleDragOver(event) {
+    event.preventDefault();
+    document.getElementById("fileDropZone").classList.add("drag-active");
+}
+
+function handleDragLeave(event) {
+    document.getElementById("fileDropZone").classList.remove("drag-active");
+}
+
+function handleFileDrop(event) {
+    event.preventDefault();
+    document.getElementById("fileDropZone").classList.remove("drag-active");
+    const file = event.dataTransfer.files[0];
+    if (file) setSelectedFile(file);
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) setSelectedFile(file);
+}
+
+function setSelectedFile(file) {
+    selectedFile = file;
+    const sizeKb = (file.size / 1024).toFixed(1);
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+    document.getElementById("fileInfoName").textContent = file.name;
+    document.getElementById("fileInfoSize").textContent = file.size > 1048576 ? `${sizeMb} MB` : `${sizeKb} KB`;
+    document.getElementById("fileDropZone").classList.add("hidden");
+    document.getElementById("fileSelectedInfo").classList.remove("hidden");
+}
+
+function clearFileScan() {
+    selectedFile = null;
+    document.getElementById("fileInput").value = "";
+    document.getElementById("fileDropZone").classList.remove("hidden");
+    document.getElementById("fileSelectedInfo").classList.add("hidden");
+    document.getElementById("fileScannerStatusDot").className = "scanner-status-dot";
+    document.getElementById("fileScannerStatusText").textContent = "Ready to scan files";
+    document.getElementById("resultsContainer").classList.add("hidden");
+}
+
+async function performFileScan() {
+    if (!selectedFile) { alert("Please select a file first."); return; }
+
+    const btn = document.getElementById("fileScanBtn");
+    btn.disabled = true;
+    document.getElementById("fileScanBtnIcon").textContent = "";
+    document.getElementById("fileScanBtnText").innerHTML = '<span class="spinner"></span> Scanning...';
+    document.getElementById("fileScannerStatusDot").className = "scanner-status-dot scanning";
+    document.getElementById("fileScannerStatusText").textContent = "Analyzing file...";
+
+    const progressEl = document.getElementById("scanProgress");
+    const resultsEl = document.getElementById("resultsContainer");
+    const checksList = document.getElementById("checksList");
+    const progressBar = document.getElementById("progressBar");
+
+    resultsEl.classList.add("hidden");
+    checksList.innerHTML = "";
+    progressBar.style.width = "0%";
+
+    const fileChecks = [
+        { label: "File Size Verification" },
+        { label: "Executable & Extension Analysis" },
+        { label: "VirusTotal File Reputation Check" },
+    ];
+
+    progressEl.classList.remove("hidden");
+    for (let i = 0; i < fileChecks.length; i++) {
+        const li = document.createElement("div");
+        li.className = "check-item scanning";
+        li.innerHTML = `<span class="check-spinner">⟳</span> ${fileChecks[i].label}`;
+        checksList.appendChild(li);
+        progressBar.style.width = `${((i + 1) / fileChecks.length) * 100}%`;
+        await sleep(300);
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const res = await fetch("/api/scan-file", {
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        progressEl.classList.add("hidden");
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            renderResults(data);
+        }
+    } catch (err) {
+        progressEl.classList.add("hidden");
+        alert("File scan failed. Please check your connection and try again.");
+    }
+
+    document.getElementById("fileScannerStatusDot").className = "scanner-status-dot done";
+    document.getElementById("fileScannerStatusText").textContent = "Scan complete";
+    btn.disabled = false;
+    document.getElementById("fileScanBtnIcon").textContent = "security";
+    document.getElementById("fileScanBtnText").textContent = "Analyze File";
+}
+</script>
+{% endblock %}

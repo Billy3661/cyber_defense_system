@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% block title %}Security Awareness — Securix{% endblock %}
+{% block description %}Build your cybersecurity knowledge with essential tips, best practices, and security fundamentals.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Security Awareness</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">school</span>Security Awareness Hub</h1>
+        <p class="page-subtitle">
+            Knowledge is your strongest defense. Learn the fundamentals of cybersecurity
+            and build habits that keep you safe online.
+        </p>
+    </div>
+</div>
+
+<div class="container awareness-page">
+
+    <!-- Awareness Levels -->
+    <div class="awareness-levels">
+        <a href="#basics" class="awareness-level-btn active" id="btnBasics" onclick="switchSection('basics', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">eco</span>Basics</a>
+        <a href="#passwords" class="awareness-level-btn" id="btnPasswords" onclick="switchSection('passwords', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">key</span>Passwords</a>
+        <a href="#phishing" class="awareness-level-btn" id="btnPhishing" onclick="switchSection('phishing', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">phishing</span>Phishing</a>
+        <a href="#network" class="awareness-level-btn" id="btnNetwork" onclick="switchSection('network', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">wifi_lock</span>Network</a>
+        <a href="#mobile" class="awareness-level-btn" id="btnMobile" onclick="switchSection('mobile', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">smartphone</span>Mobile</a>
+        <a href="#advanced" class="awareness-level-btn" id="btnAdvanced" onclick="switchSection('advanced', this)"><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">science</span>Advanced</a>
+    </div>
+
+    <!-- Basics Section -->
+    <div class="awareness-section" id="section-basics">
+        <div class="section-header">
+            <div class="section-badge">Foundation</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--success);">eco</span>Cybersecurity Basics</h2>
+            <p>Start here — the essential knowledge every internet user should have.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="awCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--success);">shield</div>
+                <h3>What is Cybersecurity?</h3>
+                <p>Cybersecurity is the practice of protecting computers, networks, and data from digital attacks, unauthorized access, and damage. It covers everything from your personal phone to national infrastructure.</p>
+                <div class="aw-key-point">
+                    <strong>Key Point:</strong> Everyone is a potential target — not just large companies.
+                </div>
+            </div>
+            <div class="awareness-card" id="awCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">track_changes</div>
+                <h3>The CIA Triad</h3>
+                <p>The three core principles of information security:</p>
+                <ul class="aw-list">
+                    <li><strong>Confidentiality</strong> — Data is only accessible to authorized people</li>
+                    <li><strong>Integrity</strong> — Data is accurate and has not been tampered with</li>
+                    <li><strong>Availability</strong> — Systems are accessible when needed</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="awCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--warning);">lock</div>
+                <h3>Defense in Depth</h3>
+                <p>Don't rely on a single security measure. Use multiple layers of protection:</p>
+                <ul class="aw-list">
+                    <li>Strong passwords + MFA</li>
+                    <li>Antivirus + Firewall</li>
+                    <li>Regular updates + Backups</li>
+                    <li>User awareness + Monitoring</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="awCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--info);">bolt</div>
+                <h3>The Human Factor</h3>
+                <p>Over <strong>90% of cyber attacks</strong> involve human error. Attackers exploit psychology — urgency, fear, greed, and trust — to bypass technical defenses.</p>
+                <div class="aw-key-point">
+                    <strong>Golden Rule:</strong> Always pause and think before clicking, downloading, or sharing information.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passwords Section -->
+    <div class="awareness-section hidden" id="section-passwords">
+        <div class="section-header">
+            <div class="section-badge">Authentication</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">key</span>Password Security</h2>
+            <p>Your password is often the only thing standing between an attacker and your account.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="pwCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--success);">verified_user</div>
+                <h3>Strong Password Formula</h3>
+                <ul class="aw-list">
+                    <li>Minimum <strong>12 characters</strong> (16+ preferred)</li>
+                    <li>Mix of UPPERCASE and lowercase letters</li>
+                    <li>Include numbers (0–9)</li>
+                    <li>Include symbols (!@#$%^&*)</li>
+                    <li>No dictionary words or predictable patterns</li>
+                    <li>Never reuse passwords across accounts</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="pwCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--info);">folder_open</div>
+                <h3>Use a Password Manager</h3>
+                <p>A password manager generates, stores, and autofills strong unique passwords for every account. You only need to remember one master password.</p>
+                <p><strong>Recommended:</strong></p>
+                <ul class="aw-list">
+                    <li>Bitwarden (free, open-source)</li>
+                    <li>1Password (premium)</li>
+                    <li>KeePassXC (offline, local)</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="pwCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--accent);">smartphone</div>
+                <h3>Multi-Factor Authentication (MFA)</h3>
+                <p>MFA adds a second layer of verification beyond your password. Even if your password is stolen, attackers can't log in without the second factor.</p>
+                <p><strong>MFA Types (strongest → weakest):</strong></p>
+                <ul class="aw-list">
+                    <li>🔑 Hardware key (YubiKey)</li>
+                    <li>📲 Authenticator app (Authy, Google Auth)</li>
+                    <li>📧 Email code</li>
+                    <li>📞 SMS code (least secure)</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="pwCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">warning</div>
+                <h3>Password Don'ts</h3>
+                <ul class="aw-list">
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Never use: 123456, password, qwerty</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Don't use your name, birthday, or pet's name</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Never share passwords via email or chat</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Don't store passwords in plain text files</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Never use the same password twice</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Don't "remember" passwords in shared devices</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Password Strength Checker -->
+        <div class="pw-checker-widget" id="pwCheckerWidget">
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">search</span>Test Your Password Strength</h3>
+            <p>Check how strong a password is (this stays local — nothing is sent to a server).</p>
+            <div class="pw-input-row">
+                <input type="password" id="pwTestInput" class="pw-test-input" placeholder="Type a password to test..." />
+                <button class="pw-toggle-btn material-symbols-outlined" id="visibilityToggleBtn" onclick="togglePwVisibility()">visibility</button>
+            </div>
+            <div class="pw-strength-bar-wrap">
+                <div class="pw-strength-bar" id="pwStrengthBar"></div>
+            </div>
+            <div class="pw-strength-label" id="pwStrengthLabel">Enter a password above</div>
+            <div class="pw-criteria" id="pwCriteria">
+                <span class="criteria-item" id="cLen">✗ 12+ characters</span>
+                <span class="criteria-item" id="cUpper">✗ Uppercase</span>
+                <span class="criteria-item" id="cLower">✗ Lowercase</span>
+                <span class="criteria-item" id="cNum">✗ Number</span>
+                <span class="criteria-item" id="cSym">✗ Symbol</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phishing Section -->
+    <div class="awareness-section hidden" id="section-phishing">
+        <div class="section-header">
+            <div class="section-badge">Social Engineering</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--error);">phishing</span>Recognizing Phishing</h2>
+            <p>Phishing is the #1 attack vector. Learn to spot and report it every time.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="phCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">mail</div>
+                <h3>Email Red Flags</h3>
+                <ul class="aw-list">
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Sender address doesn't match display name</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Urgent or threatening subject lines</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>"Your account has been suspended"</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>"You've won a prize!"</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Requests for passwords or payment</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Unexpected attachments (.exe, .zip)</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Poor grammar and spelling</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">flag</span>Generic greetings ("Dear Customer")</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="phCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--accent);">link</div>
+                <h3>Spotting Fake URLs</h3>
+                <ul class="aw-list">
+                    <li>paypa<strong>l</strong>.com vs paypa<strong>1</strong>.com</li>
+                    <li>amazon.com vs amazon-<strong>secure</strong>.net</li>
+                    <li>Subdomains: paypal.evil.com</li>
+                    <li>HTTP (no padlock) on login pages</li>
+                    <li>Shortened URLs hiding destinations</li>
+                    <li>Extra dashes: micro-soft.com</li>
+                </ul>
+                <div class="aw-key-point">
+                    <strong>Tip:</strong> Hover over any link to see its true destination before clicking.
+                </div>
+            </div>
+            <div class="awareness-card" id="phCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--info);">smartphone</div>
+                <h3>SMS Phishing (Smishing)</h3>
+                <p>Attackers send fake SMS messages pretending to be banks, delivery services, or government agencies.</p>
+                <ul class="aw-list">
+                    <li>Never click links in unexpected texts</li>
+                    <li>Call the company directly to verify</li>
+                    <li>Banks never ask for PINs via text</li>
+                    <li>Delivery companies use official apps</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="phCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--warning);">phone</div>
+                <h3>Voice Phishing (Vishing)</h3>
+                <p>Attackers call you impersonating tech support, banks, or government offices to steal information.</p>
+                <ul class="aw-list">
+                    <li>Microsoft never calls you unsolicited</li>
+                    <li>IRS communicates by mail, not phone</li>
+                    <li>Never give remote access to strangers</li>
+                    <li>Hang up and call the official number</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Section -->
+    <div class="awareness-section hidden" id="section-network">
+        <div class="section-header">
+            <div class="section-badge">Infrastructure</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--info);">wifi_lock</span>Network Security</h2>
+            <p>Secure your connection at home, at work, and on the go.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="netCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--success);">home</div>
+                <h3>Home Network Security</h3>
+                <ul class="aw-list">
+                    <li>Use WPA3 or WPA2 encryption</li>
+                    <li>Change default router admin credentials</li>
+                    <li>Create a separate guest WiFi network</li>
+                    <li>Keep router firmware updated</li>
+                    <li>Disable WPS (known vulnerabilities)</li>
+                    <li>Review connected devices regularly</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="netCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--accent);">coffee</div>
+                <h3>Public WiFi Risks</h3>
+                <p>Public WiFi at cafés, airports, and hotels is a common attack vector for MitM attacks.</p>
+                <ul class="aw-list">
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--success); vertical-align: -2px; margin-right: 4px;">check_circle</span>Always use a VPN on public WiFi</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--success); vertical-align: -2px; margin-right: 4px;">check_circle</span>Stick to HTTPS sites only</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Never access banking on public WiFi</li>
+                    <li><span class="material-symbols-outlined" style="font-size: 1rem; color: var(--error); vertical-align: -2px; margin-right: 4px;">cancel</span>Don't auto-connect to unknown networks</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="netCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--warning);">lock</div>
+                <h3>VPN — Virtual Private Network</h3>
+                <p>A VPN encrypts all traffic between your device and the VPN server, hiding your activity from eavesdroppers.</p>
+                <ul class="aw-list">
+                    <li>Essential on public WiFi</li>
+                    <li>Hides your IP address</li>
+                    <li>Choose providers with no-log policies</li>
+                    <li>Recommended: ProtonVPN, Mullvad</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="netCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">local_fire_department</div>
+                <h3>Firewall Basics</h3>
+                <p>A firewall monitors and controls incoming/outgoing network traffic based on security rules.</p>
+                <ul class="aw-list">
+                    <li>Always keep OS firewall enabled</li>
+                    <li>Configure application-level rules</li>
+                    <li>Block unused ports and services</li>
+                    <li>Review firewall logs for anomalies</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Section -->
+    <div class="awareness-section hidden" id="section-mobile">
+        <div class="section-header">
+            <div class="section-badge">Devices</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">smartphone</span>Mobile Security</h2>
+            <p>Your smartphone holds more personal data than any other device — protect it accordingly.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="mobCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--success);">install_mobile</div>
+                <h3>App Security</h3>
+                <ul class="aw-list">
+                    <li>Only install apps from official stores</li>
+                    <li>Check app permissions before installing</li>
+                    <li>Remove apps you no longer use</li>
+                    <li>Keep apps updated to patch vulnerabilities</li>
+                    <li>Be suspicious of apps asking excessive permissions</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="mobCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--warning);">lock_open</div>
+                <h3>Device Locking</h3>
+                <ul class="aw-list">
+                    <li>Use strong PIN (6+ digits) or biometrics</li>
+                    <li>Enable auto-lock after 30 seconds</li>
+                    <li>Enable full-device encryption</li>
+                    <li>Enable remote wipe capability</li>
+                    <li>Never use pattern unlock (easily observed)</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="mobCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--info);">cloud</div>
+                <h3>Mobile Data & Backup</h3>
+                <ul class="aw-list">
+                    <li>Enable encrypted cloud backup</li>
+                    <li>Review which apps sync to cloud</li>
+                    <li>Use Signal for sensitive messaging</li>
+                    <li>Be careful with location sharing</li>
+                    <li>Check location permissions per app</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="mobCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">report</div>
+                <h3>If Your Phone is Lost/Stolen</h3>
+                <ul class="aw-list">
+                    <li>Use "Find My Device" to locate/wipe</li>
+                    <li>Change passwords for all accounts</li>
+                    <li>Contact bank to freeze mobile banking</li>
+                    <li>Revoke sessions on all accounts</li>
+                    <li>Report to police for insurance purposes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Section -->
+    <div class="awareness-section hidden" id="section-advanced">
+        <div class="section-header">
+            <div class="section-badge">Expert Level</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--info);">science</span>Advanced Security Practices</h2>
+            <p>Take your security posture to the next level with these advanced techniques.</p>
+        </div>
+        <div class="awareness-cards-grid">
+            <div class="awareness-card" id="advCard1">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--success);">search</div>
+                <h3>Principle of Least Privilege</h3>
+                <p>Grant users and systems only the minimum permissions necessary to perform their tasks.</p>
+                <ul class="aw-list">
+                    <li>Use standard user accounts daily (not admin)</li>
+                    <li>Remove unused user accounts</li>
+                    <li>Audit permissions quarterly</li>
+                    <li>Use role-based access control (RBAC)</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="advCard2">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--info);">folder_copy</div>
+                <h3>Backup Strategy (3-2-1 Rule)</h3>
+                <ul class="aw-list">
+                    <li><strong>3</strong> copies of your data</li>
+                    <li><strong>2</strong> different storage media</li>
+                    <li><strong>1</strong> offsite/cloud location</li>
+                    <li>Test backups regularly (restore drills)</li>
+                    <li>Encrypt all backup data</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="advCard3">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--accent);">bar_chart</div>
+                <h3>Security Monitoring</h3>
+                <ul class="aw-list">
+                    <li>Monitor login activity on all accounts</li>
+                    <li>Set up breach alerts (HaveIBeenPwned)</li>
+                    <li>Review system event logs weekly</li>
+                    <li>Use intrusion detection systems (IDS)</li>
+                    <li>Monitor outbound network connections</li>
+                </ul>
+            </div>
+            <div class="awareness-card" id="advCard4">
+                <div class="aw-card-icon material-symbols-outlined" style="color: var(--error);">science</div>
+                <h3>Security Testing</h3>
+                <ul class="aw-list">
+                    <li>Run vulnerability scans on your network</li>
+                    <li>Conduct phishing simulation tests</li>
+                    <li>Perform regular penetration testing</li>
+                    <li>Test your incident response plan</li>
+                    <li>Use tools: Nmap, Wireshark, Metasploit</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Reference Card -->
+    <div class="quick-ref-card" id="quickRefCard">
+        <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">bolt</span>Essential Security Checklist</h2>
+        <div class="checklist-grid">
+            <div class="checklist-col">
+                <h4>Daily Habits</h4>
+                <label class="check-item-label"><input type="checkbox" /> Think before you click</label>
+                <label class="check-item-label"><input type="checkbox" /> Verify unexpected requests</label>
+                <label class="check-item-label"><input type="checkbox" /> Lock devices when away</label>
+                <label class="check-item-label"><input type="checkbox" /> Use secure networks only</label>
+            </div>
+            <div class="checklist-col">
+                <h4>Weekly</h4>
+                <label class="check-item-label"><input type="checkbox" /> Review account activity</label>
+                <label class="check-item-label"><input type="checkbox" /> Update software and apps</label>
+                <label class="check-item-label"><input type="checkbox" /> Check for unusual logins</label>
+                <label class="check-item-label"><input type="checkbox" /> Verify backup status</label>
+            </div>
+            <div class="checklist-col">
+                <h4>Monthly</h4>
+                <label class="check-item-label"><input type="checkbox" /> Audit app permissions</label>
+                <label class="check-item-label"><input type="checkbox" /> Review connected devices</label>
+                <label class="check-item-label"><input type="checkbox" /> Check breach alerts</label>
+                <label class="check-item-label"><input type="checkbox" /> Update router firmware</label>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchSection(id, btn) {
+    // Hide all sections
+    document.querySelectorAll(".awareness-section").forEach(s => s.classList.add("hidden"));
+    document.querySelectorAll(".awareness-level-btn").forEach(b => b.classList.remove("active"));
+    // Show target
+    document.getElementById("section-" + id).classList.remove("hidden");
+    btn.classList.add("active");
+    event.preventDefault();
+}
+
+// Password strength checker
+const pwInput = document.getElementById("pwTestInput");
+if (pwInput) {
+    pwInput.addEventListener("input", () => {
+        const pw = pwInput.value;
+        const len = pw.length >= 12;
+        const upper = /[A-Z]/.test(pw);
+        const lower = /[a-z]/.test(pw);
+        const num = /[0-9]/.test(pw);
+        const sym = /[^a-zA-Z0-9]/.test(pw);
+        const score = [len, upper, lower, num, sym].filter(Boolean).length;
+
+        const colors = ["#ff4757", "#ff6348", "#ffa502", "#eccc68", "#2ed573"];
+        const labels = ["Very Weak", "Weak", "Fair", "Strong", "Very Strong"];
+        const widths = ["20%", "40%", "60%", "80%", "100%"];
+
+        const bar = document.getElementById("pwStrengthBar");
+        bar.style.width = pw.length ? widths[score - 1] || "10%" : "0%";
+        bar.style.background = pw.length ? colors[score - 1] : "transparent";
+        document.getElementById("pwStrengthLabel").textContent = pw.length ? labels[score - 1] : "Enter a password above";
+        document.getElementById("pwStrengthLabel").style.color = pw.length ? colors[score - 1] : "#8892b0";
+
+        const setCriteria = (id, met) => {
+            const el = document.getElementById(id);
+            el.textContent = (met ? "✓" : "✗") + " " + el.textContent.slice(2);
+            el.className = "criteria-item " + (met ? "met" : "");
+        };
+        setCriteria("cLen", len);
+        setCriteria("cUpper", upper);
+        setCriteria("cLower", lower);
+        setCriteria("cNum", num);
+        setCriteria("cSym", sym);
+    });
+}
+
+function togglePwVisibility() {
+    const inp = document.getElementById("pwTestInput");
+    const btn = document.getElementById("visibilityToggleBtn");
+    if (inp.type === "password") {
+        inp.type = "text";
+        btn.textContent = "visibility_off";
+    } else {
+        inp.type = "password";
+        btn.textContent = "visibility";
+    }
+}
+</script>
+{% endblock %}

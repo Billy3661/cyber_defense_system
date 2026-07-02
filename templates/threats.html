@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Cyber Threats — Securix{% endblock %}
+{% block description %}Explore a comprehensive encyclopedia of cyber threats, their indicators, and prevention strategies.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Threat Encyclopedia</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">warning</span>Cyber Threat Encyclopedia</h1>
+        <p class="page-subtitle">
+            Understand the threats targeting systems today — their indicators, how they work,
+            and how to defend against them.
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filter Bar -->
+    <div class="filter-bar" id="filterBar">
+        <a href="{{ url_for('threats') }}" class="filter-btn {% if active_category == 'All' %}active{% endif %}">All</a>
+        {% for cat in categories %}
+        <a href="{{ url_for('threats', category=cat) }}" class="filter-btn {% if active_category == cat %}active{% endif %}">
+            {{ cat }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Threats Grid -->
+    <div class="threats-grid" id="threatsGrid">
+        {% for threat in threats %}
+        <a href="{{ url_for('threat_detail', threat_id=threat.id) }}" class="threat-card" id="threatCard{{ threat.id }}" style="--card-color: {{ threat.color }};">
+            <div class="threat-card-header">
+                <div class="threat-card-icon material-symbols-outlined">{{ threat.icon }}</div>
+                <div class="threat-card-meta">
+                    <span class="threat-category">{{ threat.category }}</span>
+                    <span class="severity-badge severity-{{ threat.severity.lower() }}">
+                        {{ threat.severity }}
+                    </span>
+                </div>
+            </div>
+            <h3 class="threat-card-title">{{ threat.name }}</h3>
+            <p class="threat-card-desc">{{ threat.description }}</p>
+            <div class="threat-indicators-preview">
+                <span class="indicators-label">Key Indicators:</span>
+                {% for ind in threat.indicators[:3] %}
+                <span class="indicator-chip">{{ ind }}</span>
+                {% endfor %}
+                {% if threat.indicators|length > 3 %}
+                <span class="indicator-chip more">+{{ threat.indicators|length - 3 }} more</span>
+                {% endif %}
+            </div>
+            <div class="threat-card-footer">
+                <span class="learn-more-link">Learn More & Protect →</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+
+    digraph G {
+        rankdir=TB;
+        node [shape=box, style=filled, fillcolor="#f8fafc", color="#3b82f6", fontname="Helvetica", fontcolor="#0f172a"];
+        edge [color="#94a3b8", fontname="Helvetica", fontsize=10];
+        
+        UI [label="Securix Web UI", fillcolor="#3b82f6", fontcolor="white", shape=box3d];
+        API [label="Flask Backend API"];
+        VT [label="VirusTotal API", shape=cylinder, fillcolor="#10b981", fontcolor="white"];
+        Scanner [label="Security Scanner\n(Heuristics)"];
+        NetDiscover [label="Network Auto-Discovery\n(iwgetid & ping sweep)"];
+        PortScanner [label="Deep Port Scanner"];
+        
+        UI -> API [label=" Upload/URL/Host Data"];
+        API -> VT [label=" Live Lookup (Optional)"];
+        API -> Scanner [label=" Pattern Matching"];
+        API -> NetDiscover [label=" Trigger Scan"];
+        NetDiscover -> PortScanner [label=" Found Hosts"];
+        
+        VT -> API [label=" Threat Reports"];
+        Scanner -> API [label=" Phishing/Malware Flags"];
+        PortScanner -> API [label=" Open Ports & Risks"];
+        
+        API -> UI [label=" JSON Results"];
+    }
+    

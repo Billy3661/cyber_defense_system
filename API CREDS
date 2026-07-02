@@ -1,0 +1,7 @@
+API NAME:AID8d119e9ec2c5e767337c67aac92c6f4e
+API TOKEN:582de62de9681fac5095dd26fb0416a3
+To test with curl:	
+curl -i -H 'Accept:application/json' -u AID8d119e9ec2c5e767337c67aac92c6f4e:582de62de9681fac5095dd26fb0416a3 --basic https://api.wigle.net/api/v2/profile/user
+
+Your Header value should be:	
+Authorization: Basic QUlEOGQxMTllOWVjMmM1ZTc2NzMzN2M2N2FhYzkyYzZmNGU6NTgyZGU2MmRlOTY4MWZhYzUwOTVkZDI2ZmIwNDE2YTM=

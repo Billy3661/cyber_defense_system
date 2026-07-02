@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ threat.name }} — Securix{% endblock %}
+{% block description %}Learn about {{ threat.name }}: indicators, prevention strategies, and system signs to watch for.{% endblock %}
+
+{% block content %}
+<div class="page-header" style="border-bottom-color: {{ threat.color }}40;">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> <span>›</span>
+            <a href="/threats">Threats</a> <span>›</span>
+            {{ threat.name }}
+        </div>
+        <div class="threat-detail-hero">
+            <div class="threat-detail-icon-wrap" style="background: {{ threat.color }}20; border-color: {{ threat.color }}50;">
+                <span class="threat-detail-icon material-symbols-outlined">{{ threat.icon }}</span>
+            </div>
+            <div class="threat-detail-header">
+                <div class="threat-detail-badges">
+                    <span class="threat-category-badge">{{ threat.category }}</span>
+                    <span class="severity-badge severity-{{ threat.severity.lower() }}">{{ threat.severity }} Severity</span>
+                </div>
+                <h1 class="page-title" style="color: {{ threat.color }};">{{ threat.name }}</h1>
+                <p class="page-subtitle">{{ threat.description }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container threat-detail-page">
+
+    <!-- Alert Banner -->
+    <div class="threat-alert-banner" style="border-color: {{ threat.color }}60; background: {{ threat.color }}10;">
+        <span class="threat-alert-icon material-symbols-outlined" style="color: {{ threat.color }};">report</span>
+        <div>
+            <strong>Stay Alert:</strong> If you suspect you're currently experiencing a {{ threat.name }} attack,
+            go to our <a href="/troubleshoot" style="color: {{ threat.color }};">Troubleshoot Guide</a> for immediate steps.
+        </div>
+    </div>
+
+    <div class="detail-grid">
+        <!-- Left Column -->
+        <div class="detail-col">
+
+            <!-- Indicators -->
+            <div class="detail-section-card" id="indicatorsCard">
+                <div class="detail-section-header" style="border-color: {{ threat.color }}50;">
+                    <span class="detail-section-icon material-symbols-outlined" style="color: {{ threat.color }};">error</span>
+                    <h2>Warning Indicators</h2>
+                </div>
+                <p class="detail-section-intro">Watch out for these signs that may indicate a {{ threat.name }}:</p>
+                <ul class="detail-list indicators-list">
+                    {% for indicator in threat.indicators %}
+                    <li class="detail-list-item">
+                        <span class="list-bullet" style="color: {{ threat.color }};">▶</span>
+                        {{ indicator }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- System Signs -->
+            <div class="detail-section-card" id="systemSignsCard">
+                <div class="detail-section-header" style="border-color: #ffa50250;">
+                    <span class="detail-section-icon material-symbols-outlined" style="color: #ffa502;">desktop_windows</span>
+                    <h2>System Signs to Watch</h2>
+                </div>
+                <p class="detail-section-intro">Your device or system may show these specific symptoms:</p>
+                <ul class="detail-list">
+                    {% for sign in threat.system_signs %}
+                    <li class="detail-list-item">
+                        <span class="list-bullet" style="color: #ffa502;">⚠</span>
+                        {{ sign }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="detail-col">
+
+            <!-- Prevention -->
+            <div class="detail-section-card prevention-card" id="preventionCard">
+                <div class="detail-section-header" style="border-color: #2ed57350;">
+                    <span class="detail-section-icon material-symbols-outlined" style="color: #2ed573;">shield</span>
+                    <h2>Prevention Strategies</h2>
+                </div>
+                <p class="detail-section-intro">Follow these steps to protect yourself from {{ threat.name }}:</p>
+                <ul class="detail-list">
+                    {% for step in threat.prevention %}
+                    <li class="detail-list-item prevention-item">
+                        <span class="list-bullet" style="color: #2ed573;">✓</span>
+                        {{ step }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="detail-section-card" id="quickActionsCard">
+                <div class="detail-section-header" style="border-color: #00d2ff50;">
+                    <span class="detail-section-icon material-symbols-outlined" style="color: #00d2ff;">bolt</span>
+                    <h2>Quick Actions</h2>
+                </div>
+                <div class="quick-action-btns">
+                    <a href="/scanner" class="quick-action-btn">
+                        <span class="material-symbols-outlined">search</span>
+                        <div>
+                            <strong>Scan Suspicious Links</strong>
+                            <small>Check if a URL is related to this threat</small>
+                        </div>
+                    </a>
+                    <a href="/troubleshoot" class="quick-action-btn">
+                        <span class="material-symbols-outlined">build</span>
+                        <div>
+                            <strong>Troubleshoot Guide</strong>
+                            <small>Step-by-step incident response</small>
+                        </div>
+                    </a>
+                    <a href="/awareness" class="quick-action-btn">
+                        <span class="material-symbols-outlined">school</span>
+                        <div>
+                            <strong>Learn More</strong>
+                            <small>Deepen your security knowledge</small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="threat-nav-row">
+        <a href="/threats" class="btn btn-outline">← All Threats</a>
+    </div>
+</div>
+{% endblock %}

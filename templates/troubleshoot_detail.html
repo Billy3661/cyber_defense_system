@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}{{ guide.title }} — Securix{% endblock %}
+{% block description %}Step-by-step guide: {{ guide.title }}. Follow these {{ guide.steps|length }} expert steps to resolve the issue safely.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Dashboard</a> <span>›</span>
+            <a href="/troubleshoot">Troubleshoot</a> <span>›</span>
+            {{ guide.title }}
+        </div>
+        <div class="guide-detail-hero">
+            <div class="guide-detail-icon-wrap">
+                <span class="material-symbols-outlined">{{ guide.icon }}</span>
+            </div>
+            <div>
+                <div class="threat-detail-badges">
+                    <span class="threat-category-badge">{{ guide.category }}</span>
+                    <span class="severity-badge severity-{{ guide.severity.lower() }}">{{ guide.severity }}</span>
+                </div>
+                <h1 class="page-title">{{ guide.title }}</h1>
+                <p class="page-subtitle">Follow these {{ guide.steps|length }} steps to diagnose and resolve this issue safely.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container guide-detail-page">
+
+    <!-- Warning Signs Banner -->
+    <div class="ts-warning-banner">
+        <strong><span class="material-symbols-outlined" style="font-size: 1.25rem; vertical-align: middle; margin-right: 4px; color: var(--warning);">warning</span>Potential Risks If Unaddressed:</strong>
+        {% for w in guide.warning_signs %}
+        <span class="warning-chip">{{ w }}</span>
+        {% endfor %}
+    </div>
+
+    <!-- Progress Tracker -->
+    <div class="ts-progress-tracker" id="progressTracker">
+        <div class="ts-progress-bar-wrap">
+            <div class="ts-progress-bar" id="tsProgressBar" style="width: 0%"></div>
+        </div>
+        <span class="ts-progress-label" id="tsProgressLabel">Step 0 of {{ guide.steps|length }}</span>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps-container" id="stepsContainer">
+        {% for step in guide.steps %}
+        <div class="step-card {% if loop.first %}step-active{% endif %}" id="step{{ step.step }}" data-step="{{ step.step }}">
+            <div class="step-number-wrap">
+                <div class="step-number" id="stepNum{{ step.step }}">{{ step.step }}</div>
+                <div class="step-connector {% if not loop.last %}visible{% endif %}"></div>
+            </div>
+            <div class="step-body">
+                <div class="step-header">
+                    <h3 class="step-action">{{ step.action }}</h3>
+                    <button class="step-done-btn" id="stepDoneBtn{{ step.step }}"
+                            onclick="markStepDone({{ step.step }}, {{ guide.steps|length }})">
+                        Mark Done ✓
+                    </button>
+                </div>
+                <p class="step-detail">{{ step.detail }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Completion Card (hidden initially) -->
+    <div class="completion-card hidden" id="completionCard">
+        <div class="completion-icon material-symbols-outlined" style="font-size: 3rem; color: var(--success);">celebration</div>
+        <h2>All Steps Completed!</h2>
+        <p>You've worked through all steps for <strong>{{ guide.title }}</strong>. If the issue persists, consider consulting a cybersecurity professional.</p>
+        <div class="completion-actions">
+            <a href="/troubleshoot" class="btn btn-outline">← Back to Guides</a>
+            <a href="/scanner" class="btn btn-primary"><span class="material-symbols-outlined">search</span>Scan a Link</a>
+        </div>
+    </div>
+
+    <!-- Related Resources -->
+    <div class="related-resources">
+        <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 4px; color: var(--accent);">link</span>Related Resources</h3>
+        <div class="resource-links">
+            <a href="https://www.nomoreransom.org" target="_blank" rel="noopener" class="resource-link">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px; color: var(--warning);">lock</span>NoMoreRansom.org — Free decryption tools
+            </a>
+            <a href="https://haveibeenpwned.com" target="_blank" rel="noopener" class="resource-link">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px; color: var(--accent);">key</span>HaveIBeenPwned — Check breach status
+            </a>
+            <a href="https://www.virustotal.com" target="_blank" rel="noopener" class="resource-link">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px; color: var(--info);">search</span>VirusTotal — Deep URL/file scanning
+            </a>
+            <a href="https://www.malwarebytes.com" target="_blank" rel="noopener" class="resource-link">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px; color: var(--success);">shield</span>Malwarebytes — Free malware scanner
+            </a>
+        </div>
+    </div>
+
+    <div class="threat-nav-row">
+        <a href="/troubleshoot" class="btn btn-outline">← All Guides</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const totalSteps = {{ guide.steps|length }};
+let completedSteps = 0;
+
+function markStepDone(stepNum, total) {
+    const stepCard = document.getElementById("step" + stepNum);
+    const stepNumEl = document.getElementById("stepNum" + stepNum);
+    const doneBtn = document.getElementById("stepDoneBtn" + stepNum);
+
+    if (stepCard.classList.contains("step-done")) return;
+
+    stepCard.classList.add("step-done");
+    stepCard.classList.remove("step-active");
+    stepNumEl.textContent = "✓";
+    stepNumEl.classList.add("done");
+    doneBtn.textContent = "✓ Done";
+    doneBtn.disabled = true;
+
+    completedSteps++;
+    const pct = Math.round((completedSteps / total) * 100);
+    document.getElementById("tsProgressBar").style.width = pct + "%";
+    document.getElementById("tsProgressLabel").textContent = `Step ${completedSteps} of ${total} completed`;
+
+    // Activate next step
+    const nextStep = document.getElementById("step" + (stepNum + 1));
+    if (nextStep) {
+        nextStep.classList.add("step-active");
+        nextStep.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    if (completedSteps === total) {
+        setTimeout(() => {
+            document.getElementById("completionCard").classList.remove("hidden");
+            document.getElementById("completionCard").scrollIntoView({ behavior: "smooth" });
+        }, 500);
+    }
+}
+</script>
+{% endblock %}

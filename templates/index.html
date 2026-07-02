@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Securix — Dashboard{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="pulse-dot"></span>
+            <span>Live Threat Monitoring Active</span>
+        </div>
+        <h1 class="hero-title">
+            Your <span class="gradient-text">Cybersecurity</span><br />
+            Defense Command Center
+        </h1>
+        <p class="hero-subtitle">
+            Scan malicious links, explore real-world cyber threats, troubleshoot security issues,
+            and build your digital defense knowledge — all in one powerful platform.
+        </p>
+        <div class="hero-actions">
+            <a href="{{ url_for('scanner') }}" class="btn btn-primary" id="heroScanBtn">
+                <span class="material-symbols-outlined">search</span> Scan a Link Now
+            </a>
+            <a href="{{ url_for('threats') }}" class="btn btn-outline" id="heroThreatsBtn">
+                <span class="material-symbols-outlined">warning</span> View Threats
+            </a>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="cyber-globe">
+            <div class="globe-ring ring-1"></div>
+            <div class="globe-ring ring-2"></div>
+            <div class="globe-ring ring-3"></div>
+            <div class="globe-core">
+                <span class="globe-icon material-symbols-outlined" style="font-size: 2.5rem; animation: swordClash 3s ease-in-out infinite;">swords</span>
+            </div>
+            <div class="orbit-dot dot-1"></div>
+            <div class="orbit-dot dot-2"></div>
+            <div class="orbit-dot dot-3"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Bar -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card" id="statThreats">
+                <div class="stat-icon material-symbols-outlined">warning</div>
+                <div class="stat-number counter" data-target="{{ stats.threats_count }}">0</div>
+                <div class="stat-label">Threat Types Documented</div>
+            </div>
+            <div class="stat-card" id="statGuides">
+                <div class="stat-icon material-symbols-outlined">build</div>
+                <div class="stat-number counter" data-target="{{ stats.guides_count }}">0</div>
+                <div class="stat-label">Troubleshoot Guides</div>
+            </div>
+            <div class="stat-card" id="statScans">
+                <div class="stat-icon material-symbols-outlined">search</div>
+                <div class="stat-number counter" data-target="{{ stats.links_scanned }}">0</div>
+                <div class="stat-label">Links Scanned This Session</div>
+            </div>
+            <div class="stat-card" id="statChecks">
+                <div class="stat-icon material-symbols-outlined">check_circle</div>
+                <div class="stat-number counter" data-target="10">0</div>
+                <div class="stat-label">Security Checks Per Scan</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Scan Widget -->
+<section class="quick-scan-section">
+    <div class="container">
+        <div class="quick-scan-card">
+            <div class="section-badge">Quick Scan</div>
+            <h2>Scan a Suspicious Link Instantly</h2>
+            <p>Paste any URL below and our engine will perform 10 security checks in seconds.</p>
+            <div class="quick-scan-form">
+                <div class="scan-input-wrapper">
+                    <span class="scan-input-icon material-symbols-outlined">link</span>
+                    <input
+                        type="text"
+                        id="quickScanInput"
+                        placeholder="https://suspicious-site.com/login?redirect=..."
+                        class="scan-input"
+                        autocomplete="off"
+                    />
+                </div>
+                <button class="btn btn-primary" id="quickScanBtn" onclick="quickScan()">
+                    <span class="material-symbols-outlined">search</span> Scan Now
+                </button>
+            </div>
+            <div id="quickScanResult" class="quick-result hidden"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Feature Cards -->
+<section class="features-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">Features</div>
+            <h2>Everything You Need to Stay Secure</h2>
+            <p>A complete suite of tools and knowledge to protect yourself and your organization.</p>
+        </div>
+        <div class="features-grid">
+            <a href="{{ url_for('scanner') }}" class="feature-card" id="featureScanner">
+                <div class="feature-icon-wrap" style="background: linear-gradient(135deg, #00d2ff20, #00d2ff10); border-color: #00d2ff40;">
+                    <span class="feature-icon material-symbols-outlined">search</span>
+                </div>
+                <h3>Link Scanner</h3>
+                <p>Instantly analyze any URL for phishing, malware, and malicious indicators using 10 advanced checks.</p>
+                <div class="feature-tags">
+                    <span class="tag">Phishing Detection</span>
+                    <span class="tag">DNS Analysis</span>
+                    <span class="tag">Pattern Matching</span>
+                </div>
+                <div class="feature-arrow">→</div>
+            </a>
+
+            <a href="{{ url_for('threats') }}" class="feature-card" id="featureThreats">
+                <div class="feature-icon-wrap" style="background: linear-gradient(135deg, #ff475720, #ff475710); border-color: #ff475740;">
+                    <span class="feature-icon material-symbols-outlined">warning</span>
+                </div>
+                <h3>Threat Encyclopedia</h3>
+                <p>Deep dive into 8+ major cyber threat categories, their indicators, and how to protect yourself.</p>
+                <div class="feature-tags">
+                    <span class="tag">Ransomware</span>
+                    <span class="tag">Phishing</span>
+                    <span class="tag">DDoS</span>
+                </div>
+                <div class="feature-arrow">→</div>
+            </a>
+
+            <a href="{{ url_for('troubleshoot') }}" class="feature-card" id="featureTroubleshoot">
+                <div class="feature-icon-wrap" style="background: linear-gradient(135deg, #ffa50220, #ffa50210); border-color: #ffa50240;">
+                    <span class="feature-icon material-symbols-outlined">build</span>
+                </div>
+                <h3>Troubleshoot Guide</h3>
+                <p>Step-by-step guides for diagnosing and resolving common security issues on your systems.</p>
+                <div class="feature-tags">
+                    <span class="tag">Step-by-Step</span>
+                    <span class="tag">Self-Help</span>
+                    <span class="tag">Diagnostics</span>
+                </div>
+                <div class="feature-arrow">→</div>
+            </a>
+
+            <a href="{{ url_for('awareness') }}" class="feature-card" id="featureAwareness">
+                <div class="feature-icon-wrap" style="background: linear-gradient(135deg, #a29bfe20, #a29bfe10); border-color: #a29bfe40;">
+                    <span class="feature-icon material-symbols-outlined">school</span>
+                </div>
+                <h3>Security Awareness</h3>
+                <p>Learn cybersecurity fundamentals, best practices, and tips to build lasting digital safety habits.</p>
+                <div class="feature-tags">
+                    <span class="tag">Education</span>
+                    <span class="tag">Best Practices</span>
+                    <span class="tag">Tips & Tricks</span>
+                </div>
+                <div class="feature-arrow">→</div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Threats -->
+<section class="recent-threats-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">Threat Intelligence</div>
+            <h2>Common Cyber Threats</h2>
+            <p>Stay informed about the most prevalent cyber threats targeting individuals and organizations.</p>
+        </div>
+        <div class="threats-preview-grid">
+            {% for threat in recent_threats %}
+            <a href="{{ url_for('threat_detail', threat_id=threat.id) }}" class="threat-preview-card" id="threatCard{{ threat.id }}">
+                <div class="threat-preview-header">
+                    <span class="threat-preview-icon material-symbols-outlined">{{ threat.icon }}</span>
+                    <div class="threat-severity-badge severity-{{ threat.severity.lower() }}">
+                        {{ threat.severity }}
+                    </div>
+                </div>
+                <h4>{{ threat.name }}</h4>
+                <p>{{ threat.description[:100] }}...</p>
+                <div class="threat-category-tag">{{ threat.category }}</div>
+            </a>
+            {% endfor %}
+        </div>
+        <div class="section-cta">
+            <a href="{{ url_for('threats') }}" class="btn btn-outline" id="viewAllThreatsBtn">View All Threats →</a>
+        </div>
+    </div>
+</section>
+
+<!-- Security Tips Ticker -->
+<section class="tips-section">
+    <div class="container">
+        <div class="tips-card">
+            <div class="tips-label"><span class="material-symbols-outlined" style="font-size: 1.15rem; vertical-align: -2px; margin-right: 4px;">lightbulb</span>Security Tip</div>
+            <div class="tips-content" id="tipContent">
+                Use a password manager to create and store unique, strong passwords for every account.
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TIPS = [
+    "Use a password manager to create and store unique, strong passwords for every account.",
+    "Enable multi-factor authentication (MFA) on all your critical accounts today.",
+    "Never click links in emails — always navigate directly to websites by typing the address.",
+    "Keep your operating system and all software up to date to patch security vulnerabilities.",
+    "Back up your important data regularly using the 3-2-1 rule: 3 copies, 2 media types, 1 offsite.",
+    "Use a VPN when connecting to public WiFi networks to encrypt your traffic.",
+    "Be suspicious of urgent requests — attackers create panic to bypass your critical thinking.",
+    "Check if your email has been in a data breach at haveibeenpwned.com.",
+    "Use HTTPS websites only — look for the padlock icon in your browser address bar.",
+    "Regularly review which apps have access to your social media and revoke unused ones.",
+];
+
+let tipIndex = 0;
+function rotateTip() {
+    const el = document.getElementById("tipContent");
+    if (!el) return;
+    el.style.opacity = "0";
+    setTimeout(() => {
+        tipIndex = (tipIndex + 1) % TIPS.length;
+        el.textContent = TIPS[tipIndex];
+        el.style.opacity = "1";
+    }, 400);
+}
+setInterval(rotateTip, 6000);
+
+async function quickScan() {
+    const input = document.getElementById("quickScanInput");
+    const resultDiv = document.getElementById("quickScanResult");
+    const btn = document.getElementById("quickScanBtn");
+    const url = input.value.trim();
+    if (!url) { input.focus(); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Scanning...';
+    resultDiv.className = "quick-result hidden";
+
+    try {
+        const res = await fetch("/api/scan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        resultDiv.className = "quick-result";
+        resultDiv.innerHTML = `
+            <div class="quick-verdict" style="border-color: ${data.verdict_color}; color: ${data.verdict_color}; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-symbols-outlined" style="font-size: 1.5rem;">${data.verdict_icon}</span> <strong>${data.verdict}</strong>
+                <span style="color: #8892b0; font-weight: 400; font-size: 0.85rem; margin-left: 1rem;">
+                    Risk Score: ${data.risk_percent}/100
+                </span>
+            </div>
+            <a href="/scanner" class="quick-detail-link">View full analysis →</a>`;
+    } catch(e) {
+        resultDiv.className = "quick-result error";
+        resultDiv.textContent = "Scan failed. Please try again.";
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined">search</span> Scan Now';
+}
+
+document.getElementById("quickScanInput")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") quickScan();
+});
+</script>
+{% endblock %}

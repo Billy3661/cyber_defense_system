@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block title %}Phishing Lab — Securix{% endblock %}
+{% block description %}Practice identifying phishing red flags in a mock email inbox game.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Phishing Lab</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">phishing</span>Interactive Phishing Simulator</h1>
+        <p class="page-subtitle">
+            Train your instincts in our interactive inbox game. Spot mismatched domain names, suspicious headers,
+            and high-pressure language to score points!
+        </p>
+    </div>
+</div>
+
+<div class="container simulator-page">
+    <div class="simulator-layout">
+        <!-- Sidebar: Inbox list -->
+        <div class="inbox-sidebar">
+            <div class="inbox-header">
+                <h3><span class="material-symbols-outlined">inbox</span> Inbox</h3>
+                <span class="inbox-badge" id="inboxCount">0</span>
+            </div>
+            <div class="email-list" id="emailList">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="score-card">
+                <div class="score-label">Score</div>
+                <div class="score-value"><span id="currentScore">0</span> / <span id="totalQuestions">5</span></div>
+            </div>
+        </div>
+
+        <!-- Main pane: Email Reader & Decision Panel -->
+        <div class="email-pane" id="emailPane">
+            <div class="empty-state" id="emptyState">
+                <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">drafts</span>
+                <h3>Select an email to inspect</h3>
+                <p>Review the headers, sender address, and email links carefully.</p>
+            </div>
+
+            <!-- Email View -->
+            <div class="email-view hidden" id="emailView">
+                <div class="email-meta-header">
+                    <div class="email-sender-avatar">
+                        <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div class="email-meta-text">
+                        <div class="email-subject-line" id="viewSubject"></div>
+                        <div class="email-sender-line">
+                            From: <strong id="viewSenderName"></strong> &lt;<span id="viewSenderEmail" class="highlight-info"></span>&gt;
+                        </div>
+                        <div class="email-date-line" id="viewDate"></div>
+                    </div>
+                </div>
+
+                <div class="email-body" id="viewBody">
+                    <!-- HTML body goes here -->
+                </div>
+
+                <!-- Decision buttons -->
+                <div class="decision-panel" id="decisionPanel">
+                    <h4>Is this email safe or a phishing attempt?</h4>
+                    <div class="decision-buttons">
+                        <button class="btn btn-success" onclick="makeDecision(false)">
+                            <span class="material-symbols-outlined">check_circle</span> Safe / Legitimate
+                        </button>
+                        <button class="btn btn-error" onclick="makeDecision(true)">
+                            <span class="material-symbols-outlined">report</span> Phishing Attempt
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Feedback & Explanations -->
+                <div class="feedback-panel hidden" id="feedbackPanel">
+                    <div class="feedback-header">
+                        <span class="feedback-verdict-icon material-symbols-outlined" id="feedbackIcon"></span>
+                        <h3 id="feedbackTitle"></h3>
+                    </div>
+                    <p class="feedback-desc" id="feedbackDesc"></p>
+                    
+                    <div class="red-flags-container hidden" id="redFlagsContainer">
+                        <h4>🔍 Key Red Flags Spotted:</h4>
+                        <ul class="red-flags-list" id="redFlagsList"></ul>
+                    </div>
+
+                    <div class="feedback-footer">
+                        <button class="btn btn-primary" onclick="nextEmail()">Next Email →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let emails = [];
+let currentIndex = -1;
+let score = 0;
+let answeredCount = 0;
+const answeredIds = new Set();
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadEmails();
+});
+
+async function loadEmails() {
+    try {
+        const res = await fetch("/api/simulator/emails");
+        emails = await res.json();
+        document.getElementById("inboxCount").textContent = emails.length;
+        document.getElementById("totalQuestions").textContent = emails.length;
+        renderEmailList();
+        selectEmail(0);
+    } catch (err) {
+        console.error("Failed to load emails: ", err);
+    }
+}
+
+function renderEmailList() {
+    const list = document.getElementById("emailList");
+    list.innerHTML = emails.map((email, idx) => {
+        const isAnswered = answeredIds.has(email.id);
+        const activeClass = idx === currentIndex ? "active" : "";
+        const answeredIcon = isAnswered 
+            ? `<span class="material-symbols-outlined mail-status" style="color: var(--success);">done</span>` 
+            : `<span class="material-symbols-outlined mail-status" style="color: var(--text-muted);">mail</span>`;
+
+        return `
+            <div class="email-item ${activeClass} ${isAnswered ? 'answered' : ''}" onclick="selectEmail(${idx})">
+                ${answeredIcon}
+                <div class="email-item-content">
+                    <div class="email-item-sender">${email.sender_name}</div>
+                    <div class="email-item-subject">${email.subject}</div>
+                    <div class="email-item-date">${email.date}</div>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function selectEmail(idx) {
+    if (idx < 0 || idx >= emails.length) return;
+    currentIndex = idx;
+    
+    // Update active class in list
+    const items = document.querySelectorAll(".email-item");
+    items.forEach((item, i) => {
+        if (i === idx) item.classList.add("active");
+        else item.classList.remove("active");
+    });
+
+    const email = emails[idx];
+
+    // Hide empty state, show view
+    document.getElementById("emptyState").classList.add("hidden");
+    document.getElementById("emailView").classList.remove("hidden");
+
+    // Populate metadata
+    document.getElementById("viewSubject").textContent = email.subject;
+    document.getElementById("viewSenderName").textContent = email.sender_name;
+    document.getElementById("viewSenderEmail").textContent = email.sender_email;
+    document.getElementById("viewDate").textContent = email.date;
+    document.getElementById("viewBody").innerHTML = email.body_html;
+
+    const isAnswered = answeredIds.has(email.id);
+    if (isAnswered) {
+        showFeedback(email, false); // Just show the feedback panel without scoring again
+    } else {
+        document.getElementById("decisionPanel").classList.remove("hidden");
+        document.getElementById("feedbackPanel").classList.add("hidden");
+    }
+}
+
+function makeDecision(selectedPhishing) {
+    const email = emails[currentIndex];
+    if (answeredIds.has(email.id)) return;
+
+    answeredIds.add(email.id);
+    answeredCount++;
+
+    const correct = email.is_phishing === selectedPhishing;
+    if (correct) {
+        score++;
+        document.getElementById("currentScore").textContent = score;
+    }
+
+    renderEmailList();
+    showFeedback(email, true, correct);
+}
+
+function showFeedback(email, animate, correct = null) {
+    document.getElementById("decisionPanel").classList.add("hidden");
+    const feedbackPanel = document.getElementById("feedbackPanel");
+    feedbackPanel.classList.remove("hidden");
+
+    const feedbackIcon = document.getElementById("feedbackIcon");
+    const feedbackTitle = document.getElementById("feedbackTitle");
+    const feedbackDesc = document.getElementById("feedbackDesc");
+    const redFlagsContainer = document.getElementById("redFlagsContainer");
+    const redFlagsList = document.getElementById("redFlagsList");
+
+    if (correct !== null) {
+        if (correct) {
+            feedbackIcon.textContent = "check_circle";
+            feedbackIcon.style.color = "var(--success)";
+            feedbackTitle.textContent = "Correct! Well spotted.";
+            feedbackTitle.style.color = "var(--success)";
+        } else {
+            feedbackIcon.textContent = "cancel";
+            feedbackIcon.style.color = "var(--error)";
+            feedbackTitle.textContent = "Incorrect. You fell for the bait!";
+            feedbackTitle.style.color = "var(--error)";
+        }
+    } else {
+        // Already answered review mode
+        feedbackIcon.textContent = "info";
+        feedbackIcon.style.color = "var(--info)";
+        feedbackTitle.textContent = "Reviewing Email Analysis";
+        feedbackTitle.style.color = "var(--text)";
+    }
+
+    feedbackDesc.textContent = email.explanation;
+
+    if (email.is_phishing && email.red_flags.length > 0) {
+        redFlagsContainer.classList.remove("hidden");
+        redFlagsList.innerHTML = email.red_flags.map(f => `
+            <li>
+                <strong>Target:</strong> <code class="highlight-warn">${f.target}</code>
+                <div style="margin-top: 0.25rem;">${f.reason}</div>
+            </li>
+        `).join("");
+    } else {
+        redFlagsContainer.classList.add("hidden");
+    }
+
+    if (animate) {
+        feedbackPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+}
+
+function nextEmail() {
+    if (currentIndex < emails.length - 1) {
+        selectEmail(currentIndex + 1);
+    } else {
+        // Finished
+        alert(`Game complete! You scored ${score} out of ${emails.length}.`);
+    }
+}
+</script>
+{% endblock %}

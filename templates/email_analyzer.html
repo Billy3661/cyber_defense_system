@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block title %}Email Header Analyzer — Securix{% endblock %}
+{% block description %}Analyze raw email headers to verify SPF, DKIM, and DMARC status and spot spoofing attempts.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Email Analyzer</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">alternate_email</span>Email Header Analyzer</h1>
+        <p class="page-subtitle">
+            Paste raw headers from any email client (Outlook, Gmail, Apple Mail) to check authentication alignments, SPF/DKIM validation, and spoofing indicators.
+        </p>
+    </div>
+</div>
+
+<div class="container analyzer-page">
+    <!-- Header Input Panel -->
+    <div class="scanner-card" id="analyzerInputCard">
+        <div class="scanner-header">
+            <span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; color: var(--accent); margin-right: 0.5rem;">terminal</span>
+            <span>Paste Raw Email Headers</span>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <label for="rawHeaders" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                Raw Email Headers (Received, From, DKIM-Signature, etc.)
+            </label>
+            <textarea 
+                id="rawHeaders" 
+                class="form-control" 
+                rows="8" 
+                placeholder="Delivered-To: user@example.com&#10;Received: by 2002:a05:620a:2184:b0:4c1:83d7:5c80...&#10;ARC-Seal: i=1; a=rsa-sha256; t=1719213812; cv=none...&#10;From: Support <support@paypal.com>&#10;To: customer@example.com&#10;Subject: Account Notification"
+                style="width: 100%; background: #0f172a; border: 1px solid var(--border); color: #fff; font-family: monospace; padding: 0.75rem; border-radius: 8px; font-size: 0.85rem; resize: vertical;"
+            ></textarea>
+        </div>
+
+        <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+            <button class="btn btn-primary" onclick="performAnalysis()" id="analyzeBtn">
+                <span class="material-symbols-outlined">analytics</span> Analyze Headers
+            </button>
+            <button class="btn btn-outline" onclick="clearHeaders()">Clear</button>
+        </div>
+
+        <!-- Sample Headers -->
+        <div class="example-urls" style="margin-top: 1rem;">
+            <span class="example-label">Try sample headers:</span>
+            <button class="example-btn" onclick="loadSample('safe')">✅ Safe (Google Alert)</button>
+            <button class="example-btn" onclick="loadSample('spoofed')">❌ Spoofed Domain Mismatch</button>
+            <button class="example-btn" onclick="loadSample('spf_fail')">❌ SPF & DKIM Fail</button>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-container hidden" id="resultsContainer">
+        <!-- Verdict Banner -->
+        <div class="verdict-banner" id="verdictBanner" style="margin-bottom: 1.5rem;">
+            <div class="verdict-icon material-symbols-outlined" id="verdictIcon"></div>
+            <div class="verdict-info">
+                <div class="verdict-label">Spoofing Risk Verdict</div>
+                <div class="verdict-text" id="verdictText"></div>
+                <div class="verdict-url" id="verdictSubject">Subject: </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" id="downloadPdfBtn" onclick="downloadEmailPdf()" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span>
+                        Download PDF Report
+                    </button>
+                </div>
+            </div>
+            <div class="verdict-score-wrap">
+                <div class="verdict-score" id="verdictScore">
+                    <svg class="score-ring" viewBox="0 0 120 120">
+                        <circle class="score-ring-bg" cx="60" cy="60" r="50"/>
+                        <circle class="score-ring-fill" id="scoreRingFill" cx="60" cy="60" r="50"
+                            stroke-dasharray="314" stroke-dashoffset="314"/>
+                    </svg>
+                    <div class="score-number" id="scoreNumber">0</div>
+                    <div class="score-label">Risk Score</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Two column details grid -->
+        <div class="analyzer-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <!-- Extracted Metadata -->
+            <div class="info-card" style="margin: 0; padding: 1.25rem;">
+                <h3 style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem; color: var(--accent);">
+                    <span class="material-symbols-outlined" style="font-size: 1.3rem; vertical-align: -2px; margin-right: 4px;">info</span> Extracted Headers
+                </h3>
+                <table class="meta-table" style="width: 100%; font-size: 0.85rem; border-collapse: collapse;">
+                    <tbody>
+                        <tr>
+                            <td style="padding: 0.5rem 0; font-weight: 600; color: var(--text-muted); width: 120px;">From:</td>
+                            <td id="metaFrom" style="padding: 0.5rem 0;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem 0; font-weight: 600; color: var(--text-muted);">To:</td>
+                            <td id="metaTo" style="padding: 0.5rem 0;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem 0; font-weight: 600; color: var(--text-muted);">Date:</td>
+                            <td id="metaDate" style="padding: 0.5rem 0;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem 0; font-weight: 600; color: var(--text-muted);">Return-Path:</td>
+                            <td id="metaReturnPath" style="padding: 0.5rem 0;"></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem 0; font-weight: 600; color: var(--text-muted);">Reply-To:</td>
+                            <td id="metaReplyTo" style="padding: 0.5rem 0;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Alignment Findings -->
+            <div class="info-card" style="margin: 0; padding: 1.25rem;">
+                <h3 style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.75rem; color: var(--accent);">
+                    <span class="material-symbols-outlined" style="font-size: 1.3rem; vertical-align: -2px; margin-right: 4px;">assignment_turned_in</span> Domain Verification
+                </h3>
+                <div class="checks-results-grid" id="verificationGrid" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Verification checks -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Findings List -->
+        <div class="recommendations-panel" id="findingsPanel" style="margin-bottom: 1.5rem;">
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">policy</span>Security Findings & Explanation</h3>
+            <div class="checks-list" id="findingsList">
+                <!-- Detailed explanation list -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentEmailData = null;
+
+const SAMPLES = {
+    safe: `Delivered-To: user@gmail.com
+Received: by 2002:a05:6830:178b:b0:538:1a42:910d with SMTP id a11csp4859068otj;
+        Mon, 22 Jun 2026 14:15:30 -0700 (PDT)
+X-Google-Smtp-Source: AGHTeb27+L21u2tJSDC
+Received-SPF: pass (google.com: domain of 3-r80yxakab8re@support.google.com designates 209.85.220.69 as authorized sender) client-ip=209.85.220.69;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@google.com header.s=20230601 header.b=OaW2H9mX;
+       spf=pass (google.com: domain of 3-r80yxakab8re@support.google.com designates 209.85.220.69 as authorized sender) smtp.mailfrom=3-r80yxakab8re@support.google.com;
+       dmarc=pass (p=reject sp=reject dis=none) header.from=google.com
+From: Google Security Team <no-reply@accounts.google.com>
+To: user@gmail.com
+Subject: Security alert: New sign-in detected on Windows
+Date: Mon, 22 Jun 2026 14:15:30 -0700
+Return-Path: <no-reply@accounts.google.com>
+Reply-To: <no-reply@accounts.google.com>`,
+
+    spoofed: `Delivered-To: customer@company.corp
+Received: by corporate-mx-gateway.corp id ABC12345;
+        Mon, 22 Jun 2026 09:10:00 -0400
+Received-SPF: pass (company.corp: domain of support@mass-mailer-marketing.net designates 192.168.10.45 as authorized sender)
+Authentication-Results: company.corp;
+       dkim=pass header.i=@mass-mailer-marketing.net header.s=s1;
+       dmarc=fail (p=reject) header.from=paypal.com
+From: PayPal Billing Service <service@paypal.com>
+To: customer@company.corp
+Subject: Urgent: Invoice for Transaction PP-94820
+Date: Mon, 22 Jun 2026 09:10:00 -0400
+Return-Path: <support@mass-mailer-marketing.net>
+Reply-To: <paypal-resolutions@mass-mailer-marketing.net>`,
+
+    spf_fail: `Delivered-To: ceo@company.corp
+Received: by corporate-mx-gateway.corp id XYZ98765;
+        Sun, 21 Jun 2026 18:30:15 -0400
+Received-SPF: fail (company.corp: domain of service@netflix.com does not designate 88.99.112.5 as authorized sender)
+Authentication-Results: company.corp;
+       dkim=fail header.i=@netflix.com;
+       dmarc=fail header.from=netflix.com
+From: Netflix Billing Helpdesk <billing-update@netflix.com>
+To: ceo@company.corp
+Subject: Account Suspended: Please update your subscription details
+Date: Sun, 21 Jun 2026 18:30:15 -0400
+Return-Path: <billing-update@netflix.com>`
+};
+
+function loadSample(key) {
+    document.getElementById("rawHeaders").value = SAMPLES[key];
+}
+
+function clearHeaders() {
+    document.getElementById("rawHeaders").value = "";
+    document.getElementById("resultsContainer").classList.add("hidden");
+}
+
+async function performAnalysis() {
+    const textarea = document.getElementById("rawHeaders");
+    const headers = textarea.value.trim();
+    if (!headers) { textarea.focus(); return; }
+
+    const btn = document.getElementById("analyzeBtn");
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Analyzing...';
+
+    try {
+        const res = await fetch("/email-analyzer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ headers })
+        });
+        const data = await res.json();
+        renderResults(data);
+    } catch (err) {
+        alert("Failed to analyze email headers. Please check syntax and try again.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function renderResults(data) {
+    currentEmailData = data;
+    const container = document.getElementById("resultsContainer");
+
+    // Verdict Banner
+    const banner = document.getElementById("verdictBanner");
+    banner.style.borderColor = data.verdict_color;
+    banner.style.boxShadow = `0 0 40px ${data.verdict_color}30`;
+    document.getElementById("verdictIcon").textContent = data.verdict_icon;
+    document.getElementById("verdictText").textContent = data.verdict;
+    document.getElementById("verdictText").style.color = data.verdict_color;
+    document.getElementById("verdictSubject").textContent = `Subject: ${data.headers.subject}`;
+
+    // Score Ring
+    const score = data.score;
+    const circumference = 314;
+    const offset = circumference - (Math.min(score, 100) / 100) * circumference;
+    const fill = document.getElementById("scoreRingFill");
+    fill.style.stroke = data.verdict_color;
+    fill.style.strokeDashoffset = offset;
+    document.getElementById("scoreNumber").textContent = score;
+    document.getElementById("scoreNumber").style.color = data.verdict_color;
+
+    // Populate Metadata Table
+    document.getElementById("metaFrom").textContent = data.headers.from;
+    document.getElementById("metaTo").textContent = data.headers.to;
+    document.getElementById("metaDate").textContent = data.headers.date;
+    document.getElementById("metaReturnPath").textContent = data.headers.return_path || "None";
+    document.getElementById("metaReplyTo").textContent = data.headers.reply_to || "None";
+
+    // Populate Alignments & Security Checks
+    const verificationGrid = document.getElementById("verificationGrid");
+    verificationGrid.innerHTML = data.findings.map(f => `
+        <div class="check-result-card check-${f.status}" style="padding: 0.5rem; margin-bottom: 0.25rem;">
+            <div class="check-result-icon" style="margin-right: 6px;">
+                ${f.status === 'pass' ? '<span class="material-symbols-outlined" style="color: var(--success); font-size: 1.1rem;">check_circle</span>' : f.status === 'fail' ? '<span class="material-symbols-outlined" style="color: var(--error); font-size: 1.1rem;">cancel</span>' : '<span class="material-symbols-outlined" style="color: var(--warning); font-size: 1.1rem;">warning</span>'}
+            </div>
+            <div class="check-result-body">
+                <div class="check-result-label" style="font-size: 0.8rem; font-weight:600;">${f.label}</div>
+            </div>
+        </div>
+    `).join("");
+
+    // Detailed Findings List
+    const findingsList = document.getElementById("findingsList");
+    findingsList.innerHTML = data.findings.map(f => `
+        <div class="check-item ${f.status}" style="border-left: 3px solid ${f.status === 'pass' ? 'var(--success)' : f.status === 'fail' ? 'var(--error)' : 'var(--warning)'}; margin-bottom: 0.75rem; padding-left: 0.5rem;">
+            <strong style="display: block; font-size: 0.9rem; color: #fff;">${f.label}</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0.25rem 0 0 0;">${f.detail}</p>
+        </div>
+    `).join("");
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function downloadEmailPdf() {
+    if (!currentEmailData) return;
+    try {
+        const btn = document.getElementById("downloadPdfBtn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Generating...';
+
+        const res = await fetch("/api/report/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "email",
+                data: currentEmailData
+            })
+        });
+
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `cyberdefense_email_report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } else {
+            alert("Failed to generate PDF report.");
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    } catch (err) {
+        alert("Error downloading PDF: " + err.message);
+        document.getElementById("downloadPdfBtn").disabled = false;
+    }
+}
+</script>
+{% endblock %}

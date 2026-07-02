@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Environment variables (NEVER commit secrets)
+.env
+
+# Database (local only — Render uses its own persistent storage)
+cyber_defense.db
+
+# Logs
+*.log
+app.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (user-generated content — not for version control)
+static/uploads/

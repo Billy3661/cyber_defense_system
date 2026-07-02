@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+{% block title %}Credential Breach Checker — Securix{% endblock %}
+{% block description %}Check if your email or passwords have been exposed in historical data breaches securely.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Breach Checker</div>
+        <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">vpn_key</span>Credential Breach Checker</h1>
+        <p class="page-subtitle">
+            Safely check if your emails or passwords have been exposed in data breaches. We use secure K-Anonymity range lookups for passwords so your actual password is never shared.
+        </p>
+    </div>
+</div>
+
+<div class="container breach-page">
+    <div class="tabs-navigation" style="display: flex; gap: 1rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; padding-bottom: 0.5rem;">
+        <button class="tab-btn active" id="tabEmailBtn" onclick="switchTab('email')" style="background: none; border: none; font-size: 1.1rem; color: #fff; font-weight: 600; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 2px solid var(--accent); transition: all 0.2s;">
+            <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.3rem; margin-right: 4px;">mail</span> Email Lookup
+        </button>
+        <button class="tab-btn" id="tabPasswordBtn" onclick="switchTab('password')" style="background: none; border: none; font-size: 1.1rem; color: var(--text-muted); font-weight: 600; cursor: pointer; padding: 0.5rem 1rem; border-bottom: 2px solid transparent; transition: all 0.2s;">
+            <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 1.3rem; margin-right: 4px;">lock</span> Password Safety
+        </button>
+    </div>
+
+    <!-- Email Tab Panel -->
+    <div class="scanner-card" id="emailPanel">
+        <div class="scanner-header">
+            <span class="material-symbols-outlined" style="font-size: 1.5rem; color: var(--accent); margin-right: 0.5rem;">search</span>
+            <span>Check Email Address Safety</span>
+        </div>
+        <div class="scanner-input-group" style="margin-top: 1rem;">
+            <label for="checkEmailInput" class="scanner-label">Enter email address to search</label>
+            <div class="scanner-input-row">
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined">mail</span>
+                    <input type="email" id="checkEmailInput" class="scanner-main-input" placeholder="e.g., test@example.com" autocomplete="off" />
+                </div>
+                <button class="btn btn-primary" onclick="performEmailCheck()" id="emailCheckBtn">
+                    <span class="material-symbols-outlined">search</span> Check Email
+                </button>
+            </div>
+        </div>
+        <div class="example-urls">
+            <span class="example-label">Demo accounts:</span>
+            <button class="example-btn" onclick="setEmailExample('test@example.com')">test@example.com (Breached)</button>
+            <button class="example-btn" onclick="setEmailExample('admin@cyberdefensepro.corp')">admin@cyberdefensepro.corp (Breached)</button>
+            <button class="example-btn" onclick="setEmailExample('secure-user@safe.com')">secure-user@safe.com (Clean)</button>
+        </div>
+    </div>
+
+    <!-- Password Tab Panel -->
+    <div class="scanner-card hidden" id="passwordPanel">
+        <div class="scanner-header">
+            <span class="material-symbols-outlined" style="font-size: 1.5rem; color: var(--accent); margin-right: 0.5rem;">password</span>
+            <span>Check Password Leak Status</span>
+        </div>
+        <div class="scanner-input-group" style="margin-top: 1rem;">
+            <label for="checkPasswordInput" class="scanner-label">Enter password to check securely</label>
+            <div class="scanner-input-row">
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined">lock</span>
+                    <input type="password" id="checkPasswordInput" class="scanner-main-input" placeholder="Enter password to verify..." autocomplete="off" />
+                    <button class="clear-btn" style="right: 45px; font-size: 1.2rem;" onclick="togglePasswordVisibility()" title="Toggle View">👁</button>
+                </div>
+                <button class="btn btn-primary" onclick="performPasswordCheck()" id="passwordCheckBtn">
+                    <span class="material-symbols-outlined">security</span> Verify Password
+                </button>
+            </div>
+        </div>
+        <div class="example-urls">
+            <span class="example-label">Security note:</span>
+            <small style="color: var(--text-muted);">
+                We hash your password to SHA-1 locally, and only send the first 5 characters (e.g. <code>21BD1</code>) to the HaveIBeenPwned API.
+                Your full password is never transmitted.
+            </small>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-container hidden" id="resultsContainer" style="margin-top: 1.5rem;">
+        <!-- Verdict Banner -->
+        <div class="verdict-banner" id="verdictBanner">
+            <div class="verdict-icon material-symbols-outlined" id="verdictIcon"></div>
+            <div class="verdict-info">
+                <div class="verdict-label" id="verdictLabel">Diagnostic Verdict</div>
+                <div class="verdict-text" id="verdictText"></div>
+                <div class="verdict-url" id="verdictTarget">Target: </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn btn-primary" id="downloadPdfBtn" onclick="downloadBreachPdf()" style="padding: 0.5rem 1rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">download</span>
+                        Download PDF Report
+                    </button>
+                </div>
+            </div>
+            <div class="verdict-score-wrap">
+                <div class="verdict-score" id="verdictScore">
+                    <div class="score-number" id="scoreCount" style="font-size: 1.8rem; line-height: 1;">0</div>
+                    <div class="score-label" id="scoreLabel">Exposure(s)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="recommendations-panel" id="detailsPanel" style="margin-top: 1.5rem;">
+            <!-- Render details lists or instructions here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentBreachData = null;
+let currentTargetType = "email"; // or password
+
+function switchTab(type) {
+    const tabEmail = document.getElementById("tabEmailBtn");
+    const tabPassword = document.getElementById("tabPasswordBtn");
+    const panelEmail = document.getElementById("emailPanel");
+    const panelPassword = document.getElementById("passwordPanel");
+
+    // Hide results when switching
+    document.getElementById("resultsContainer").classList.add("hidden");
+
+    if (type === "email") {
+        tabEmail.classList.add("active");
+        tabEmail.style.borderBottomColor = "var(--accent)";
+        tabEmail.style.color = "#fff";
+
+        tabPassword.classList.remove("active");
+        tabPassword.style.borderBottomColor = "transparent";
+        tabPassword.style.color = "var(--text-muted)";
+
+        panelEmail.classList.remove("hidden");
+        panelPassword.classList.add("hidden");
+    } else {
+        tabPassword.classList.add("active");
+        tabPassword.style.borderBottomColor = "var(--accent)";
+        tabPassword.style.color = "#fff";
+
+        tabEmail.classList.remove("active");
+        tabEmail.style.borderBottomColor = "transparent";
+        tabEmail.style.color = "var(--text-muted)";
+
+        panelPassword.classList.remove("hidden");
+        panelEmail.classList.add("hidden");
+    }
+}
+
+function setEmailExample(email) {
+    document.getElementById("checkEmailInput").value = email;
+    document.getElementById("checkEmailInput").focus();
+}
+
+function togglePasswordVisibility() {
+    const input = document.getElementById("checkPasswordInput");
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+
+async function performEmailCheck() {
+    const emailInput = document.getElementById("checkEmailInput");
+    const email = emailInput.value.trim();
+    if (!email) { emailInput.focus(); return; }
+
+    const btn = document.getElementById("emailCheckBtn");
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Checking...';
+
+    try {
+        const res = await fetch("/api/breach/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        currentTargetType = "email";
+        renderEmailResults(email, data);
+    } catch (err) {
+        alert("Failed to perform breach lookup.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+function renderEmailResults(email, data) {
+    const container = document.getElementById("resultsContainer");
+
+    const count = data.breaches.length;
+    const clean = count === 0;
+
+    const banner = document.getElementById("verdictBanner");
+    const verdictIcon = document.getElementById("verdictIcon");
+    const verdictText = document.getElementById("verdictText");
+    const verdictTarget = document.getElementById("verdictTarget");
+    const scoreCount = document.getElementById("scoreCount");
+    const detailsPanel = document.getElementById("detailsPanel");
+
+    verdictTarget.textContent = `Target: ${email}`;
+    scoreCount.textContent = count;
+    document.getElementById("scoreLabel").textContent = "Exposure(s)";
+
+    // Format for PDF data payload
+    currentBreachData = {
+        target: email,
+        verdict: clean ? "Clean (No breaches found)" : "Exposed (Breaches detected)",
+        verdict_color: clean ? "#2ed573" : "#ff4757",
+        count: count,
+        checks: clean ? [
+            { label: "Email Address Database Check", detail: "No compromised records associated with this address." }
+        ] : data.breaches.map(b => ({
+            label: b.title,
+            detail: `${b.date} - Compromised: ${b.compromised.join(", ")}`
+        }))
+    };
+
+    if (clean) {
+        banner.style.borderColor = "var(--success)";
+        banner.style.boxShadow = "0 0 40px rgba(46, 213, 115, 0.15)";
+        verdictIcon.textContent = "check_circle";
+        verdictIcon.style.color = "var(--success)";
+        verdictText.textContent = "Good News: Safe!";
+        verdictText.style.color = "var(--success)";
+
+        detailsPanel.innerHTML = `
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--success);">shield</span>Recommendations</h3>
+            <ul class="rec-list">
+                <li><span class="material-symbols-outlined" style="color: var(--success); font-size: 1.1rem; vertical-align: -2px; margin-right: 6px;">check_circle</span>No data breaches detected in our databases for this address.</li>
+                <li><span class="material-symbols-outlined" style="color: var(--accent); font-size: 1.1rem; vertical-align: -2px; margin-right: 6px;">info</span>Stay vigilant and use unique passwords for every service.</li>
+            </ul>
+        `;
+    } else {
+        banner.style.borderColor = "var(--error)";
+        banner.style.boxShadow = "0 0 40px rgba(255, 71, 87, 0.15)";
+        verdictIcon.textContent = "warning";
+        verdictIcon.style.color = "var(--error)";
+        verdictText.textContent = "Warning: Exposed in breaches!";
+        verdictText.style.color = "var(--error)";
+
+        const listHtml = data.breaches.map(b => `
+            <div style="border-left: 3px solid var(--error); padding-left: 0.75rem; margin-bottom: 1rem;">
+                <h4 style="color: #fff; margin: 0 0 0.25rem 0;">${b.title} (${b.date})</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.25rem 0;">${b.details}</p>
+                <div style="font-size: 0.8rem;"><strong style="color: var(--warning);">Compromised:</strong> ${b.compromised.join(", ")}</div>
+            </div>
+        `).join("");
+
+        detailsPanel.innerHTML = `
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--error);">report</span>Exposed Data Sources</h3>
+            <div style="margin-top: 1rem;">
+                ${listHtml}
+            </div>
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <h4 style="color: #fff; margin-bottom: 0.5rem;">⚠️ Immediate Actions Required:</h4>
+                <ul class="rec-list">
+                    <li>Change the password of the email account and any sites where you used this same email/password combo.</li>
+                    <li>Enable Multi-Factor Authentication (MFA/2FA) on all accounts where available.</li>
+                    <li>Use a Password Manager to generate and safely store unique, complex passwords.</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ─────────────────────────────────────────────
+//  PASSWORD K-ANONYMITY CHECK
+// ─────────────────────────────────────────────
+
+async function performPasswordCheck() {
+    const pwInput = document.getElementById("checkPasswordInput");
+    const password = pwInput.value;
+    if (!password) { pwInput.focus(); return; }
+
+    const btn = document.getElementById("passwordCheckBtn");
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Verifying...';
+
+    try {
+        // Hash locally to SHA-1 first
+        const sha1 = await sha1Local(password);
+        const prefix = sha1.substring(0, 5);
+        const suffix = sha1.substring(5);
+
+        // Fetch range from HaveIBeenPwned API
+        const url = `https://api.pwnedpasswords.com/range/${prefix}`;
+        const resp = await fetch(url);
+        
+        let count = 0;
+        if (resp.status === 200) {
+            const bodyText = await resp.text();
+            const lines = bodyText.split("\n");
+            for (let line of lines) {
+                const parts = line.trim().split(":");
+                if (parts[0] === suffix) {
+                    count = parseInt(parts[1], 10);
+                    break;
+                }
+            }
+        }
+        
+        currentTargetType = "password";
+        renderPasswordResults(password.length, count);
+    } catch (err) {
+        alert("Failed to check HaveIBeenPwned range API. Checking locally offline...");
+        // Fallback local API
+        try {
+            const res = await fetch("/api/breach/password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password })
+            });
+            const data = await res.json();
+            currentTargetType = "password";
+            renderPasswordResults(password.length, data.count);
+        } catch (e) {
+            alert("Could not complete verification.");
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function sha1Local(str) {
+    const buffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0").toUpperCase()).join("");
+}
+
+function renderPasswordResults(len, count) {
+    const container = document.getElementById("resultsContainer");
+    const clean = count === 0;
+
+    const banner = document.getElementById("verdictBanner");
+    const verdictIcon = document.getElementById("verdictIcon");
+    const verdictText = document.getElementById("verdictText");
+    const verdictTarget = document.getElementById("verdictTarget");
+    const scoreCount = document.getElementById("scoreCount");
+    const detailsPanel = document.getElementById("detailsPanel");
+
+    verdictTarget.textContent = `Target: [Password Length: ${len}]`;
+    scoreCount.textContent = count.toLocaleString();
+    document.getElementById("scoreLabel").textContent = "Breach Matches";
+
+    // Format for PDF
+    currentBreachData = {
+        target: `[Password Checked - Length ${len}]`,
+        verdict: clean ? "Clean (No breaches found)" : "Exposed (Breaches detected)",
+        verdict_color: clean ? "#2ed573" : "#ff4757",
+        count: count,
+        checks: [
+            { label: "HaveIBeenPwned Range Search", detail: clean ? "Password was not found in database of leaked passwords." : `Password found ${count.toLocaleString()} times in historical data breaches.` }
+        ]
+    };
+
+    if (clean) {
+        banner.style.borderColor = "var(--success)";
+        banner.style.boxShadow = "0 0 40px rgba(46, 213, 115, 0.15)";
+        verdictIcon.textContent = "check_circle";
+        verdictIcon.style.color = "var(--success)";
+        verdictText.textContent = "Safe: Password is Clean!";
+        verdictText.style.color = "var(--success)";
+
+        detailsPanel.innerHTML = `
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--success);">shield</span>Password Analysis</h3>
+            <ul class="rec-list">
+                <li><span class="material-symbols-outlined" style="color: var(--success); font-size: 1.1rem; vertical-align: -2px; margin-right: 6px;">check_circle</span>This password was not found in any database of known leaked credentials.</li>
+                <li><span class="material-symbols-outlined" style="color: var(--accent); font-size: 1.1rem; vertical-align: -2px; margin-right: 6px;">info</span>However, remember to keep your password complex and never reuse it across multiple web sites.</li>
+            </ul>
+        `;
+    } else {
+        banner.style.borderColor = "var(--error)";
+        banner.style.boxShadow = "0 0 40px rgba(255, 71, 87, 0.15)";
+        verdictIcon.textContent = "warning";
+        verdictIcon.style.color = "var(--error)";
+        verdictText.textContent = "COMPROMISED PASSWORD!";
+        verdictText.style.color = "var(--error)";
+
+        detailsPanel.innerHTML = `
+            <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--error);">report</span>Exposure Alert</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">
+                This password has been exposed in public databases at least <strong style="color: var(--error);">${count.toLocaleString()} times</strong>. 
+                Hackers use lists of previously exposed passwords in automated "credential stuffing" and brute-force attacks to break into accounts.
+            </p>
+            <div style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <h4 style="color: #fff; margin-bottom: 0.5rem;">⚠️ Immediate Actions Required:</h4>
+                <ul class="rec-list">
+                    <li><strong style="color: var(--error);">Stop using this password immediately</strong> for any accounts.</li>
+                    <li>Generate a strong, completely random replacement password.</li>
+                    <li>Never reuse passwords on different accounts.</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    container.classList.remove("hidden");
+    container.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function downloadBreachPdf() {
+    if (!currentBreachData) return;
+    try {
+        const btn = document.getElementById("downloadPdfBtn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:4px;"></span> Generating...';
+
+        const res = await fetch("/api/report/pdf", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type: "breach",
+                data: currentBreachData
+            })
+        });
+
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `cyberdefense_breach_report.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } else {
+            alert("Failed to generate PDF report.");
+        }
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    } catch (err) {
+        alert("Error downloading PDF: " + err.message);
+        document.getElementById("downloadPdfBtn").disabled = false;
+    }
+}
+</script>
+{% endblock %}
