@@ -63,7 +63,6 @@
 <div class="container scanner-page">
 
 
-    <!-- Scanner Tabs -->
     <div class="scanner-tabs">
         <button class="scanner-tab active" id="tabUrl" onclick="switchTab('url')">
             <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">link</span> URL Scanner
@@ -72,9 +71,8 @@
             <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">upload_file</span> File Scanner
         </button>
         <button class="scanner-tab" id="tabNetwork" onclick="switchTab('network')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">router</span> LAN Scanner
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">travel_explore</span> IP Intelligence
         </button>
-
     </div>
 
     <!-- URL Scanner Card -->
@@ -155,149 +153,47 @@
         </div>
     </div>
 
-    <!-- Network Scanner Card (WiFi / LAN Discovery) -->
+    <!-- IP Intelligence Card -->
     <div class="scanner-card hidden" id="networkScannerCard">
         <div class="scanner-header">
             <div class="scanner-status-dot" id="netScannerStatusDot"></div>
-            <span id="netScannerStatusText">Ready to discover network</span>
+            <span id="netScannerStatusText">Ready to look up IP</span>
         </div>
 
-        <label class="scanner-label" style="display:block; margin-bottom:1rem;">LAN Port Scanner &amp; Topology Map</label>
+        <label class="scanner-label" style="display:block; margin-bottom:1rem;">IP Address / Domain Intelligence</label>
 
-        <!-- Scanner Mode Selector -->
-        <div class="net-scan-mode-toggle" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(255,255,255,0.03); padding: 0.35rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-            <button class="btn-toggle active" id="modeSubnetBtn" onclick="setNetScanMode('subnet')" style="flex: 1; padding: 0.5rem; border-radius: 6px; border: none; background: rgba(59,130,246,0.15); color: #fff; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;">
-                <span class="material-symbols-outlined" style="font-size: 1.1rem;">hub</span> Discover Subnet
-            </button>
-            <button class="btn-toggle" id="modeTargetBtn" onclick="setNetScanMode('target')" style="flex: 1; padding: 0.5rem; border-radius: 6px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;">
-                <span class="material-symbols-outlined" style="font-size: 1.1rem;">track_changes</span> Custom Target IP Scan
-            </button>
-        </div>
-
-        <!-- Subnet scan config group -->
-        <div id="subnetScanConfig">
-            <div class="net-options-row">
-                <div class="net-input-group" style="flex:1;">
-                    <label class="net-label">Scan Depth</label>
-                    <select id="netScanDepth" class="scanner-main-input" style="cursor:pointer; font-family:var(--font-mono);">
-                        <option value="ping">Ping Sweep (fastest)</option>
-                        <option value="common" selected>Common Ports</option>
-                        <option value="deep">Deep Port Scan</option>
-                    </select>
+        <div class="scanner-input-group">
+            <div class="scanner-input-row">
+                <div class="scanner-input-wrap">
+                    <span class="scanner-prefix material-symbols-outlined">travel_explore</span>
+                    <input type="text" id="ipLookupInput" class="scanner-main-input"
+                           placeholder="e.g. 8.8.8.8 or google.com"
+                           autocomplete="off" spellcheck="false"
+                           onkeydown="if(event.key==='Enter') performIpLookup()" />
+                    <button class="clear-btn" onclick="document.getElementById('ipLookupInput').value=''" title="Clear">✕</button>
                 </div>
-                <div class="net-input-group" style="flex:1;">
-                    <label class="net-label">Subnet Hint (optional)</label>
-                    <div class="scanner-input-wrap">
-                        <span class="scanner-prefix material-symbols-outlined">router</span>
-                        <input type="text" id="netSubnet" class="scanner-main-input"
-                               placeholder="Auto-detect (leave blank)"
-                               autocomplete="off" spellcheck="false" />
-                    </div>
-                </div>
+                <button class="btn btn-primary scanner-btn" id="ipLookupBtn" onclick="performIpLookup()">
+                    <span id="ipLookupBtnIcon" class="material-symbols-outlined">search</span>
+                    <span id="ipLookupBtnText">Look Up</span>
+                </button>
             </div>
         </div>
 
-        <!-- Target host scan config group -->
-        <div id="targetScanConfig" class="hidden">
-            <div class="net-options-row">
-                <div class="net-input-group" style="flex:1;">
-                    <label class="net-label">Target IP Address</label>
-                    <div class="scanner-input-wrap">
-                        <span class="scanner-prefix material-symbols-outlined">dns</span>
-                        <input type="text" id="targetIpInput" class="scanner-main-input"
-                               placeholder="e.g. 192.168.1.1"
-                               autocomplete="off" spellcheck="false" />
-                    </div>
-                </div>
-                <div class="net-input-group" style="flex:1;">
-                    <label class="net-label">Target Ports</label>
-                    <div class="scanner-input-wrap">
-                        <span class="scanner-prefix material-symbols-outlined">settings_ethernet</span>
-                        <input type="text" id="targetPortsInput" class="scanner-main-input"
-                               placeholder="e.g. 22,80,443 or 1-100 (default: common)"
-                               autocomplete="off" spellcheck="false" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div style="display:flex; gap:0.75rem; margin-top:1.25rem; flex-wrap:wrap;">
-            <button class="btn btn-primary scanner-btn" id="netScanBtn" onclick="performNetworkScan()" style="flex:1;min-width:160px;">
-                <span id="netScanBtnIcon" class="material-symbols-outlined">radar</span>
-                <span id="netScanBtnText">Discover Network</span>
-            </button>
-            <button class="btn btn-outline" onclick="clearNetworkScan()" style="padding:0.65rem 1.2rem;">✕ Clear</button>
-        </div>
-
-
-        <div class="net-disclaimer" style="margin-bottom:0.75rem;">
-            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; color:var(--warning);">policy</span>
-            Only scan networks you own or have explicit permission to test. Unauthorized scanning may be illegal.
-        </div>
-
-
-        <!-- Scanning animation -->
-        <div class="net-scan-animation hidden" id="netScanAnimation">
-            <div class="radar-ring"></div>
-            <div class="radar-ring" style="animation-delay:0.5s;"></div>
-            <div class="radar-ring" style="animation-delay:1s;"></div>
-            <span class="material-symbols-outlined" style="font-size:2rem;color:var(--accent);">wifi_tethering</span>
-            <div class="net-scan-label" id="netScanLabel">Probing subnet...</div>
+        <div class="example-urls" style="margin-top:1rem;">
+            <span class="example-label">Try examples:</span>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='8.8.8.8'">8.8.8.8 (Google DNS)</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='1.1.1.1'">1.1.1.1 (Cloudflare)</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='github.com'">github.com</button>
         </div>
 
         <!-- Results -->
-        <div class="net-results hidden" id="netResults">
-            <!-- View toggles for list vs topology -->
-            <div class="net-view-header-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; margin-top:1rem; flex-wrap:wrap; gap:0.5rem;">
-                <span class="net-results-header" style="margin:0; display:flex; align-items:center; gap:8px;">
-                    <span class="material-symbols-outlined" style="color:var(--accent);">lan</span>
-                    <span id="netResultsTitle">Scan Results</span>
-                </span>
-                <div style="display:flex; gap:0.5rem; background:rgba(255,255,255,0.03); padding:0.25rem; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
-                    <button class="btn-view-mode active" id="viewGridBtn" onclick="setNetViewMode('grid')" style="padding:0.35rem 0.75rem; border:none; background:rgba(59,130,246,0.15); color:white; border-radius:4px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:500;">
-                        <span class="material-symbols-outlined" style="font-size:0.95rem;">grid_view</span> List Grid
-                    </button>
-                    <button class="btn-view-mode" id="viewTopoBtn" onclick="setNetViewMode('topo')" style="padding:0.35rem 0.75rem; border:none; background:transparent; border-radius:4px; font-size:0.8rem; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:500;">
-                        <span class="material-symbols-outlined" style="font-size:0.95rem;">hub</span> Topology Map
-                    </button>
-                </div>
-            </div>
+        <div class="hidden" id="ipLookupResults" style="margin-top:1.5rem;">
+            <div id="ipLookupGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem;"></div>
+        </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
-                <div class="net-summary" id="netSummary"></div>
-                <button class="btn btn-outline" id="btnExportNetReport" onclick="exportNetworkPDF()" style="gap:0.4rem; padding:0.45rem 0.9rem; font-size:0.85rem;" disabled>
-                    <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle;">download_2</span> Export Report (PDF)
-                </button>
-            </div>
-
-            <!-- Hosts grid -->
-            <div class="net-hosts-grid" id="netHostsGrid"></div>
-
-            <!-- Network Topology Map Container -->
-            <div id="netTopoContainer" class="net-topo-container hidden" style="position:relative; width:100%; height:450px; background:rgba(15,23,42,0.6); border-radius:12px; border:1px solid rgba(255,255,255,0.08); overflow:hidden; margin-bottom:1.5rem;">
-                <div style="position:absolute; top:12px; left:12px; z-index:10; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); padding:6px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.08); font-size:0.75rem; color:var(--text-muted);">
-                    Interactive Topology Map (Drag nodes, click to inspect)
-                </div>
-                <div style="position:absolute; top:12px; right:12px; z-index:10; display:flex; gap:0.25rem;">
-                    <button class="btn-topo-ctrl" onclick="zoomTopo(1.1)" title="Zoom In" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; width:28px; height:28px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">+</button>
-                    <button class="btn-topo-ctrl" onclick="zoomTopo(0.9)" title="Zoom Out" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; width:28px; height:28px; border-radius:4px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center;">-</button>
-                    <button class="btn-topo-ctrl" onclick="resetTopoZoom()" title="Reset Zoom" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.08); color:white; padding:0 8px; height:28px; border-radius:4px; cursor:pointer; font-size:0.72rem; display:flex; align-items:center; justify-content:center;">Reset</button>
-                </div>
-                <svg id="netTopoSvg" style="width:100%; height:100%; cursor:grab; user-select:none;"></svg>
-            </div>
-
-            <!-- Open Ports Table (shown when a host is selected) -->
-            <div class="net-ports-panel hidden" id="netPortsPanel">
-                <div class="net-ports-header">
-                    <span class="material-symbols-outlined" style="color:var(--accent);">dns</span>
-                    <span id="netPortsTitle">Open Ports</span>
-                    <button onclick="document.getElementById('netPortsPanel').classList.add('hidden')" class="btn-close-ports">×</button>
-                </div>
-                <table class="net-ports-table" id="netPortsTable">
-                    <thead><tr><th>Port</th><th>State</th><th>Service</th><th>Risk</th><th>Remedy</th></tr></thead>
-                    <tbody id="netPortsBody"></tbody>
-                </table>
-            </div>
+        <div class="net-disclaimer" style="margin-top:1.25rem;">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; color:var(--info);">info</span>
+            Uses public geolocation data. Results are approximate and for informational purposes only.
         </div>
     </div>
 
@@ -618,23 +514,59 @@ document.getElementById("scanUrl")?.addEventListener("keydown", e => {
     if (e.key === "Enter") performScan();
 });
 
-// ── AUTO-DETECT SCAN ENGINE ──
-(async function loadEngineStatus() {
+
+// ── IP INTELLIGENCE LOOKUP ──
+async function performIpLookup() {
+    const input = document.getElementById('ipLookupInput');
+    const query = input.value.trim();
+    if (!query) { input.focus(); return; }
+
+    const btn = document.getElementById('ipLookupBtn');
+    btn.disabled = true;
+    document.getElementById('ipLookupBtnText').textContent = 'Looking up...';
+    document.getElementById('netScannerStatusDot').className = 'scanner-status-dot scanning';
+    document.getElementById('netScannerStatusText').textContent = 'Fetching intelligence...';
+    document.getElementById('ipLookupResults').classList.add('hidden');
+
     try {
-        const r = await fetch("/api/scanner-engine");
-        const d = await r.json();
-        const badge = document.getElementById("engineBadge");
-        const label = document.getElementById("engineLabel");
-        const note  = document.getElementById("engineNote");
-        if (badge && label) {
-            badge.style.borderColor = d.color + "30";
-            badge.style.background  = d.color + "10";
-            label.textContent = d.label;
-            label.style.color = d.color;
-            if (note) note.textContent = d.note;
-        }
-    } catch(e) { /* silent */ }
-})();
+        const res = await fetch(`https://ipapi.co/${encodeURIComponent(query)}/json/`);
+        const d = await res.json();
+
+        if (d.error) { alert('Could not resolve: ' + (d.reason || query)); return; }
+
+        const cards = [
+            { icon: 'public',        label: 'IP Address',     value: d.ip },
+            { icon: 'language',      label: 'Hostname',        value: d.org || '—' },
+            { icon: 'location_on',   label: 'Location',        value: [d.city, d.region, d.country_name].filter(Boolean).join(', ') || '—' },
+            { icon: 'flag',          label: 'Country Code',    value: d.country_code || '—' },
+            { icon: 'schedule',      label: 'Timezone',        value: d.timezone || '—' },
+            { icon: 'cell_tower',    label: 'ISP / ASN',       value: (d.asn ? d.asn + ' ' : '') + (d.org || '—') },
+            { icon: 'my_location',   label: 'Coordinates',     value: d.latitude && d.longitude ? `${d.latitude}, ${d.longitude}` : '—' },
+            { icon: 'currency_exchange', label: 'Currency',    value: d.currency_name ? `${d.currency_name} (${d.currency})` : '—' },
+        ];
+
+        document.getElementById('ipLookupGrid').innerHTML = cards.map(c => `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:1rem; display:flex; align-items:flex-start; gap:0.75rem;">
+                <span class="material-symbols-outlined" style="color:var(--accent); font-size:1.4rem; flex-shrink:0; margin-top:2px;">${c.icon}</span>
+                <div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:3px;">${c.label}</div>
+                    <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary); word-break:break-all;">${c.value}</div>
+                </div>
+            </div>`).join('');
+
+        document.getElementById('ipLookupResults').classList.remove('hidden');
+        document.getElementById('netScannerStatusDot').className = 'scanner-status-dot done';
+        document.getElementById('netScannerStatusText').textContent = 'Lookup complete';
+    } catch(err) {
+        alert('Lookup failed. Check your connection and try again.');
+        document.getElementById('netScannerStatusDot').className = 'scanner-status-dot';
+        document.getElementById('netScannerStatusText').textContent = 'Ready to look up IP';
+    } finally {
+        btn.disabled = false;
+        document.getElementById('ipLookupBtnText').textContent = 'Look Up';
+    }
+}
+
 
 // ── TAB SWITCHING ──
 function switchTab(tab) {
@@ -849,9 +781,16 @@ function renderNetworkResults(data) {
     // Host cards grid
     const grid = document.getElementById("netHostsGrid");
     if (data.active_hosts.length === 0) {
-        grid.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2rem; grid-column:1/-1;">
-            <span class="material-symbols-outlined" style="font-size:2.5rem; display:block; margin-bottom:0.5rem; color:var(--success);">wifi_off</span>
-            No active hosts found on <strong>${data.subnet}</strong>
+        grid.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:2.5rem 1.5rem; grid-column:1/-1;">
+            <span class="material-symbols-outlined" style="font-size:3rem; display:block; margin-bottom:1rem; color:var(--warning);">cloud_off</span>
+            <div style="font-size:1.05rem; font-weight:700; color:var(--text-primary); margin-bottom:0.5rem;">LAN Scanner Unavailable in Cloud Mode</div>
+            <div style="font-size:0.88rem; max-width:420px; margin:0 auto; line-height:1.6;">
+                The LAN/WiFi scanner can only discover devices on the <strong>same network</strong> as the server.
+                When Securix is hosted in the cloud, the server cannot reach your home or office devices.<br><br>
+                <strong style="color:var(--accent);">To use LAN scanning:</strong> Run Securix locally on your machine using
+                <code style="background:rgba(255,255,255,0.07); padding:2px 6px; border-radius:4px;">source venv/bin/activate && python app.py</code>
+                and access it at <code style="background:rgba(255,255,255,0.07); padding:2px 6px; border-radius:4px;">http://localhost:5050</code>.
+            </div>
         </div>`;
     } else {
         grid.innerHTML = data.active_hosts.map(h => {

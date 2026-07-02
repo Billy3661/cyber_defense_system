@@ -2372,53 +2372,59 @@ def api_stats():
 def api_chat():
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        return jsonify({"error": "Groq API key is not configured. Please add GROQ_API_KEY to your .env file."}), 500
+        return jsonify({"error": "AI is not configured. Please contact the administrator."}), 500
 
     try:
-        client = Groq(api_key=api_key)
-        
         data = request.json
         user_message = data.get("message", "")
-        history = data.get("history", []) # Expected format: [{"role": "user", "content": "hello"}, {"role": "model", "content": "hi"}]
+        history = data.get("history", [])
         context = data.get("context", "")
 
         if not user_message:
             return jsonify({"error": "Empty message provided."}), 400
 
-        system_prompt = """
-        You are Securix AI, an elite cybersecurity assistant integrated into the Securix Cyber Defense System.
-        Your job is to help users understand cybersecurity concepts, explain vulnerabilities, provide remediation steps, and guide them through the Securix platform.
-        Respond in a concise, professional, and helpful manner. Format your responses using Markdown, as it will be rendered as HTML on the frontend.
-        Do not use emojis unless appropriate for the tone. Focus on actionable security advice.
-        """
-        
+        system_prompt = """You are Securix AI, an elite cybersecurity assistant integrated into the Securix Cyber Defense System.
+Your job is to help users understand cybersecurity concepts, explain vulnerabilities, provide remediation steps, and guide them through the Securix platform.
+Respond in a concise, professional, and helpful manner. Format your responses using Markdown, as it will be rendered as HTML on the frontend.
+Do not use emojis unless appropriate for the tone. Focus on actionable security advice."""
+
         if context:
             system_prompt += f"\n\nUSER CONTEXT (Background info for this request):\n{context}"
 
-        # Convert simple history to OpenAI/Groq format
-        formatted_history = [{"role": "system", "content": system_prompt}]
+        messages = [{"role": "system", "content": system_prompt}]
         for msg in history:
             role = "user" if msg.get("role") == "user" else "assistant"
-            formatted_history.append({"role": role, "content": msg.get("content", "")})
-        
-        # Append the new user message
-        formatted_history.append({"role": "user", "content": user_message})
+            messages.append({"role": role, "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": user_message})
 
-        # Non-streaming for maximum hosting compatibility
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=formatted_history,
-            stream=False,
-            temperature=0.7,
-            max_tokens=2048
+        # Direct HTTP request — bypasses SDK connection issues on cloud hosts
+        groq_response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 2048
+            },
+            timeout=30
         )
 
-        reply_text = response.choices[0].message.content
+        if groq_response.status_code != 200:
+            err = groq_response.json().get("error", {}).get("message", "Unknown error")
+            return jsonify({"error": f"AI service error: {err}"}), 500
+
+        reply_text = groq_response.json()["choices"][0]["message"]["content"]
         return jsonify({"response": reply_text})
 
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "AI took too long to respond. Please try again."}), 504
     except Exception as e:
         print(f"Chatbot error: {e}")
-        return jsonify({"error": f"Failed to get a response from AI: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to reach AI service: {str(e)}"}), 500
 
 
 # ─────────────────────────────────────────────
