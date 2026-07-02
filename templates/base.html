@@ -240,87 +240,61 @@
             try {
                 // Collect context
                 let pageContext = `User is currently on page: ${window.location.pathname}.`;
-                
-                // If on scanner page and results exist, grab them
                 if (window.location.pathname === '/scanner') {
                     const scanResults = document.querySelector('.scan-results-card');
                     if (scanResults) {
                         pageContext += `\nThey are viewing scan results:\n${scanResults.innerText.substring(0, 1000)}`;
                     }
                 }
-                
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        history: chatHistory,
-                        context: pageContext
-                    })
+                    body: JSON.stringify({ message, history: chatHistory, context: pageContext })
                 });
 
                 // Remove typing indicator
                 const indicator = document.getElementById('typingIndicator');
                 if (indicator) indicator.remove();
 
-                if (!response.ok) {
-                    const data = await response.json();
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
                     showError(data.error || "An error occurred");
                     return;
                 }
 
-                // Create empty AI message div
+                // Create AI message bubble
                 const aiDiv = document.createElement('div');
                 aiDiv.className = 'chat-message ai';
                 aiDiv.innerHTML = `<div class="message-content markdown-body"></div>`;
                 chatBody.appendChild(aiDiv);
-                
                 const contentDiv = aiDiv.querySelector('.message-content');
-                let fullResponse = "";
 
-                // Read stream
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let buffer = "";
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n\n');
-                    buffer = lines.pop(); // Keep incomplete chunk in buffer
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const dataStr = line.substring(6);
-                            if (dataStr === '[DONE]') {
-                                break;
-                            }
-                            try {
-                                const dataObj = JSON.parse(dataStr);
-                                if (dataObj.error) {
-                                    showError(dataObj.error);
-                                } else if (dataObj.text) {
-                                    fullResponse += dataObj.text;
-                                    contentDiv.innerHTML = marked.parse(fullResponse);
-                                    scrollToBottom();
-                                }
-                            } catch (e) {
-                                console.error("Error parsing stream data:", e);
-                            }
-                        }
+                // Typewriter animation
+                const fullText = data.response || "";
+                let i = 0;
+                function typeNextChar() {
+                    if (i < fullText.length) {
+                        i += Math.floor(Math.random() * 4) + 1; // type a few chars at a time for speed
+                        contentDiv.innerHTML = marked.parse(fullText.substring(0, i));
+                        scrollToBottom();
+                        setTimeout(typeNextChar, 12);
+                    } else {
+                        contentDiv.innerHTML = marked.parse(fullText);
+                        scrollToBottom();
                     }
                 }
+                typeNextChar();
 
                 // Update history
                 chatHistory.push({role: 'user', content: message});
-                chatHistory.push({role: 'model', content: fullResponse});
+                chatHistory.push({role: 'model', content: fullText});
 
             } catch (err) {
                 const indicator = document.getElementById('typingIndicator');
                 if (indicator) indicator.remove();
-                showError("Failed to connect to Securix AI");
+                showError("Failed to connect to Securix AI. Please try again.");
             }
             scrollToBottom();
         }

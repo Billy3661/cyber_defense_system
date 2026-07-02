@@ -2404,30 +2404,17 @@ def api_chat():
         # Append the new user message
         formatted_history.append({"role": "user", "content": user_message})
 
-        # Yield chunks as server-sent events (SSE)
-        def generate():
-            try:
-                response_stream = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=formatted_history,
-                    stream=True,
-                    temperature=0.7,
-                    max_tokens=2048
-                )
-                for chunk in response_stream:
-                    if chunk.choices and chunk.choices[0].delta.content:
-                        # Yield in SSE format
-                        yield f"data: {json.dumps({'text': chunk.choices[0].delta.content})}\n\n"
-            except Exception as stream_err:
-                yield f"data: {json.dumps({'error': str(stream_err)})}\n\n"
-            finally:
-                yield "data: [DONE]\n\n"
+        # Non-streaming for maximum hosting compatibility
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=formatted_history,
+            stream=False,
+            temperature=0.7,
+            max_tokens=2048
+        )
 
-        resp = Response(stream_with_context(generate()), mimetype="text/event-stream")
-        resp.headers["X-Accel-Buffering"] = "no"
-        resp.headers["Cache-Control"] = "no-cache"
-        resp.headers["Connection"] = "keep-alive"
-        return resp
+        reply_text = response.choices[0].message.content
+        return jsonify({"response": reply_text})
 
     except Exception as e:
         print(f"Chatbot error: {e}")

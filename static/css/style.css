@@ -2736,20 +2736,19 @@ a:hover {
     .page-subtitle { font-size: 0.85rem; }
 
     /* ── Navbar ── */
-    .navbar { padding: 0 1rem; }
-    .nav-container { flex-wrap: wrap; }
-    .nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background: var(--bg-secondary);
-        padding: 0.75rem 0;
-        border-top: 1px solid rgba(255,255,255,0.06);
-        gap: 0;
+    .navbar { padding: 0 1rem; height: auto; min-height: 60px; }
+    .nav-container {
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
     }
-    .nav-links.open { display: flex; }
-    .nav-link { padding: 0.75rem 1.25rem; border-radius: 0; }
-    .nav-actions { gap: 0.5rem; }
+    .nav-links { display: none !important; }
+    .nav-actions { gap: 0.4rem; flex-shrink: 0; }
+    .nav-actions .btn { font-size: 0.78rem; padding: 0.4rem 0.7rem; white-space: nowrap; }
+    .nav-logo { flex-shrink: 0; }
+    .logo-text { font-size: 1.1rem; }
 
     /* ── Dashboard cards ── */
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
