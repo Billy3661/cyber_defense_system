@@ -1148,7 +1148,7 @@ def index():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form.get("username")
+        username = request.form.get("username", "").strip().lower()
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
@@ -1177,7 +1177,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
+        username = request.form.get("username", "").strip().lower()
         password = request.form.get("password")
 
         if not username or not password:
@@ -1342,10 +1342,29 @@ def scan_port(host, port, timeout=0.5):
         return False
 
 
+MAC_CACHE = {}
+
 def resolve_mac_vendor(mac):
     if not mac or mac.lower() in ["unknown", ""]:
         return "Unknown Vendor"
-    prefix = mac[:8].lower().replace("-", ":")
+    
+    mac_clean = mac.upper()
+    prefix = mac_clean[:8].replace("-", ":")
+    
+    if prefix in MAC_CACHE:
+        return MAC_CACHE[prefix]
+        
+    try:
+        resp = req.get(f"https://macvendors.co/api/{mac_clean}", timeout=2.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            vendor = data.get("result", {}).get("company", "Standard Network Device")
+            MAC_CACHE[prefix] = vendor
+            return vendor
+    except Exception:
+        pass
+        
+    prefix_lower = prefix.lower()
     vendors = {
         "00:11:24": "Apple", "00:26:bb": "Apple", "00:03:93": "Apple", "0c:4d:12": "Apple",
         "08:00:27": "VirtualBox", "00:50:56": "VMware", "00:0c:29": "VMware", "00:05:69": "VMware",
@@ -1364,7 +1383,7 @@ def resolve_mac_vendor(mac):
         "3c:a6:16": "Xiaomi", "00:9e:c8": "Xiaomi",
         "00:18:8b": "Motorola", "00:00:0c": "Cisco",
     }
-    return vendors.get(prefix, "Standard Network Device")
+    return vendors.get(prefix_lower, "Standard Network Device")
 
 def guess_device_type(open_ports, hostname, vendor):
     hostname_lower = hostname.lower()
@@ -1806,14 +1825,17 @@ def api_scan_network():
         elif scan_depth == "ping":
             active_hosts = discovered
         else:
-            ports_arg = ",".join(map(str, COMMON_PORTS))
-            if scan_depth == "deep": ports_arg = "1-1024"
-            active_ips = [h["ip"] for h in discovered]
+            if scan_depth == "aggressive":
+                nmap_args = ["nmap", "-A", "-T4", "-p", "1-1024", "-oX", "-"] + [h["ip"] for h in discovered]
+                timeout_val = 90
+            else:
+                ports_arg = ",".join(map(str, COMMON_PORTS))
+                if scan_depth == "deep": ports_arg = "1-1024"
+                nmap_args = ["nmap", "-sV", "-T4", "--version-light", "--open", "-p", ports_arg, "-oX", "-"] + [h["ip"] for h in discovered]
+                timeout_val = 45
+                
             try:
-                rp = subprocess.run(
-                    ["nmap", "-sV", "-T4", "--version-light", "--open",
-                     "-p", ports_arg, "-oX", "-"] + active_ips,
-                    capture_output=True, text=True, timeout=45)
+                rp = subprocess.run(nmap_args, capture_output=True, text=True, timeout=timeout_val)
                 detailed = parse_nmap_xml(rp.stdout, arp_cache)
                 dmap     = {h["ip"]: h for h in detailed}
                 active_hosts = []
@@ -2362,7 +2384,38 @@ def api_stats():
 # ─────────────────────────────────────────────
 
 
+# ─────────────────────────────────────────────
+#  IP INTELLIGENCE ENDPOINT
+# ─────────────────────────────────────────────
+@app.route("/api/ip-intelligence", methods=["POST"])
+@login_required
+def api_ip_intelligence():
+    data = request.get_json() or {}
+    query = data.get("ip", "").strip()
+    if not query:
+        return jsonify({"error": "IP or domain required"}), 400
 
+    try:
+        geo_res = req.get(f"https://ipapi.co/{query}/json/", timeout=5.0)
+        geo_data = geo_res.json()
+    except Exception:
+        geo_data = {"error": True, "reason": "Geolocation service timeout"}
+
+    vt_key = session.get("vt_api_key") or os.environ.get("VIRUSTOTAL_API_KEY")
+    vt_stats = None
+    if vt_key:
+        try:
+            vt_res = req.get(
+                f"https://www.virustotal.com/api/v3/ip_addresses/{query}",
+                headers={"x-apikey": vt_key},
+                timeout=3.0
+            )
+            if vt_res.status_code == 200:
+                vt_stats = vt_res.json().get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+        except Exception:
+            pass
+
+    return jsonify({"geo": geo_data, "vt": vt_stats})
 
 # ─────────────────────────────────────────────
 #  AI CHATBOT (GEMINI)

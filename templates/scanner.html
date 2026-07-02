@@ -529,12 +529,22 @@ async function performIpLookup() {
     document.getElementById('ipLookupResults').classList.add('hidden');
 
     try {
-        const res = await fetch(`https://ipapi.co/${encodeURIComponent(query)}/json/`);
-        const d = await res.json();
+        const res = await fetch("/api/ip-intelligence", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ip: query })
+        });
+        const data = await res.json();
+        
+        if (data.error || (data.geo && data.geo.error)) { 
+            alert('Could not resolve: ' + (data.geo?.reason || data.error || query)); 
+            return; 
+        }
 
-        if (d.error) { alert('Could not resolve: ' + (d.reason || query)); return; }
+        const d = data.geo;
+        const vt = data.vt;
 
-        const cards = [
+        let cards = [
             { icon: 'public',        label: 'IP Address',     value: d.ip },
             { icon: 'language',      label: 'Hostname',        value: d.org || '—' },
             { icon: 'location_on',   label: 'Location',        value: [d.city, d.region, d.country_name].filter(Boolean).join(', ') || '—' },
@@ -542,8 +552,25 @@ async function performIpLookup() {
             { icon: 'schedule',      label: 'Timezone',        value: d.timezone || '—' },
             { icon: 'cell_tower',    label: 'ISP / ASN',       value: (d.asn ? d.asn + ' ' : '') + (d.org || '—') },
             { icon: 'my_location',   label: 'Coordinates',     value: d.latitude && d.longitude ? `${d.latitude}, ${d.longitude}` : '—' },
-            { icon: 'currency_exchange', label: 'Currency',    value: d.currency_name ? `${d.currency_name} (${d.currency})` : '—' },
         ];
+        
+        if (vt) {
+            const malCount = vt.malicious || 0;
+            const susCount = vt.suspicious || 0;
+            const totalDanger = malCount + susCount;
+            let vtColor = "var(--success)";
+            let vtIcon = "check_circle";
+            if (totalDanger > 0) { vtColor = "var(--warning)"; vtIcon = "warning"; }
+            if (totalDanger > 3) { vtColor = "var(--error)"; vtIcon = "report"; }
+            
+            cards.push({
+                icon: 'security',
+                label: 'VirusTotal Rep',
+                value: `<span style="color:${vtColor}; font-weight:700;"><span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-2px;">${vtIcon}</span> ${malCount} malicious, ${susCount} suspicious</span>`
+            });
+        } else {
+            cards.push({ icon: 'security', label: 'VirusTotal Rep', value: '<span style="color:var(--text-muted); font-size:0.8rem;">API Key Not Set</span>' });
+        }
 
         document.getElementById('ipLookupGrid').innerHTML = cards.map(c => `
             <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:1rem; display:flex; align-items:flex-start; gap:0.75rem;">
