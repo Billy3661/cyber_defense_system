@@ -157,7 +157,7 @@
     <div class="scanner-card hidden" id="networkScannerCard">
         <div class="scanner-header">
             <div class="scanner-status-dot" id="netScannerStatusDot"></div>
-            <span id="netScannerStatusText">Ready to look up IP</span>
+            <span id="netScannerStatusText">Ready to investigate</span>
         </div>
 
         <label class="scanner-label" style="display:block; margin-bottom:1rem;">IP Address / Domain Intelligence</label>
@@ -167,14 +167,14 @@
                 <div class="scanner-input-wrap">
                     <span class="scanner-prefix material-symbols-outlined">travel_explore</span>
                     <input type="text" id="ipLookupInput" class="scanner-main-input"
-                           placeholder="e.g. 8.8.8.8 or google.com"
+                           placeholder="e.g. 8.8.8.8 or example.com"
                            autocomplete="off" spellcheck="false"
                            onkeydown="if(event.key==='Enter') performIpLookup()" />
                     <button class="clear-btn" onclick="document.getElementById('ipLookupInput').value=''" title="Clear">✕</button>
                 </div>
                 <button class="btn btn-primary scanner-btn" id="ipLookupBtn" onclick="performIpLookup()">
                     <span id="ipLookupBtnIcon" class="material-symbols-outlined">search</span>
-                    <span id="ipLookupBtnText">Look Up</span>
+                    <span id="ipLookupBtnText">Investigate</span>
                 </button>
             </div>
         </div>
@@ -184,16 +184,66 @@
             <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='8.8.8.8'">8.8.8.8 (Google DNS)</button>
             <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='1.1.1.1'">1.1.1.1 (Cloudflare)</button>
             <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='github.com'">github.com</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='45.33.32.156'">Known Server</button>
         </div>
 
-        <!-- Results -->
-        <div class="hidden" id="ipLookupResults" style="margin-top:1.5rem;">
-            <div id="ipLookupGrid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem;"></div>
-        </div>
+        <!-- Rich Results Panel -->
+        <div class="hidden" id="ipLookupResults" style="margin-top:1.75rem;">
 
-        <div class="net-disclaimer" style="margin-top:1.25rem;">
-            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; color:var(--info);">info</span>
-            Uses public geolocation data. Results are approximate and for informational purposes only.
+            <!-- Threat Score Banner -->
+            <div id="ipThreatBanner" style="
+                border-radius:14px; border:1px solid; padding:1.25rem 1.5rem;
+                margin-bottom:1.5rem; display:flex; align-items:center; gap:1.25rem;
+                background:rgba(0,0,0,0.2); flex-wrap:wrap;">
+                <div id="ipThreatIcon" style="font-size:2.8rem; line-height:1; flex-shrink:0;"></div>
+                <div style="flex:1; min-width:160px;">
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:3px;">Threat Assessment</div>
+                    <div id="ipThreatLabel" style="font-size:1.25rem; font-weight:800;"></div>
+                    <div id="ipThreatDetail" style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px; line-height:1.5;"></div>
+                </div>
+                <div style="text-align:center; flex-shrink:0;">
+                    <div id="ipThreatScore" style="font-size:2.2rem; font-weight:900; line-height:1;"></div>
+                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">Risk Score</div>
+                </div>
+            </div>
+
+            <!-- Two-column layout -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">location_on</span> Geolocation
+                    </div>
+                    <div id="ipGeoSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">cell_tower</span> Network &amp; ASN
+                    </div>
+                    <div id="ipNetSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                </div>
+            </div>
+
+            <!-- VirusTotal Breakdown -->
+            <div id="ipVtSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem;">
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--warning); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">security</span> VirusTotal Engine Breakdown
+                </div>
+                <div id="ipVtBars" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:0.75rem;"></div>
+            </div>
+
+            <!-- Flags -->
+            <div id="ipFlagsRow" style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem;"></div>
+
+            <!-- Footer -->
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                <div style="font-size:0.75rem; color:var(--text-muted);">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; color:var(--info);">info</span>
+                    Data from ipapi.co &amp; VirusTotal. Approximate — for informational use only.
+                </div>
+                <button onclick="copyIpReport()" class="btn btn-outline" style="padding:0.4rem 0.9rem; font-size:0.78rem; gap:4px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
+                </button>
+            </div>
         </div>
     </div>
 
@@ -515,7 +565,24 @@ document.getElementById("scanUrl")?.addEventListener("keydown", e => {
 });
 
 
+
 // ── IP INTELLIGENCE LOOKUP ──
+let lastIpReport = null;
+
+function ipInfoRow(label, value, icon = '') {
+    return `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; font-size:0.83rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
+        <span style="color:var(--text-muted); flex-shrink:0;">${icon ? `<span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; margin-right:3px;">${icon}</span>` : ''}${label}</span>
+        <span style="color:var(--text-primary); font-weight:600; text-align:right; word-break:break-all;">${value || '—'}</span>
+    </div>`;
+}
+
+function vtBar(label, count, color) {
+    return `<div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:0.7rem 0.85rem; text-align:center;">
+        <div style="font-size:1.4rem; font-weight:900; color:${color};">${count}</div>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${label}</div>
+    </div>`;
+}
+
 async function performIpLookup() {
     const input = document.getElementById('ipLookupInput');
     const query = input.value.trim();
@@ -523,7 +590,7 @@ async function performIpLookup() {
 
     const btn = document.getElementById('ipLookupBtn');
     btn.disabled = true;
-    document.getElementById('ipLookupBtnText').textContent = 'Looking up...';
+    document.getElementById('ipLookupBtnText').innerHTML = '<span class="spinner"></span> Investigating...';
     document.getElementById('netScannerStatusDot').className = 'scanner-status-dot scanning';
     document.getElementById('netScannerStatusText').textContent = 'Fetching intelligence...';
     document.getElementById('ipLookupResults').classList.add('hidden');
@@ -535,67 +602,152 @@ async function performIpLookup() {
             body: JSON.stringify({ ip: query })
         });
         const data = await res.json();
-        
-        if (data.error || (data.geo && data.geo.error)) { 
-            alert('Could not resolve: ' + (data.geo?.reason || data.error || query)); 
-            return; 
+
+        if (data.error || (data.geo && data.geo.error)) {
+            alert('Could not resolve: ' + (data.geo?.reason || data.error || query));
+            return;
         }
 
         const d = data.geo;
         const vt = data.vt;
 
-        let cards = [
-            { icon: 'public',        label: 'IP Address',     value: d.ip },
-            { icon: 'language',      label: 'Hostname',        value: d.org || '—' },
-            { icon: 'location_on',   label: 'Location',        value: [d.city, d.region, d.country_name].filter(Boolean).join(', ') || '—' },
-            { icon: 'flag',          label: 'Country Code',    value: d.country_code || '—' },
-            { icon: 'schedule',      label: 'Timezone',        value: d.timezone || '—' },
-            { icon: 'cell_tower',    label: 'ISP / ASN',       value: (d.asn ? d.asn + ' ' : '') + (d.org || '—') },
-            { icon: 'my_location',   label: 'Coordinates',     value: d.latitude && d.longitude ? `${d.latitude}, ${d.longitude}` : '—' },
-        ];
-        
+        // ── Threat Score ──
+        let riskScore = 0;
+        let threatLabel = 'Clean';
+        let threatDetail = 'No threats detected from available intelligence sources.';
+        let threatColor = 'var(--success)';
+        let threatIcon = '✅';
+        let flags = [];
+
         if (vt) {
-            const malCount = vt.malicious || 0;
-            const susCount = vt.suspicious || 0;
-            const totalDanger = malCount + susCount;
-            let vtColor = "var(--success)";
-            let vtIcon = "check_circle";
-            if (totalDanger > 0) { vtColor = "var(--warning)"; vtIcon = "warning"; }
-            if (totalDanger > 3) { vtColor = "var(--error)"; vtIcon = "report"; }
-            
-            cards.push({
-                icon: 'security',
-                label: 'VirusTotal Rep',
-                value: `<span style="color:${vtColor}; font-weight:700;"><span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-2px;">${vtIcon}</span> ${malCount} malicious, ${susCount} suspicious</span>`
-            });
+            const mal = vt.malicious || 0;
+            const sus = vt.suspicious || 0;
+            const total = mal + sus;
+            riskScore = Math.min(100, Math.round((mal * 15 + sus * 8)));
+            if (total > 0) {
+                threatLabel = total > 5 ? 'High Threat' : total > 2 ? 'Suspicious' : 'Low Risk';
+                threatColor = total > 5 ? 'var(--error)' : total > 2 ? 'var(--warning)' : '#f59e0b';
+                threatIcon = total > 5 ? '🚨' : '⚠️';
+                threatDetail = `Flagged by ${mal} malicious and ${sus} suspicious VirusTotal engines.`;
+                if (mal > 0) flags.push({ label: 'Malicious', color: 'var(--error)' });
+                if (sus > 0) flags.push({ label: 'Suspicious', color: 'var(--warning)' });
+            }
         } else {
-            cards.push({ icon: 'security', label: 'VirusTotal Rep', value: '<span style="color:var(--text-muted); font-size:0.8rem;">API Key Not Set</span>' });
+            threatDetail = 'VirusTotal API key not configured — limited threat data.';
         }
 
-        document.getElementById('ipLookupGrid').innerHTML = cards.map(c => `
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:1rem; display:flex; align-items:flex-start; gap:0.75rem;">
-                <span class="material-symbols-outlined" style="color:var(--accent); font-size:1.4rem; flex-shrink:0; margin-top:2px;">${c.icon}</span>
-                <div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:3px;">${c.label}</div>
-                    <div style="font-size:0.9rem; font-weight:600; color:var(--text-primary); word-break:break-all;">${c.value}</div>
-                </div>
-            </div>`).join('');
+        if (d.country_code === 'CN' || d.country_code === 'RU' || d.country_code === 'KP') {
+            flags.push({ label: `High-risk region: ${d.country_name}`, color: 'var(--warning)' });
+            if (riskScore < 20) riskScore = 20;
+        }
+        if (!d.ip.includes(':') && d.ip.startsWith('10.') || d.ip.startsWith('192.168.') || d.ip.startsWith('172.')) {
+            flags.push({ label: 'Private / LAN Address', color: 'var(--info)' });
+            threatLabel = 'Local Network';
+            threatDetail = 'This is a private network address — not routable on the internet.';
+            threatColor = 'var(--info)';
+            threatIcon = '🏠';
+        }
+        if (d.org && (d.org.toLowerCase().includes('vpn') || d.org.toLowerCase().includes('proxy') || d.org.toLowerCase().includes('tor'))) {
+            flags.push({ label: 'VPN / Proxy / Tor', color: 'var(--warning)' });
+            riskScore = Math.max(riskScore, 30);
+        }
+
+        // Store for copy
+        lastIpReport = { query, d, vt, threatLabel, riskScore };
+
+        // ── Render Threat Banner ──
+        const banner = document.getElementById('ipThreatBanner');
+        banner.style.borderColor = threatColor;
+        banner.style.boxShadow = `0 0 28px ${threatColor}22`;
+        document.getElementById('ipThreatIcon').textContent = threatIcon;
+        document.getElementById('ipThreatLabel').style.color = threatColor;
+        document.getElementById('ipThreatLabel').textContent = threatLabel;
+        document.getElementById('ipThreatDetail').textContent = threatDetail;
+        document.getElementById('ipThreatScore').style.color = threatColor;
+        document.getElementById('ipThreatScore').textContent = riskScore;
+
+        // ── Render Geo Section ──
+        const countryFlag = d.country_code ? String.fromCodePoint(...[...d.country_code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0))) : '';
+        document.getElementById('ipGeoSection').innerHTML =
+            ipInfoRow('IP Address', `<code style="font-size:0.9rem;">${d.ip}</code>`) +
+            ipInfoRow('Country', `${countryFlag} ${d.country_name || '—'}`, 'flag') +
+            ipInfoRow('City / Region', [d.city, d.region].filter(Boolean).join(', ') || '—', 'location_city') +
+            ipInfoRow('Timezone', d.timezone || '—', 'schedule') +
+            ipInfoRow('Coordinates', d.latitude && d.longitude ? `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}` : '—', 'my_location');
+
+        // ── Render Network Section ──
+        document.getElementById('ipNetSection').innerHTML =
+            ipInfoRow('ASN', d.asn || '—', 'router') +
+            ipInfoRow('ISP / Org', d.org || '—', 'business') +
+            ipInfoRow('Network Type', d.ip_type || 'Standard Unicast', 'category') +
+            ipInfoRow('Currency', d.currency_name ? `${d.currency_name} (${d.currency})` : '—', 'payments') +
+            ipInfoRow('Languages', d.languages || '—', 'translate');
+
+        // ── Render VT Breakdown ──
+        if (vt) {
+            document.getElementById('ipVtBars').innerHTML =
+                vtBar('Malicious', vt.malicious || 0, vt.malicious > 0 ? 'var(--error)' : 'var(--success)') +
+                vtBar('Suspicious', vt.suspicious || 0, vt.suspicious > 0 ? 'var(--warning)' : 'var(--text-muted)') +
+                vtBar('Harmless', vt.harmless || 0, 'var(--success)') +
+                vtBar('Undetected', vt.undetected || 0, 'var(--text-muted)') +
+                vtBar('Timeout', vt.timeout || 0, 'var(--text-muted)');
+        } else {
+            document.getElementById('ipVtBars').innerHTML = `<div style="color:var(--text-muted); font-size:0.83rem; grid-column:1/-1;">
+                <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:-3px; margin-right:5px;">info</span>
+                Configure your VirusTotal API key in the Scanner settings to see engine breakdown results.
+            </div>`;
+        }
+
+        // ── Render Flags ──
+        document.getElementById('ipFlagsRow').innerHTML = flags.length
+            ? flags.map(f => `<span style="background:${f.color}15; border:1px solid ${f.color}40; color:${f.color}; padding:0.25rem 0.7rem; border-radius:50px; font-size:0.75rem; font-weight:700;">⚑ ${f.label}</span>`).join('')
+            : `<span style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success); padding:0.25rem 0.7rem; border-radius:50px; font-size:0.75rem; font-weight:700;">✓ No threat flags detected</span>`;
 
         document.getElementById('ipLookupResults').classList.remove('hidden');
         document.getElementById('netScannerStatusDot').className = 'scanner-status-dot done';
-        document.getElementById('netScannerStatusText').textContent = 'Lookup complete';
+        document.getElementById('netScannerStatusText').textContent = `Investigation complete — ${query}`;
+        document.getElementById('ipLookupResults').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
     } catch(err) {
         alert('Lookup failed. Check your connection and try again.');
         document.getElementById('netScannerStatusDot').className = 'scanner-status-dot';
-        document.getElementById('netScannerStatusText').textContent = 'Ready to look up IP';
+        document.getElementById('netScannerStatusText').textContent = 'Ready to investigate';
     } finally {
         btn.disabled = false;
-        document.getElementById('ipLookupBtnText').textContent = 'Look Up';
+        document.getElementById('ipLookupBtnText').textContent = 'Investigate';
     }
 }
 
+function copyIpReport() {
+    if (!lastIpReport) return;
+    const { query, d, vt, threatLabel, riskScore } = lastIpReport;
+    const txt = [
+        `Securix IP Intelligence Report`,
+        `Query: ${query}`,
+        `---`,
+        `IP: ${d.ip}`,
+        `Location: ${[d.city, d.region, d.country_name].filter(Boolean).join(', ')}`,
+        `Timezone: ${d.timezone}`,
+        `Coordinates: ${d.latitude}, ${d.longitude}`,
+        `ASN: ${d.asn}`,
+        `ISP/Org: ${d.org}`,
+        `---`,
+        `Threat Assessment: ${threatLabel}`,
+        `Risk Score: ${riskScore}/100`,
+        vt ? `VirusTotal: ${vt.malicious} malicious, ${vt.suspicious} suspicious` : 'VirusTotal: Not configured',
+        `---`,
+        `Generated by Securix at ${new Date().toISOString()}`
+    ].join('\n');
+    navigator.clipboard.writeText(txt).then(() => {
+        const btn = document.querySelector('[onclick="copyIpReport()"]');
+        if (btn) { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;">check</span> Copied!'; setTimeout(() => { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report'; }, 2000); }
+    });
+}
+
+
 
 // ── TAB SWITCHING ──
+
 function switchTab(tab) {
     const urlCard  = document.getElementById("scannerCard");
     const fileCard = document.getElementById("fileScannerCard");
