@@ -2447,12 +2447,20 @@ def api_ip_intelligence():
     is_ip = _is_valid_ip(query)
     lookup_target = query
 
-    # Resolve domain to IP for VT lookup (VT requires an IP)
+    # Resolve domain to IP for geo/VT lookups (ipapi.co only accepts IPs)
     if not is_ip:
         try:
             lookup_target = socket.gethostbyname(query)
         except Exception:
             return jsonify({"error": "Could not resolve domain"}), 400
+
+    # ── Geolocation (ipapi.co) ──
+    geo_data = None
+    try:
+        geo_res = req.get(f"https://ipapi.co/{lookup_target}/json/", timeout=5.0)
+        geo_data = geo_res.json()
+    except Exception:
+        pass
 
     # ── VirusTotal ──
     vt_key = session.get("vt_api_key") or os.environ.get("VIRUSTOTAL_API_KEY")
@@ -2537,6 +2545,7 @@ def api_ip_intelligence():
         ssl_info = None
 
     return jsonify({
+        "geo": geo_data,
         "vt": vt_stats,
         "whois": whois_data,
         "dns": dns_records,

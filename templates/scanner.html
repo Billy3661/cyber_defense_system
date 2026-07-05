@@ -207,6 +207,22 @@
                 </div>
             </div>
 
+            <!-- Geolocation -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">location_on</span> Geolocation
+                    </div>
+                    <div id="ipGeoSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
+                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">cell_tower</span> Network &amp; ASN
+                    </div>
+                    <div id="ipNetSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                </div>
+            </div>
+
             <!-- WHOIS Information -->
             <div id="ipWhoisSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
                 <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
@@ -246,7 +262,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
                 <div style="font-size:0.75rem; color:var(--text-muted);">
                     <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; color:var(--info);">info</span>
-                    Data from VirusTotal, WHOIS, DNS, SSL. For informational use only.
+                    Data from ipapi.co, VirusTotal, WHOIS, DNS, SSL. For informational use only.
                 </div>
                 <button onclick="copyIpReport()" class="btn btn-outline" style="padding:0.4rem 0.9rem; font-size:0.78rem; gap:4px;">
                     <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
@@ -617,6 +633,7 @@ async function performIpLookup() {
         }
 
         const vt = data.vt;
+        const d = data.geo;
 
         // ── Threat Score ──
         let riskScore = 0;
@@ -643,8 +660,20 @@ async function performIpLookup() {
             threatDetail = 'VirusTotal API key not configured — limited threat data.';
         }
 
+        // ── Geo-based flags ──
+        if (d) {
+            if (d.country_code === 'CN' || d.country_code === 'RU' || d.country_code === 'KP') {
+                flags.push({ label: `High-risk region: ${d.country_name}`, color: 'var(--warning)' });
+                if (riskScore < 20) riskScore = 20;
+            }
+            if (d.org && (d.org.toLowerCase().includes('vpn') || d.org.toLowerCase().includes('proxy') || d.org.toLowerCase().includes('tor'))) {
+                flags.push({ label: 'VPN / Proxy / Tor', color: 'var(--warning)' });
+                riskScore = Math.max(riskScore, 30);
+            }
+        }
+
         // Store for copy
-        lastIpReport = { query, vt, threatLabel, riskScore, whois: data.whois, dns: data.dns, ssl: data.ssl };
+        lastIpReport = { query, d, vt, threatLabel, riskScore, whois: data.whois, dns: data.dns, ssl: data.ssl };
 
         // ── Render Threat Banner ──
         const banner = document.getElementById('ipThreatBanner');
@@ -656,6 +685,27 @@ async function performIpLookup() {
         document.getElementById('ipThreatDetail').textContent = threatDetail;
         document.getElementById('ipThreatScore').style.color = threatColor;
         document.getElementById('ipThreatScore').textContent = riskScore;
+
+        // ── Render Geo Section ──
+        if (d) {
+            const countryFlag = d.country_code ? String.fromCodePoint(...[...d.country_code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0))) : '';
+            document.getElementById('ipGeoSection').innerHTML =
+                ipInfoRow('IP Address', `<code style="font-size:0.9rem;">${d.ip}</code>`) +
+                ipInfoRow('Country', `${countryFlag} ${d.country_name || '—'}`, 'flag') +
+                ipInfoRow('City / Region', [d.city, d.region].filter(Boolean).join(', ') || '—', 'location_city') +
+                ipInfoRow('Timezone', d.timezone || '—', 'schedule') +
+                ipInfoRow('Coordinates', d.latitude && d.longitude ? `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}` : '—', 'my_location');
+
+            document.getElementById('ipNetSection').innerHTML =
+                ipInfoRow('ASN', d.asn || '—', 'router') +
+                ipInfoRow('ISP / Org', d.org || '—', 'business') +
+                ipInfoRow('Network Type', d.ip_type || 'Standard Unicast', 'category') +
+                ipInfoRow('Currency', d.currency_name ? `${d.currency_name} (${d.currency})` : '—', 'payments') +
+                ipInfoRow('Languages', d.languages || '—', 'translate');
+        } else {
+            document.getElementById('ipGeoSection').innerHTML = ipInfoRow('Geolocation', 'Unavailable', 'search_off');
+            document.getElementById('ipNetSection').innerHTML = ipInfoRow('Network', 'Unavailable', 'search_off');
+        }
 
         // ── Render VT Breakdown ──
         if (vt) {
@@ -746,7 +796,7 @@ async function performIpLookup() {
 
 function copyIpReport() {
     if (!lastIpReport) return;
-    const { query, vt, threatLabel, riskScore, whois, dns, ssl } = lastIpReport;
+    const { query, d, vt, threatLabel, riskScore, whois, dns, ssl } = lastIpReport;
     const lines = [
         `Securix Domain Intelligence Report`,
         `Domain: ${query}`,
@@ -755,6 +805,13 @@ function copyIpReport() {
         `Risk Score: ${riskScore}/100`,
         vt ? `VirusTotal: ${vt.malicious} malicious, ${vt.suspicious} suspicious` : 'VirusTotal: Not configured',
     ];
+    if (d) {
+        lines.push(`---`,
+            `IP: ${d.ip}`,
+            `Location: ${[d.city, d.region, d.country_name].filter(Boolean).join(', ')}`,
+            `ISP/Org: ${d.org}`
+        );
+    }
     if (whois) {
         lines.push(`---`, `WHOIS:`);
         if (whois.registrar) lines.push(`  Registrar: ${whois.registrar.join(', ')}`);
