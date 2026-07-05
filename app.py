@@ -239,7 +239,7 @@ def parse_email_headers(raw_headers: str) -> dict:
         spf_status = "neutral"
 
     dkim_text = (extracted["dkim_signature"] + " " + extracted["authentication_results"]).lower()
-    if "dkim=pass" in dkim_text or "dkim pass" in dkim_text or "pass (ok)" in dkim_text or (extracted["dkim_signature"] and "dkim=fail" not in dkim_text):
+    if "dkim=pass" in dkim_text or "dkim pass" in dkim_text or "pass (ok)" in dkim_text:
         dkim_status = "pass"
     elif "dkim=fail" in dkim_text or "dkim fail" in dkim_text:
         dkim_status = "fail"
@@ -493,9 +493,6 @@ MOCK_INBOX_EMAILS = [
         "explanation": "This email is legitimate. The sender is internal HR, the tone is professional, it references standard company policy, the attachment is a safe PDF format, and there is no pressure or threat of negative action."
     }
 ]
-
-# Initialize database
-database.init_db()
 
 app = Flask(__name__)
 # SECRET_KEY from env is required for secure sessions on Render.
@@ -1208,10 +1205,10 @@ def edit_profile():
     if request.method == "POST":
         new_username = request.form.get("username")
         new_password = request.form.get("password")
+        current_password = request.form.get("current_password", "")
         profile_img = request.files.get("profile_image")
         
         user_id = session.get("user_id")
-        
         image_filename = None
         if profile_img and profile_img.filename:
             from werkzeug.utils import secure_filename
@@ -1229,12 +1226,18 @@ def edit_profile():
             flash("Username cannot be empty.", "error")
             return redirect(url_for("edit_profile"))
             
-        # Update username in database (Assuming update functionality)
+        # Update username in database
         user_id = session.get("user_id")
         try:
-            # Quick sqlite update
             database.execute_query("UPDATE users SET username = ? WHERE id = ?", (new_username, user_id))
             if new_password:
+                if not current_password:
+                    flash("Current password is required to set a new password.", "error")
+                    return redirect(url_for("edit_profile"))
+                user = database.get_user_by_username(session.get("username", ""))
+                if not user or not check_password_hash(user["password_hash"], current_password):
+                    flash("Current password is incorrect.", "error")
+                    return redirect(url_for("edit_profile"))
                 hashed_pwd = generate_password_hash(new_password)
                 database.execute_query("UPDATE users SET password_hash = ? WHERE id = ?", (hashed_pwd, user_id))
             
