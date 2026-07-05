@@ -1,11 +1,13 @@
 import re
 import json
 import socket
+import secrets
 import urllib.parse
 import functools
 import os
 import base64
 import hashlib
+import logging
 from io import BytesIO
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g, send_file, Response, stream_with_context
@@ -495,11 +497,30 @@ MOCK_INBOX_EMAILS = [
 ]
 
 app = Flask(__name__)
-# SECRET_KEY from env is required for secure sessions on Render.
-# A hardcoded fallback is used only for local development.
-app.secret_key = os.environ.get("SECRET_KEY", "local-dev-fallback-change-in-production")
+app.secret_key = os.environ.get("SECRET_KEY")
+if not app.secret_key:
+    app.secret_key = secrets.token_hex(32)
+    logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+
+# ─────────────────────────────────────────────
+#  CSRF PROTECTION
+# ─────────────────────────────────────────────
+
+def generate_csrf_token():
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_hex(32)
+    return session["csrf_token"]
+
+def validate_csrf():
+    token = request.form.get("csrf_token")
+    if not token or token != session.get("csrf_token"):
+        return False
+    return True
+
+app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
 
 # ─────────────────────────────────────────────
@@ -1145,6 +1166,10 @@ def index():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        if not validate_csrf():
+            flash("Session expired. Please try again.", "error")
+            return redirect(url_for("register"))
+
         username = request.form.get("username", "").strip().lower()
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
@@ -1174,6 +1199,10 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        if not validate_csrf():
+            flash("Session expired. Please try again.", "error")
+            return redirect(url_for("login"))
+
         username = request.form.get("username", "").strip().lower()
         password = request.form.get("password")
 
@@ -1203,6 +1232,10 @@ def login():
 @login_required
 def edit_profile():
     if request.method == "POST":
+        if not validate_csrf():
+            flash("Session expired. Please try again.", "error")
+            return redirect(url_for("edit_profile"))
+
         new_username = request.form.get("username")
         new_password = request.form.get("password")
         current_password = request.form.get("current_password", "")
@@ -1211,16 +1244,19 @@ def edit_profile():
         user_id = session.get("user_id")
         image_filename = None
         if profile_img and profile_img.filename:
-            from werkzeug.utils import secure_filename
-            import os
-            import uuid
-            
+            if profile_img.content_length and profile_img.content_length > 5 * 1024 * 1024:
+                flash("Profile image must be under 5 MB.", "error")
+                return redirect(url_for("edit_profile"))
+
             ext = profile_img.filename.rsplit('.', 1)[1].lower() if '.' in profile_img.filename else ''
-            if ext in ['png', 'jpg', 'jpeg', 'gif']:
-                image_filename = f"user_{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
-                upload_dir = os.path.join(app.root_path, 'static', 'uploads')
-                os.makedirs(upload_dir, exist_ok=True)
-                profile_img.save(os.path.join(upload_dir, image_filename))
+            if ext not in ['png', 'jpg', 'jpeg', 'gif']:
+                flash("Only PNG, JPG, and GIF images are allowed.", "error")
+                return redirect(url_for("edit_profile"))
+
+            image_filename = f"user_{user_id}_{secrets.token_hex(8)}.{ext}"
+            upload_dir = os.path.join(app.root_path, 'static', 'uploads')
+            os.makedirs(upload_dir, exist_ok=True)
+            profile_img.save(os.path.join(upload_dir, image_filename))
         
         if not new_username:
             flash("Username cannot be empty.", "error")
@@ -1300,9 +1336,12 @@ def config_vt_key():
     data = request.get_json() or {}
     key = data.get("key", "").strip()
     username = session.get("username", "")
+
+    if key and (len(key) < 20 or not re.match(r'^[A-Za-z0-9]+$', key)):
+        return jsonify({"status": "error", "message": "Invalid API key format."}), 400
+
     if username:
         database.set_user_vt_key(username, key)
-    # Also keep in session for this request cycle
     if key:
         session["vt_api_key"] = key
         return jsonify({"status": "success", "message": "VirusTotal API Key saved permanently ✓"})

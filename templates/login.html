@@ -22,6 +22,7 @@
         {% endwith %}
 
         <form action="{{ url_for('login') }}" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <label for="username" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Username</label>
                 <div class="scanner-input-wrap">

@@ -21,6 +21,7 @@
         {% endwith %}
 
         <form action="{{ url_for('edit_profile') }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center; margin-bottom: 1rem;">
                 <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 2px solid var(--accent); margin-bottom: 0.5rem;">
                     {% if current_user and current_user.profile_image %}
