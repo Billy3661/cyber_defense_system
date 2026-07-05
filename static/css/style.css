@@ -250,11 +250,40 @@
 [data-theme="light"] .scanner-main-input {
     color: var(--text-primary);
     background-color: #f0f5ff;
+    border-color: rgba(0, 0, 0, 0.12);
 }
 
 [data-theme="light"] .scan-input::placeholder,
 [data-theme="light"] .scanner-main-input::placeholder {
     color: var(--text-muted);
+}
+
+/* Chat widget in light mode */
+[data-theme="light"] .chat-window {
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .chat-header {
+    border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .chat-footer {
+    border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .chat-footer input {
+    border-color: rgba(0, 0, 0, 0.12);
+    background-color: #f0f4ff;
+}
+
+[data-theme="light"] .chat-message.ai .message-content {
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .user-dropdown {
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Theme toggle button */
@@ -3345,6 +3374,101 @@ a:hover {
 }
 [data-theme="light"] .wifi-filter-btn { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.03); color: var(--text-secondary); }
 [data-theme="light"] .wifi-filter-btn.active { background: rgba(37,99,235,0.08); border-color: var(--accent); color: var(--accent); }
+
+/* User status widget */
+.user-status-widget {
+    position: relative;
+}
+
+.user-badge {
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    padding: 0.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.profile-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+}
+
+.profile-avatar-icon {
+    font-size: 1.8rem;
+    color: var(--accent);
+}
+
+.btn-signin {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-signin .btn-signin-icon {
+    font-size: 1.1rem;
+    color: var(--accent);
+}
+
+[data-theme="light"] .btn-signin {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+/* User dropdown menu */
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.5rem;
+    background: var(--surface-light);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    min-width: 160px;
+    padding: 0.5rem 0;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.user-dropdown a {
+    display: block;
+    padding: 0.6rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.user-dropdown a:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-dropdown a.logout-link {
+    color: var(--error);
+}
+
+.user-dropdown a.logout-link:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.user-dropdown .dropdown-icon {
+    font-size: 1rem;
+    vertical-align: -2px;
+    margin-right: 6px;
+}
 
 /* =========================================
    AI Chatbot Widget

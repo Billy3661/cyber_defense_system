@@ -63,3 +63,20 @@ Rounds are applied incrementally on your command.
   - Avatar section uses `.avatar-wrap` / `.avatar-img` / `.avatar-placeholder-icon`
   - Edit profile flash messages use `.flash-msg` + `.flash-success`/`.flash-error`
 - [x] Added light mode counterpart for `.avatar-wrap` background
+
+---
+
+## Round 4 — UX/UI Improvements
+
+- [x] Added light mode CSS overrides for the AI chat widget:
+  - `.chat-window` border and box-shadow now adapt to light mode
+  - `.chat-header`, `.chat-footer` borders switch from white to dark
+  - `.chat-footer input` border and background adapt for light mode
+  - `.chat-message.ai .message-content` border adapts for light mode
+- [x] Added proper CSS classes for user navigation elements that were entirely inline:
+  - `.user-status-widget`, `.user-badge`, `.profile-avatar-img`, `.profile-avatar-icon`, `.btn-signin`, `.btn-signin-icon`
+  - `.user-dropdown` — moved from inline to a proper CSS class with hover states, `.logout-link` variant, `.dropdown-icon` utility
+  - Light mode overrides for `.user-dropdown` and `.btn-signin`
+- [x] Fixed theme-consistency of flash messages in `login.html`/`register.html`:
+  - Replaced hardcoded `#2ed573` color with CSS variables via `.flash-msg`/`.flash-success`/`.flash-error` classes
+- [x] Fixed `.scanner-main-input` light mode border-color (was missing from the later override block)

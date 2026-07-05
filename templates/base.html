@@ -53,26 +53,26 @@
 
             <div class="nav-actions" style="display: flex; align-items: center; gap: 0.75rem;">
                 {% if session.get('username') %}
-                <div class="user-status-widget" style="position: relative;">
-                    <button class="user-badge" id="userMenuBtn" onclick="document.getElementById('userMenuDropdown').classList.toggle('hidden')" style="color: var(--text-primary); background: transparent; border: none; padding: 0.4rem; cursor: pointer; display: flex; align-items: center;">
+                <div class="user-status-widget">
+                    <button class="user-badge" id="userMenuBtn" onclick="document.getElementById('userMenuDropdown').classList.toggle('hidden')">
                         {% if session.get('profile_image') %}
-                            <img src="{{ url_for('static', filename='uploads/' + session.profile_image) }}" alt="Profile" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent);" />
+                            <img src="{{ url_for('static', filename='uploads/' + session.profile_image) }}" alt="Profile" class="profile-avatar-img" />
                         {% else %}
-                            <span class="material-symbols-outlined" style="font-size: 1.8rem; color: var(--accent);">account_circle</span>
+                            <span class="material-symbols-outlined profile-avatar-icon">account_circle</span>
                         {% endif %}
                     </button>
-                    <div class="user-dropdown hidden" id="userMenuDropdown" style="position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background: var(--surface-light); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; min-width: 160px; padding: 0.5rem 0; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                        <a href="{{ url_for('edit_profile') }}" style="display: block; padding: 0.6rem 1rem; color: var(--text-primary); text-decoration: none; font-size: 0.85rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                            <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: -2px; margin-right: 6px;">manage_accounts</span> Edit Profile
+                    <div class="user-dropdown hidden" id="userMenuDropdown">
+                        <a href="{{ url_for('edit_profile') }}">
+                            <span class="material-symbols-outlined dropdown-icon">manage_accounts</span> Edit Profile
                         </a>
-                        <a href="{{ url_for('logout') }}" style="display: block; padding: 0.6rem 1rem; color: var(--error); text-decoration: none; font-size: 0.85rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'" onmouseout="this.style.background='transparent'">
-                            <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: -2px; margin-right: 6px;">logout</span> Sign Out
+                        <a href="{{ url_for('logout') }}" class="logout-link">
+                            <span class="material-symbols-outlined dropdown-icon">logout</span> Sign Out
                         </a>
                     </div>
                 </div>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="btn-signin" style="color: var(--text-primary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; padding: 0.4rem 0.85rem; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-                    <span class="material-symbols-outlined" style="font-size: 1.1rem; color: var(--accent);">login</span>
+                <a href="{{ url_for('login') }}" class="btn-signin">
+                    <span class="material-symbols-outlined btn-signin-icon">login</span>
                     <span>Sign In</span>
                 </a>
                 {% endif %}
