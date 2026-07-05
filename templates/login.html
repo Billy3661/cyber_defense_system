@@ -32,9 +32,12 @@
 
             <div class="field-group">
                 <label for="password" class="form-label">Password</label>
-                <div class="scanner-input-wrap">
+                <div class="scanner-input-wrap" style="position: relative;">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
-                    <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Enter your password" required style="padding-left: 3rem;" />
+                    <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Enter your password" required style="padding-left: 3rem; padding-right: 3rem;" />
+                    <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('password', this)" aria-label="Toggle password visibility">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -48,4 +51,20 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('.material-symbols-outlined');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+    }
+}
+</script>
 {% endblock %}

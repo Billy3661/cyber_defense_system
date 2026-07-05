@@ -32,18 +32,24 @@
             </div>
 
             <div class="field-group">
-                <label for="password" class="form-label">Password</label>
-                <div class="scanner-input-wrap">
+                <label for="regPassword" class="form-label">Password</label>
+                <div class="scanner-input-wrap" style="position: relative;">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
-                    <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Create password" required style="padding-left: 3rem;" />
+                    <input type="password" id="regPassword" name="password" class="scanner-main-input" placeholder="Create password" required style="padding-left: 3rem; padding-right: 3rem;" />
+                    <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('regPassword', this)" aria-label="Toggle password visibility">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
             <div class="field-group">
-                <label for="confirm_password" class="form-label">Confirm Password</label>
-                <div class="scanner-input-wrap">
+                <label for="regConfirmPassword" class="form-label">Confirm Password</label>
+                <div class="scanner-input-wrap" style="position: relative;">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
-                    <input type="password" id="confirm_password" name="confirm_password" class="scanner-main-input" placeholder="Confirm password" required style="padding-left: 3rem;" />
+                    <input type="password" id="regConfirmPassword" name="confirm_password" class="scanner-main-input" placeholder="Confirm password" required style="padding-left: 3rem; padding-right: 3rem;" />
+                    <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)" aria-label="Toggle password visibility">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -69,8 +75,20 @@
 
 {% block scripts %}
 <script>
-const regPwInput = document.getElementById("password");
-const regConfirmInput = document.getElementById("confirm_password");
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('.material-symbols-outlined');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+    } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+    }
+}
+
+const regPwInput = document.getElementById("regPassword");
+const regConfirmInput = document.getElementById("regConfirmPassword");
 const strengthBar = document.getElementById("regPwStrengthBar");
 const strengthLabel = document.getElementById("regPwStrengthLabel");
 const strengthContainer = document.getElementById("pwStrengthContainer");
