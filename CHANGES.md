@@ -80,3 +80,16 @@ Rounds are applied incrementally on your command.
 - [x] Fixed theme-consistency of flash messages in `login.html`/`register.html`:
   - Replaced hardcoded `#2ed573` color with CSS variables via `.flash-msg`/`.flash-success`/`.flash-error` classes
 - [x] Fixed `.scanner-main-input` light mode border-color (was missing from the later override block)
+
+---
+
+## Round 5 — Data Persistence (PostgreSQL Support)
+
+- [x] Rewrote `database.py` to support both SQLite (local dev) and PostgreSQL (production):
+  - Automatically detects `DATABASE_URL` env var — uses PostgreSQL when set, falls back to SQLite
+  - `_p()` helper converts placeholder syntax (`?` → `%s`) and DDL differences (`INTEGER PRIMARY KEY AUTOINCREMENT` → `SERIAL PRIMARY KEY`)
+  - Row-factory abstraction handles both `sqlite3.Row` and psycopg2 tuples
+  - All existing queries preserved without behavioral changes
+- [x] Added `psycopg2-binary==2.9.9` to `requirements.txt`
+- [x] Added `DATABASE_URL` env var to `render.yaml` (user must sync a value from Render PostgreSQL dashboard)
+- [x] Enabled SQLite WAL mode for better concurrent performance in local dev
