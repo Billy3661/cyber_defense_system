@@ -45,10 +45,25 @@
 
             <div class="field-group">
                 <label for="current_password" class="form-label">Current Password</label>
-                <div class="scanner-input-wrap">
+                <div class="scanner-input-wrap" style="position: relative;">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
-                    <input type="password" id="current_password" name="current_password" class="scanner-main-input" placeholder="Enter current password" style="padding-left: 3rem;" />
+                    <input type="password" id="current_password" name="current_password" class="scanner-main-input" placeholder="Enter current password" style="padding-left: 3rem; padding-right: 3rem;" />
+                    <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('current_password', this)" aria-label="Toggle password visibility">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
+            </div>
+
+            <div class="field-group">
+                <label for="new_password" class="form-label">New Password <span style="font-size:0.75rem; font-weight:normal; color:var(--text-muted);">(Leave blank to keep current)</span></label>
+                <div class="scanner-input-wrap" style="position: relative;">
+                    <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
+                    <input type="password" id="new_password" name="password" class="scanner-main-input" placeholder="Enter new password" style="padding-left: 3rem; padding-right: 3rem;" />
+                    <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('new_password', this)" aria-label="Toggle password visibility">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                </div>
+            </div>
             </div>
 
             <div class="field-group">
