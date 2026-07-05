@@ -2567,6 +2567,7 @@ def _is_valid_ip(value):
 # ─────────────────────────────────────────────
 
 @app.route("/api/chat", methods=["POST"])
+@login_required
 def api_chat():
     api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:

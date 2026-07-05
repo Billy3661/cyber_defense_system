@@ -166,6 +166,7 @@
     </footer>
 
     <!-- AI Chatbot Widget -->
+    {% if session.get('user_id') %}
     <div class="chat-widget" id="chatWidget">
         <div class="chat-window" id="chatWindow" style="display: none;">
             <div class="chat-header">
@@ -198,6 +199,7 @@
             <span class="chat-badge" style="display: none;" id="chatBadge"></span>
         </div>
     </div>
+    {% endif %}
 
     <script>
         // Chatbot logic
