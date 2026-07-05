@@ -2428,7 +2428,7 @@ def api_stats():
 
 
 # ─────────────────────────────────────────────
-#  IP INTELLIGENCE ENDPOINT
+#  DOMAIN INTELLIGENCE ENDPOINT
 # ─────────────────────────────────────────────
 @app.route("/api/ip-intelligence", methods=["POST"])
 @login_required
@@ -2436,7 +2436,7 @@ def api_ip_intelligence():
     data = request.get_json() or {}
     query = data.get("ip", "").strip()
     if not query:
-        return jsonify({"error": "IP or domain required"}), 400
+        return jsonify({"error": "Domain required"}), 400
 
     # Strip protocol and path if user pasted a full URL
     if "://" in query:
@@ -2447,19 +2447,12 @@ def api_ip_intelligence():
     is_ip = _is_valid_ip(query)
     lookup_target = query
 
-    # Resolve domain to IP for geo/VT lookups (ipapi.co only accepts IPs)
+    # Resolve domain to IP for VT lookup (VT requires an IP)
     if not is_ip:
         try:
             lookup_target = socket.gethostbyname(query)
         except Exception:
-            pass
-
-    # ── Geolocation (ipapi.co) — only accepts IP addresses ──
-    try:
-        geo_res = req.get(f"https://ipapi.co/{lookup_target}/json/", timeout=5.0)
-        geo_data = geo_res.json()
-    except Exception:
-        geo_data = {"error": True, "reason": "Geolocation service timeout"}
+            return jsonify({"error": "Could not resolve domain"}), 400
 
     # ── VirusTotal ──
     vt_key = session.get("vt_api_key") or os.environ.get("VIRUSTOTAL_API_KEY")
@@ -2544,7 +2537,6 @@ def api_ip_intelligence():
         ssl_info = None
 
     return jsonify({
-        "geo": geo_data,
         "vt": vt_stats,
         "whois": whois_data,
         "dns": dns_records,

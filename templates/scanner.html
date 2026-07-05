@@ -71,7 +71,7 @@
             <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">upload_file</span> File Scanner
         </button>
         <button class="scanner-tab" id="tabNetwork" onclick="switchTab('network')">
-            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">travel_explore</span> IP Intelligence
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">travel_explore</span> Domain Intelligence
         </button>
     </div>
 
@@ -153,21 +153,21 @@
         </div>
     </div>
 
-    <!-- IP Intelligence Card -->
+    <!-- Domain Intelligence Card -->
     <div class="scanner-card hidden" id="networkScannerCard">
         <div class="scanner-header">
             <div class="scanner-status-dot" id="netScannerStatusDot"></div>
             <span id="netScannerStatusText">Ready to investigate</span>
         </div>
 
-        <label class="scanner-label" style="display:block; margin-bottom:1rem;">IP Address / Domain Intelligence</label>
+        <label class="scanner-label" style="display:block; margin-bottom:1rem;">Domain Intelligence</label>
 
         <div class="scanner-input-group">
             <div class="scanner-input-row">
                 <div class="scanner-input-wrap">
                     <span class="scanner-prefix material-symbols-outlined">travel_explore</span>
                     <input type="text" id="ipLookupInput" class="scanner-main-input"
-                           placeholder="e.g. 8.8.8.8 or example.com"
+                           placeholder="e.g. example.com"
                            autocomplete="off" spellcheck="false"
                            onkeydown="if(event.key==='Enter') performIpLookup()" />
                     <button class="clear-btn" onclick="document.getElementById('ipLookupInput').value=''" title="Clear">✕</button>
@@ -181,10 +181,10 @@
 
         <div class="example-urls" style="margin-top:1rem;">
             <span class="example-label">Try examples:</span>
-            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='8.8.8.8'">8.8.8.8 (Google DNS)</button>
-            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='1.1.1.1'">1.1.1.1 (Cloudflare)</button>
             <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='github.com'">github.com</button>
-            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='45.33.32.156'">Known Server</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='maseno.ac.ke'">maseno.ac.ke</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='google.com'">google.com</button>
+            <button class="example-btn" onclick="document.getElementById('ipLookupInput').value='bit.ly'">bit.ly</button>
         </div>
 
         <!-- Rich Results Panel -->
@@ -207,20 +207,12 @@
                 </div>
             </div>
 
-            <!-- Two-column layout -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
-                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:1rem;">location_on</span> Geolocation
-                    </div>
-                    <div id="ipGeoSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+            <!-- WHOIS Information -->
+            <div id="ipWhoisSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">description</span> WHOIS Record
                 </div>
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
-                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:1rem;">cell_tower</span> Network &amp; ASN
-                    </div>
-                    <div id="ipNetSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
-                </div>
+                <div id="ipWhoisBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
             </div>
 
             <!-- VirusTotal Breakdown -->
@@ -229,14 +221,6 @@
                     <span class="material-symbols-outlined" style="font-size:1rem;">security</span> VirusTotal Engine Breakdown
                 </div>
                 <div id="ipVtBars" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:0.75rem;"></div>
-            </div>
-
-            <!-- WHOIS Information -->
-            <div id="ipWhoisSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
-                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
-                    <span class="material-symbols-outlined" style="font-size:1rem;">description</span> WHOIS Record
-                </div>
-                <div id="ipWhoisBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
             </div>
 
             <!-- DNS Records -->
@@ -262,7 +246,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
                 <div style="font-size:0.75rem; color:var(--text-muted);">
                     <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; color:var(--info);">info</span>
-                    Data from ipapi.co, VirusTotal, WHOIS, DNS, SSL. For informational use only.
+                    Data from VirusTotal, WHOIS, DNS, SSL. For informational use only.
                 </div>
                 <button onclick="copyIpReport()" class="btn btn-outline" style="padding:0.4rem 0.9rem; font-size:0.78rem; gap:4px;">
                     <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
@@ -627,12 +611,11 @@ async function performIpLookup() {
         });
         const data = await res.json();
 
-        if (data.error || (data.geo && data.geo.error)) {
-            alert('Could not resolve: ' + (data.geo?.reason || data.error || query));
+        if (data.error) {
+            alert('Could not resolve: ' + (data.error || query));
             return;
         }
 
-        const d = data.geo;
         const vt = data.vt;
 
         // ── Threat Score ──
@@ -660,24 +643,8 @@ async function performIpLookup() {
             threatDetail = 'VirusTotal API key not configured — limited threat data.';
         }
 
-        if (d.country_code === 'CN' || d.country_code === 'RU' || d.country_code === 'KP') {
-            flags.push({ label: `High-risk region: ${d.country_name}`, color: 'var(--warning)' });
-            if (riskScore < 20) riskScore = 20;
-        }
-        if (!d.ip.includes(':') && d.ip.startsWith('10.') || d.ip.startsWith('192.168.') || d.ip.startsWith('172.')) {
-            flags.push({ label: 'Private / LAN Address', color: 'var(--info)' });
-            threatLabel = 'Local Network';
-            threatDetail = 'This is a private network address — not routable on the internet.';
-            threatColor = 'var(--info)';
-            threatIcon = '🏠';
-        }
-        if (d.org && (d.org.toLowerCase().includes('vpn') || d.org.toLowerCase().includes('proxy') || d.org.toLowerCase().includes('tor'))) {
-            flags.push({ label: 'VPN / Proxy / Tor', color: 'var(--warning)' });
-            riskScore = Math.max(riskScore, 30);
-        }
-
         // Store for copy
-        lastIpReport = { query, d, vt, threatLabel, riskScore, whois: data.whois, dns: data.dns, ssl: data.ssl };
+        lastIpReport = { query, vt, threatLabel, riskScore, whois: data.whois, dns: data.dns, ssl: data.ssl };
 
         // ── Render Threat Banner ──
         const banner = document.getElementById('ipThreatBanner');
@@ -689,23 +656,6 @@ async function performIpLookup() {
         document.getElementById('ipThreatDetail').textContent = threatDetail;
         document.getElementById('ipThreatScore').style.color = threatColor;
         document.getElementById('ipThreatScore').textContent = riskScore;
-
-        // ── Render Geo Section ──
-        const countryFlag = d.country_code ? String.fromCodePoint(...[...d.country_code.toUpperCase()].map(c => 0x1F1E6 - 65 + c.charCodeAt(0))) : '';
-        document.getElementById('ipGeoSection').innerHTML =
-            ipInfoRow('IP Address', `<code style="font-size:0.9rem;">${d.ip}</code>`) +
-            ipInfoRow('Country', `${countryFlag} ${d.country_name || '—'}`, 'flag') +
-            ipInfoRow('City / Region', [d.city, d.region].filter(Boolean).join(', ') || '—', 'location_city') +
-            ipInfoRow('Timezone', d.timezone || '—', 'schedule') +
-            ipInfoRow('Coordinates', d.latitude && d.longitude ? `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}` : '—', 'my_location');
-
-        // ── Render Network Section ──
-        document.getElementById('ipNetSection').innerHTML =
-            ipInfoRow('ASN', d.asn || '—', 'router') +
-            ipInfoRow('ISP / Org', d.org || '—', 'business') +
-            ipInfoRow('Network Type', d.ip_type || 'Standard Unicast', 'category') +
-            ipInfoRow('Currency', d.currency_name ? `${d.currency_name} (${d.currency})` : '—', 'payments') +
-            ipInfoRow('Languages', d.languages || '—', 'translate');
 
         // ── Render VT Breakdown ──
         if (vt) {
@@ -796,17 +746,10 @@ async function performIpLookup() {
 
 function copyIpReport() {
     if (!lastIpReport) return;
-    const { query, d, vt, threatLabel, riskScore, whois, dns, ssl } = lastIpReport;
+    const { query, vt, threatLabel, riskScore, whois, dns, ssl } = lastIpReport;
     const lines = [
-        `Securix IP Intelligence Report`,
-        `Query: ${query}`,
-        `---`,
-        `IP: ${d.ip}`,
-        `Location: ${[d.city, d.region, d.country_name].filter(Boolean).join(', ')}`,
-        `Timezone: ${d.timezone}`,
-        `Coordinates: ${d.latitude}, ${d.longitude}`,
-        `ASN: ${d.asn}`,
-        `ISP/Org: ${d.org}`,
+        `Securix Domain Intelligence Report`,
+        `Domain: ${query}`,
         `---`,
         `Threat Assessment: ${threatLabel}`,
         `Risk Score: ${riskScore}/100`,
