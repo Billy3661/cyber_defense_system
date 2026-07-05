@@ -2438,6 +2438,12 @@ def api_ip_intelligence():
     if not query:
         return jsonify({"error": "IP or domain required"}), 400
 
+    # Strip protocol and path if user pasted a full URL
+    if "://" in query:
+        parsed = urllib.parse.urlparse(query)
+        query = parsed.hostname or parsed.netloc.split(":")[0]
+    query = query.rstrip("/")
+
     is_ip = _is_valid_ip(query)
     lookup_target = query
 
