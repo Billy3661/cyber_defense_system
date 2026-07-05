@@ -10,14 +10,12 @@ import hashlib
 import logging
 from io import BytesIO
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, g, send_file, Response, stream_with_context
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file
 import requests as req
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import database
-from groq import Groq
-import markdown
 
 # Load .env for local development (no-op in production)
 load_dotenv()
@@ -2492,15 +2490,17 @@ Do not use emojis unless appropriate for the tone. Focus on actionable security 
             messages.append({"role": role, "content": msg.get("content", "")})
         messages.append({"role": "user", "content": user_message})
 
-        # Direct HTTP request — bypasses SDK connection issues on cloud hosts
+        groq_api_base = os.environ.get("GROQ_API_BASE", "https://api.groq.com/openai/v1/chat/completions")
+        groq_model = os.environ.get("GROQ_MODEL", "llama-3.1-8b-instant")
+
         groq_response = req.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+            groq_api_base,
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama-3.1-8b-instant",
+                "model": groq_model,
                 "messages": messages,
                 "temperature": 0.7,
                 "max_tokens": 2048

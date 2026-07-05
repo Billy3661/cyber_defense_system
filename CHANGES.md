@@ -45,3 +45,21 @@ Rounds are applied incrementally on your command.
   - Restricted allowed file extensions to `png`, `jpg`, `jpeg`, `gif`
   - Replaced `uuid.uuid4().hex[:8]` with cryptographically secure `secrets.token_hex(8)` for filenames
   - Removed redundant `import os` / `from werkzeug.utils import secure_filename` inside the request handler (were already imported at module top-level)
+
+---
+
+## Round 3 — Code Quality
+
+- [x] Removed dead imports: `from groq import Groq`, `import markdown`, `g`, `Response`, `stream_with_context` from Flask
+- [x] Made Groq AI configuration dynamic:
+  - `GROQ_API_BASE` env var (default: `https://api.groq.com/openai/v1/chat/completions`)
+  - `GROQ_MODEL` env var (default: `llama-3.1-8b-instant`)
+- [x] Added reusable CSS utility classes to `style.css`: `.form-stack`, `.field-group`, `.form-label`, `.btn-block`, `.flash-msg`, `.flash-success`, `.flash-error`, `.avatar-wrap`, `.avatar-img`, `.avatar-placeholder-icon`
+- [x] Migrated inline styles to CSS classes in `login.html`, `register.html`, `edit_profile.html`:
+  - Forms now use `.form-stack`
+  - Field groups use `.field-group`
+  - Labels use `.form-label`
+  - Full-width buttons use `.btn-block`
+  - Avatar section uses `.avatar-wrap` / `.avatar-img` / `.avatar-placeholder-icon`
+  - Edit profile flash messages use `.flash-msg` + `.flash-success`/`.flash-error`
+- [x] Added light mode counterpart for `.avatar-wrap` background

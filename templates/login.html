@@ -9,7 +9,6 @@
         <h2 style="margin-bottom: 0.5rem; text-align: center;">Welcome Back</h2>
         <p style="text-align: center; margin-bottom: 2rem; font-size: 0.9rem;">Sign in to access your security tools and diagnostics</p>
 
-        <!-- Flash messages for errors -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -21,25 +20,25 @@
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('login') }}" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <form action="{{ url_for('login') }}" method="POST" class="form-stack">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="username" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Username</label>
+            <div class="field-group">
+                <label for="username" class="form-label">Username</label>
                 <div class="scanner-input-wrap">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">person</span>
                     <input type="text" id="username" name="username" class="scanner-main-input" placeholder="Enter your username" required style="padding-left: 3rem;" autocomplete="off" />
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="password" style="font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Password</label>
+            <div class="field-group">
+                <label for="password" class="form-label">Password</label>
                 <div class="scanner-input-wrap">
                     <span class="scanner-prefix material-symbols-outlined" style="left: 1rem;">key</span>
                     <input type="password" id="password" name="password" class="scanner-main-input" placeholder="Enter your password" required style="padding-left: 3rem;" />
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem; padding: 0.9rem;">
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem; padding: 0.9rem;">
                 <span class="material-symbols-outlined" style="font-size: 1.25rem; margin-right: 4px;">lock</span> Sign In
             </button>
         </form>
