@@ -2439,10 +2439,18 @@ def api_ip_intelligence():
         return jsonify({"error": "IP or domain required"}), 400
 
     is_ip = _is_valid_ip(query)
+    lookup_target = query
 
-    # ── Geolocation (ipapi.co) ──
+    # Resolve domain to IP for geo/VT lookups (ipapi.co only accepts IPs)
+    if not is_ip:
+        try:
+            lookup_target = socket.gethostbyname(query)
+        except Exception:
+            pass
+
+    # ── Geolocation (ipapi.co) — only accepts IP addresses ──
     try:
-        geo_res = req.get(f"https://ipapi.co/{query}/json/", timeout=5.0)
+        geo_res = req.get(f"https://ipapi.co/{lookup_target}/json/", timeout=5.0)
         geo_data = geo_res.json()
     except Exception:
         geo_data = {"error": True, "reason": "Geolocation service timeout"}
@@ -2453,7 +2461,7 @@ def api_ip_intelligence():
     if vt_key:
         try:
             vt_res = req.get(
-                f"https://www.virustotal.com/api/v3/ip_addresses/{query}",
+                f"https://www.virustotal.com/api/v3/ip_addresses/{lookup_target}",
                 headers={"x-apikey": vt_key},
                 timeout=3.0
             )
