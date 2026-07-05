@@ -1227,7 +1227,7 @@ def login():
             flash("Invalid username or password.", "error")
             return redirect(url_for("login"))
 
-    return render_template("login.html")
+    return render_template("login.html", login_failed=False)
 
 @app.route("/edit-profile", methods=["GET", "POST"])
 @login_required
