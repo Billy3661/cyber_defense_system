@@ -231,6 +231,30 @@
                 <div id="ipVtBars" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:0.75rem;"></div>
             </div>
 
+            <!-- WHOIS Information -->
+            <div id="ipWhoisSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">description</span> WHOIS Record
+                </div>
+                <div id="ipWhoisBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+            </div>
+
+            <!-- DNS Records -->
+            <div id="ipDnsSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">dns</span> DNS Records
+                </div>
+                <div id="ipDnsBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+            </div>
+
+            <!-- SSL Certificate -->
+            <div id="ipSslSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
+                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--warning); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">enhanced_encryption</span> SSL / TLS Certificate
+                </div>
+                <div id="ipSslBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+            </div>
+
             <!-- Flags -->
             <div id="ipFlagsRow" style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem;"></div>
 
@@ -238,7 +262,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
                 <div style="font-size:0.75rem; color:var(--text-muted);">
                     <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; color:var(--info);">info</span>
-                    Data from ipapi.co &amp; VirusTotal. Approximate — for informational use only.
+                    Data from ipapi.co, VirusTotal, WHOIS, DNS, SSL. For informational use only.
                 </div>
                 <button onclick="copyIpReport()" class="btn btn-outline" style="padding:0.4rem 0.9rem; font-size:0.78rem; gap:4px;">
                     <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
@@ -653,7 +677,7 @@ async function performIpLookup() {
         }
 
         // Store for copy
-        lastIpReport = { query, d, vt, threatLabel, riskScore };
+        lastIpReport = { query, d, vt, threatLabel, riskScore, whois: data.whois, dns: data.dns, ssl: data.ssl };
 
         // ── Render Threat Banner ──
         const banner = document.getElementById('ipThreatBanner');
@@ -698,6 +722,58 @@ async function performIpLookup() {
             </div>`;
         }
 
+        // ── Render WHOIS ──
+        const whois = data.whois;
+        if (whois) {
+            document.getElementById('ipWhoisSection').style.display = 'block';
+            const rows = [];
+            if (whois.registrar) rows.push(ipInfoRow('Registrar', whois.registrar.join(', '), 'store'));
+            if (whois.org) rows.push(ipInfoRow('Organization', whois.org.join(', '), 'business'));
+            if (whois.creation_date) rows.push(ipInfoRow('Created', whois.creation_date.split(' ')[0] || whois.creation_date, 'calendar_today'));
+            if (whois.expiration_date) rows.push(ipInfoRow('Expires', whois.expiration_date.split(' ')[0] || whois.expiration_date, 'event'));
+            if (whois.updated_date) rows.push(ipInfoRow('Updated', whois.updated_date.split(' ')[0] || whois.updated_date, 'update'));
+            if (whois.country) rows.push(ipInfoRow('Country', whois.country, 'flag'));
+            if (whois.emails) rows.push(ipInfoRow('Abuse Contact', whois.emails.join(', '), 'mail'));
+            if (whois.name_servers) rows.push(ipInfoRow('Name Servers', whois.name_servers.join(', '), 'dns'));
+            if (whois.status) rows.push(ipInfoRow('Domain Status', whois.status.join(', '), 'info'));
+            document.getElementById('ipWhoisBody').innerHTML = rows.join('');
+        }
+
+        // ── Render DNS Records ──
+        const dns = data.dns;
+        if (dns) {
+            document.getElementById('ipDnsSection').style.display = 'block';
+            const dnsRows = [];
+            if (dns.a && dns.a.length) dnsRows.push(ipInfoRow('A Records', dns.a.join('<br>'), 'link'));
+            if (dns.aaaa && dns.aaaa.length) dnsRows.push(ipInfoRow('AAAA Records', dns.aaaa.join('<br>'), 'link'));
+            if (dns.mx && dns.mx.length) dnsRows.push(ipInfoRow('MX Records', dns.mx.join('<br>'), 'mail'));
+            if (dns.ns && dns.ns.length) dnsRows.push(ipInfoRow('NS Records', dns.ns.join('<br>'), 'dns'));
+            if (dns.txt && dns.txt.length) dnsRows.push(ipInfoRow('TXT Records', dns.txt.slice(0, 3).join('<br>'), 'info'));
+            if (dns.cname && dns.cname.length) dnsRows.push(ipInfoRow('CNAME', dns.cname.join('<br>'), 'arrow_right_alt'));
+            if (dns.ptr) dnsRows.push(ipInfoRow('Reverse DNS (PTR)', dns.ptr, 'swap_vert'));
+            if (!dnsRows.length) dnsRows.push(ipInfoRow('DNS Records', 'No records found', 'search_off'));
+            document.getElementById('ipDnsBody').innerHTML = dnsRows.join('');
+        }
+
+        // ── Render SSL Certificate ──
+        const ssl = data.ssl;
+        if (ssl) {
+            document.getElementById('ipSslSection').style.display = 'block';
+            const sslRows = [];
+            if (ssl.subject && ssl.subject.commonName) sslRows.push(ipInfoRow('Common Name', ssl.subject.commonName, 'badge'));
+            if (ssl.subject && ssl.subject.organizationName) sslRows.push(ipInfoRow('Organization', ssl.subject.organizationName, 'business'));
+            if (ssl.issuer && ssl.issuer.commonName) sslRows.push(ipInfoRow('Issuer', ssl.issuer.commonName, 'verified'));
+            if (ssl.valid_from) sslRows.push(ipInfoRow('Valid From', ssl.valid_from.split(' ')[0] || ssl.valid_from, 'calendar_today'));
+            if (ssl.valid_to) sslRows.push(ipInfoRow('Valid Until', ssl.valid_to.split(' ')[0] || ssl.valid_to, 'event'));
+            if (ssl.san && ssl.san.length) {
+                const sanList = ssl.san.slice(0, 6).join('<br>');
+                const more = ssl.san.length > 6 ? `<br><span style="color:var(--text-muted);font-size:0.78rem;">+${ssl.san.length - 6} more</span>` : '';
+                sslRows.push(ipInfoRow('Subject Alt Names', sanList + more, 'language'));
+            }
+            if (!sslRows.length) sslRows.push(ipInfoRow('SSL Certificate', 'Certificate data unavailable', 'search_off'));
+            document.getElementById('ipSslBody').innerHTML = sslRows.join('');
+        }
+
         // ── Render Flags ──
         document.getElementById('ipFlagsRow').innerHTML = flags.length
             ? flags.map(f => `<span style="background:${f.color}15; border:1px solid ${f.color}40; color:${f.color}; padding:0.25rem 0.7rem; border-radius:50px; font-size:0.75rem; font-weight:700;">⚑ ${f.label}</span>`).join('')
@@ -720,8 +796,8 @@ async function performIpLookup() {
 
 function copyIpReport() {
     if (!lastIpReport) return;
-    const { query, d, vt, threatLabel, riskScore } = lastIpReport;
-    const txt = [
+    const { query, d, vt, threatLabel, riskScore, whois, dns, ssl } = lastIpReport;
+    const lines = [
         `Securix IP Intelligence Report`,
         `Query: ${query}`,
         `---`,
@@ -735,9 +811,32 @@ function copyIpReport() {
         `Threat Assessment: ${threatLabel}`,
         `Risk Score: ${riskScore}/100`,
         vt ? `VirusTotal: ${vt.malicious} malicious, ${vt.suspicious} suspicious` : 'VirusTotal: Not configured',
-        `---`,
-        `Generated by Securix at ${new Date().toISOString()}`
-    ].join('\n');
+    ];
+    if (whois) {
+        lines.push(`---`, `WHOIS:`);
+        if (whois.registrar) lines.push(`  Registrar: ${whois.registrar.join(', ')}`);
+        if (whois.org) lines.push(`  Org: ${whois.org.join(', ')}`);
+        if (whois.creation_date) lines.push(`  Created: ${whois.creation_date.split(' ')[0]}`);
+        if (whois.expiration_date) lines.push(`  Expires: ${whois.expiration_date.split(' ')[0]}`);
+        if (whois.emails) lines.push(`  Abuse: ${whois.emails.join(', ')}`);
+        if (whois.name_servers) lines.push(`  Name Servers: ${whois.name_servers.join(', ')}`);
+    }
+    if (dns && dns.a && dns.a.length) {
+        lines.push(`---`, `DNS:`);
+        if (dns.a.length) lines.push(`  A: ${dns.a.join(', ')}`);
+        if (dns.aaaa && dns.aaaa.length) lines.push(`  AAAA: ${dns.aaaa.join(', ')}`);
+        if (dns.mx && dns.mx.length) lines.push(`  MX: ${dns.mx.join(', ')}`);
+        if (dns.ns && dns.ns.length) lines.push(`  NS: ${dns.ns.join(', ')}`);
+        if (dns.ptr) lines.push(`  PTR: ${dns.ptr}`);
+    }
+    if (ssl && ssl.subject) {
+        lines.push(`---`, `SSL:`);
+        if (ssl.subject.commonName) lines.push(`  CN: ${ssl.subject.commonName}`);
+        if (ssl.issuer && ssl.issuer.commonName) lines.push(`  Issuer: ${ssl.issuer.commonName}`);
+        if (ssl.valid_to) lines.push(`  Valid Until: ${ssl.valid_to.split(' ')[0]}`);
+    }
+    lines.push(`---`, `Generated by Securix at ${new Date().toISOString()}`);
+    const txt = lines.join('\n');
     navigator.clipboard.writeText(txt).then(() => {
         const btn = document.querySelector('[onclick="copyIpReport()"]');
         if (btn) { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;">check</span> Copied!'; setTimeout(() => { btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report'; }, 2000); }

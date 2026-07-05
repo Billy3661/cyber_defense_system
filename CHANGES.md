@@ -93,3 +93,21 @@ Rounds are applied incrementally on your command.
 - [x] Added `psycopg2-binary==2.9.9` to `requirements.txt`
 - [x] Added `DATABASE_URL` env var to `render.yaml` (user must sync a value from Render PostgreSQL dashboard)
 - [x] Enabled SQLite WAL mode for better concurrent performance in local dev
+
+---
+
+## Round 6 — IP Intelligence OSINT Enhancement
+
+- [x] Added **WHOIS lookup** via `python-whois` library (already in requirements):
+  - Registrar, organization, creation/expiration/update dates
+  - Name servers, abuse contact emails, domain status
+- [x] Added **DNS record enumeration** via `dnspython` (already in requirements):
+  - A, AAAA, MX, TXT, NS, CNAME records (up to 8 each)
+  - Reverse DNS / PTR lookup for IP addresses
+- [x] Added **SSL/TLS certificate inspection** (stdlib `ssl` module, best-effort):
+  - Common name, organization, issuer
+  - Validity period (notBefore / notAfter)
+  - Subject Alternative Names (SANs) up to 6 displayed
+- [x] Updated UI with 3 new result panels: WHOIS Record, DNS Records, SSL/TLS Certificate
+- [x] Updated Copy Report to include all new intelligence data
+- [x] Updated data source footer to reflect enriched sources

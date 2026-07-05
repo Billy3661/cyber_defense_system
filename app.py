@@ -1,6 +1,7 @@
 import re
 import json
 import socket
+import ssl
 import secrets
 import urllib.parse
 import functools
@@ -12,6 +13,8 @@ from io import BytesIO
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, send_file
 import requests as req
+import whois
+import dns.resolver
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -2435,12 +2438,16 @@ def api_ip_intelligence():
     if not query:
         return jsonify({"error": "IP or domain required"}), 400
 
+    is_ip = _is_valid_ip(query)
+
+    # ── Geolocation (ipapi.co) ──
     try:
         geo_res = req.get(f"https://ipapi.co/{query}/json/", timeout=5.0)
         geo_data = geo_res.json()
     except Exception:
         geo_data = {"error": True, "reason": "Geolocation service timeout"}
 
+    # ── VirusTotal ──
     vt_key = session.get("vt_api_key") or os.environ.get("VIRUSTOTAL_API_KEY")
     vt_stats = None
     if vt_key:
@@ -2455,7 +2462,90 @@ def api_ip_intelligence():
         except Exception:
             pass
 
-    return jsonify({"geo": geo_data, "vt": vt_stats})
+    # ── WHOIS Lookup ──
+    whois_data = None
+    try:
+        w = whois.whois(query)
+        def _first_or_list(val):
+            if not val:
+                return None
+            if isinstance(val, list):
+                return [str(v) for v in val if v]
+            return [str(val)] if str(val) else None
+        whois_data = {
+            "registrar": _first_or_list(w.registrar),
+            "creation_date": str(w.creation_date[0]) if isinstance(w.creation_date, list) and w.creation_date else (str(w.creation_date) if w.creation_date else None),
+            "expiration_date": str(w.expiration_date[0]) if isinstance(w.expiration_date, list) and w.expiration_date else (str(w.expiration_date) if w.expiration_date else None),
+            "updated_date": str(w.updated_date[0]) if isinstance(w.updated_date, list) and w.updated_date else (str(w.updated_date) if w.updated_date else None),
+            "name_servers": _first_or_list(w.name_servers),
+            "org": _first_or_list(w.org),
+            "country": w.country if isinstance(w.country, str) else (_first_or_list(w.country)[0] if _first_or_list(w.country) else None),
+            "emails": _first_or_list(w.emails),
+            "status": _first_or_list(w.status),
+        }
+    except Exception:
+        whois_data = None
+
+    # ── DNS Records ──
+    dns_records = {}
+    for rtype in ("A", "AAAA", "MX", "TXT", "NS", "CNAME"):
+        try:
+            answers = dns.resolver.resolve(query, rtype, lifetime=3.0)
+            dns_records[rtype.lower()] = [str(r) for r in answers][:8]
+        except Exception:
+            dns_records[rtype.lower()] = []
+
+    # Reverse DNS (PTR) — only for IPs
+    if is_ip:
+        try:
+            hostname, _, _ = socket.gethostbyaddr(query)
+            dns_records["ptr"] = hostname
+        except Exception:
+            dns_records["ptr"] = None
+    else:
+        dns_records["ptr"] = None
+
+    # ── SSL Certificate (best-effort, port 443) ──
+    ssl_info = None
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with ctx.wrap_socket(socket.socket(socket.AF_INET), server_hostname=query) as ssock:
+            ssock.settimeout(4.0)
+            ssock.connect((query, 443))
+            cert = ssock.getpeercert()
+            if cert:
+                subject = dict(x[0] for x in cert.get("subject", []) if x)
+                issuer = dict(x[0] for x in cert.get("issuer", []) if x)
+                ssl_info = {
+                    "subject": subject,
+                    "issuer": issuer,
+                    "valid_from": cert.get("notBefore"),
+                    "valid_to": cert.get("notAfter"),
+                    "san": [f"{t[0]}:{t[1]}" for t in cert.get("subjectAltName", [])],
+                    "version": cert.get("version"),
+                }
+    except Exception:
+        ssl_info = None
+
+    return jsonify({
+        "geo": geo_data,
+        "vt": vt_stats,
+        "whois": whois_data,
+        "dns": dns_records,
+        "ssl": ssl_info,
+    })
+
+
+def _is_valid_ip(value):
+    parts = value.split(".")
+    if len(parts) != 4:
+        return False
+    for p in parts:
+        if not p.isdigit() or not 0 <= int(p) <= 255:
+            return False
+    return True
 
 # ─────────────────────────────────────────────
 #  AI CHATBOT (GEMINI)
