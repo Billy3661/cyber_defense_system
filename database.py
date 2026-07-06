@@ -105,8 +105,62 @@ def init_db():
         )
     """))
 
+    # ── Chat History tables ──
+    cur.execute(_p("""
+        CREATE TABLE IF NOT EXISTS chat_conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            title TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+    cur.execute(_p("""
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+
     conn.commit()
     conn.close()
+
+def create_conversation(username, title=""):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    if using_postgres():
+        cur.execute("INSERT INTO chat_conversations (username, title) VALUES (%s, %s) RETURNING id", (username, title))
+        conn.commit()
+        conv_id = cur.fetchone()[0]
+    else:
+        cur.execute("INSERT INTO chat_conversations (username, title) VALUES (?, ?)", (username, title))
+        conn.commit()
+        conv_id = cur.lastrowid
+    conn.close()
+    return conv_id
+
+def add_message(conversation_id, role, content):
+    execute_query("INSERT INTO chat_messages (conversation_id, role, content) VALUES (?, ?, ?)", (conversation_id, role, content))
+    execute_query("UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", (conversation_id,))
+
+def update_conversation_title(conversation_id, title):
+    execute_query("UPDATE chat_conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (title, conversation_id))
+
+def get_conversations(username):
+    return execute_query("SELECT * FROM chat_conversations WHERE username = ? ORDER BY updated_at DESC", (username,), fetch_all=True)
+
+def get_messages(conversation_id):
+    return execute_query("SELECT id, role, content, created_at FROM chat_messages WHERE conversation_id = ? ORDER BY created_at ASC", (conversation_id,), fetch_all=True)
+
+def delete_conversation(conversation_id):
+    execute_query("DELETE FROM chat_messages WHERE conversation_id = ?", (conversation_id,))
+    execute_query("DELETE FROM chat_conversations WHERE id = ?", (conversation_id,))
+
+def delete_message(message_id):
+    execute_query("DELETE FROM chat_messages WHERE id = ?", (message_id,))
 
 def create_user(username, password_hash):
     conn = get_db_connection()

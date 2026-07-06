@@ -3087,7 +3087,7 @@ def _is_valid_ip(value):
     return True
 
 # ─────────────────────────────────────────────
-#  AI CHATBOT (GEMINI)
+#  AI CHATBOT
 # ─────────────────────────────────────────────
 
 @app.route("/api/chat", methods=["POST"])
@@ -3097,22 +3097,29 @@ def api_chat():
     if not api_key:
         return jsonify({"error": "AI is not configured. Please contact the administrator."}), 500
 
+    username = session["username"]
+
     try:
         data = request.json
-        user_message = data.get("message", "")
+        user_message = data.get("message", "").strip()
+        conv_id = data.get("conversation_id")
         history = data.get("history", [])
         context = data.get("context", "")
 
         if not user_message:
             return jsonify({"error": "Empty message provided."}), 400
 
-        system_prompt = """You are Securix AI, an elite cybersecurity assistant integrated into the Securix Cyber Defense System.
-Your job is to help users understand cybersecurity concepts, explain vulnerabilities, provide remediation steps, and guide them through the Securix platform.
-Respond in a concise, professional, and helpful manner. Format your responses using Markdown, as it will be rendered as HTML on the frontend.
-Do not use emojis unless appropriate for the tone. Focus on actionable security advice."""
+        # Create conversation if new
+        if not conv_id:
+            conv_id = database.create_conversation(username, user_message[:80])
+
+        # Save user message
+        database.add_message(conv_id, "user", user_message)
+
+        system_prompt = """You are Securix AI, a cybersecurity assistant. Answer in 2-4 short paragraphs maximum. Be direct and precise. Use Markdown only when it aids clarity (bullet points, bold). Never use emojis. If asked about a scan result, interpret it specifically. If you don't know, say so."""
 
         if context:
-            system_prompt += f"\n\nUSER CONTEXT (Background info for this request):\n{context}"
+            system_prompt += f"\n\nContext:\n{context}"
 
         messages = [{"role": "system", "content": system_prompt}]
         for msg in history:
@@ -3132,8 +3139,8 @@ Do not use emojis unless appropriate for the tone. Focus on actionable security 
             json={
                 "model": groq_model,
                 "messages": messages,
-                "temperature": 0.7,
-                "max_tokens": 2048
+                "temperature": 0.4,
+                "max_tokens": 1024
             },
             timeout=30
         )
@@ -3143,13 +3150,71 @@ Do not use emojis unless appropriate for the tone. Focus on actionable security 
             return jsonify({"error": f"AI service error: {err}"}), 500
 
         reply_text = groq_response.json()["choices"][0]["message"]["content"]
-        return jsonify({"response": reply_text})
+
+        # Save AI response + update title with first user message
+        database.add_message(conv_id, "assistant", reply_text)
+
+        # Update title to first user message if still default
+        convs = database.get_conversations(username)
+        for c in convs:
+            if c["id"] == conv_id and not c.get("title"):
+                database.update_conversation_title(conv_id, user_message[:80])
+                break
+
+        return jsonify({"response": reply_text, "conversation_id": conv_id})
 
     except req.exceptions.Timeout:
         return jsonify({"error": "AI took too long to respond. Please try again."}), 504
     except Exception as e:
         print(f"Chatbot error: {e}")
         return jsonify({"error": f"Failed to reach AI service: {str(e)}"}), 500
+
+
+@app.route("/api/chat/history", methods=["GET"])
+@login_required
+def chat_history():
+    username = session["username"]
+    convs = database.get_conversations(username)
+    return jsonify([{
+        "id": c["id"],
+        "title": c.get("title") or "New Chat",
+        "created_at": c["created_at"],
+        "updated_at": c["updated_at"]
+    } for c in convs])
+
+
+@app.route("/api/chat/history/<int:conv_id>", methods=["GET"])
+@login_required
+def chat_history_messages(conv_id):
+    username = session["username"]
+    convs = database.get_conversations(username)
+    if not any(c["id"] == conv_id for c in convs):
+        return jsonify({"error": "Conversation not found"}), 404
+    msgs = database.get_messages(conv_id)
+    return jsonify([{
+        "id": m["id"],
+        "role": m["role"],
+        "content": m["content"],
+        "created_at": m["created_at"]
+    } for m in msgs])
+
+
+@app.route("/api/chat/history/<int:conv_id>", methods=["DELETE"])
+@login_required
+def chat_delete_conversation(conv_id):
+    username = session["username"]
+    convs = database.get_conversations(username)
+    if not any(c["id"] == conv_id for c in convs):
+        return jsonify({"error": "Conversation not found"}), 404
+    database.delete_conversation(conv_id)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/chat/message/<int:msg_id>", methods=["DELETE"])
+@login_required
+def chat_delete_message(msg_id):
+    database.delete_message(msg_id)
+    return jsonify({"ok": True})
 
 
 # ─────────────────────────────────────────────

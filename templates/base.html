@@ -171,9 +171,17 @@
                 <div class="chat-title">
                     <span class="material-symbols-outlined" style="color: var(--accent); margin-right: 8px;">psychology</span> Securix AI
                 </div>
-                <button class="chat-close" onclick="toggleChat()" aria-label="Close Chat">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <div class="chat-header-actions">
+                    <button class="chat-header-btn" id="chatHistoryBtn" onclick="toggleHistory()" title="Chat History" aria-label="Chat History">
+                        <span class="material-symbols-outlined">history</span>
+                    </button>
+                    <button class="chat-header-btn" id="chatNewBtn" onclick="newChat()" title="New Chat" aria-label="New Chat">
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                    <button class="chat-close" onclick="toggleChat()" aria-label="Close Chat">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
             </div>
             <div class="chat-body" id="chatBody">
                 <div class="chat-message ai">
@@ -207,14 +215,17 @@
             }
         }).catch(() => {});
 
-        // Chatbot logic
+        // ── Chatbot Logic ──
         let chatHistory = [];
-        
+        let currentConvId = null;
+
         function toggleChat() {
             const chatWindow = document.getElementById('chatWindow');
             if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
                 chatWindow.style.display = 'flex';
                 document.getElementById('chatBadge').style.display = 'none';
+                // Reset to chat view (close history if open)
+                document.getElementById('chatBody').classList.remove('showing-history');
                 setTimeout(() => document.getElementById('chatInput').focus(), 100);
             } else {
                 chatWindow.style.display = 'none';
@@ -222,14 +233,11 @@
         }
 
         function handleChatKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
+            if (e.key === 'Enter') sendMessage();
         }
 
         function sendQuickReply(text) {
-            const input = document.getElementById('chatInput');
-            input.value = text;
+            document.getElementById('chatInput').value = text;
             sendMessage();
         }
 
@@ -237,24 +245,18 @@
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
             if (!message) return;
-
-            // Clear input
             input.value = '';
-
-            // Hide quick replies if they exist
-            const quickReplies = document.getElementById('quickReplies');
-            if (quickReplies) quickReplies.style.display = 'none';
-
+            document.getElementById('quickReplies').style.display = 'none';
             const chatBody = document.getElementById('chatBody');
-            
-            // Add user message
+
+            // User bubble
             const userDiv = document.createElement('div');
             userDiv.className = 'chat-message user';
             userDiv.innerHTML = `<div class="message-content">${escapeHTML(message)}</div>`;
             chatBody.appendChild(userDiv);
             scrollToBottom();
 
-            // Add typing indicator
+            // Typing indicator
             const typingDiv = document.createElement('div');
             typingDiv.className = 'chat-message ai typing';
             typingDiv.id = 'typingIndicator';
@@ -263,45 +265,37 @@
             scrollToBottom();
 
             try {
-                // Collect context
                 let pageContext = `User is currently on page: ${window.location.pathname}.`;
                 if (window.location.pathname === '/scanner') {
-                    const scanResults = document.querySelector('.scan-results-card');
-                    if (scanResults) {
-                        pageContext += `\nThey are viewing scan results:\n${scanResults.innerText.substring(0, 1000)}`;
-                    }
+                    const sr = document.querySelector('.scan-results-card');
+                    if (sr) pageContext += `\nScan results:\n${sr.innerText.substring(0, 1000)}`;
                 }
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, history: chatHistory, context: pageContext })
+                    body: JSON.stringify({ message, history: chatHistory, context: pageContext, conversation_id: currentConvId })
                 });
 
-                // Remove typing indicator
                 const indicator = document.getElementById('typingIndicator');
                 if (indicator) indicator.remove();
 
                 const data = await response.json();
+                if (!response.ok || data.error) { showError(data.error || "An error occurred"); return; }
 
-                if (!response.ok || data.error) {
-                    showError(data.error || "An error occurred");
-                    return;
-                }
+                currentConvId = data.conversation_id;
 
-                // Create AI message bubble
+                // AI bubble with typewriter
                 const aiDiv = document.createElement('div');
                 aiDiv.className = 'chat-message ai';
                 aiDiv.innerHTML = `<div class="message-content markdown-body"></div>`;
                 chatBody.appendChild(aiDiv);
                 const contentDiv = aiDiv.querySelector('.message-content');
-
-                // Typewriter animation
                 const fullText = data.response || "";
                 let i = 0;
                 function typeNextChar() {
                     if (i < fullText.length) {
-                        i += Math.floor(Math.random() * 4) + 1; // type a few chars at a time for speed
+                        i += Math.floor(Math.random() * 4) + 1;
                         contentDiv.innerHTML = marked.parse(fullText.substring(0, i));
                         scrollToBottom();
                         setTimeout(typeNextChar, 12);
@@ -312,7 +306,6 @@
                 }
                 typeNextChar();
 
-                // Update history
                 chatHistory.push({role: 'user', content: message});
                 chatHistory.push({role: 'model', content: fullText});
 
@@ -322,6 +315,90 @@
                 showError("Failed to connect to Securix AI. Please try again.");
             }
             scrollToBottom();
+        }
+
+        // ── Chat History ──
+        async function toggleHistory() {
+            const body = document.getElementById('chatBody');
+            const isShowing = body.classList.contains('showing-history');
+            if (isShowing) {
+                body.classList.remove('showing-history');
+                return;
+            }
+            body.classList.add('showing-history');
+            body.innerHTML = `<div class="chat-history-loading">Loading...</div>`;
+            try {
+                const r = await fetch('/api/chat/history');
+                const convs = await r.json();
+                if (!convs.length) {
+                    body.innerHTML = `<div class="chat-history-empty">No conversations yet.</div>`;
+                    return;
+                }
+                body.innerHTML = `<div class="chat-history-list"></div>`;
+                const list = body.querySelector('.chat-history-list');
+                convs.forEach(c => {
+                    const row = document.createElement('div');
+                    row.className = 'chat-history-item';
+                    row.innerHTML = `<div class="chat-history-title">${escapeHTML(c.title)}</div>
+                        <div class="chat-history-meta">${new Date(c.updated_at).toLocaleDateString()}</div>
+                        <button class="chat-history-del material-symbols-outlined" onclick="event.stopPropagation(); deleteConv(${c.id})" title="Delete conversation">delete</button>`;
+                    row.addEventListener('click', () => loadConversation(c.id));
+                    list.appendChild(row);
+                });
+            } catch(e) {
+                body.innerHTML = `<div class="chat-history-empty">Failed to load history.</div>`;
+            }
+        }
+
+        async function loadConversation(convId) {
+            const body = document.getElementById('chatBody');
+            try {
+                const r = await fetch(`/api/chat/history/${convId}`);
+                const msgs = await r.json();
+                body.classList.remove('showing-history');
+                body.innerHTML = '';
+                currentConvId = convId;
+                chatHistory = [];
+                msgs.forEach(m => {
+                    if (m.role === 'user') {
+                        const div = document.createElement('div');
+                        div.className = 'chat-message user';
+                        div.innerHTML = `<div class="message-content">${escapeHTML(m.content)}</div>`;
+                        body.appendChild(div);
+                        chatHistory.push({role: 'user', content: m.content});
+                    } else {
+                        const div = document.createElement('div');
+                        div.className = 'chat-message ai';
+                        div.innerHTML = `<div class="message-content markdown-body">${marked.parse(m.content)}</div>`;
+                        body.appendChild(div);
+                        chatHistory.push({role: 'model', content: m.content});
+                    }
+                });
+                document.getElementById('quickReplies').style.display = 'none';
+                scrollToBottom();
+            } catch(e) {
+                body.innerHTML = `<div class="chat-message system"><div class="message-content error">Failed to load conversation.</div></div>`;
+            }
+        }
+
+        async function deleteConv(convId) {
+            try {
+                await fetch(`/api/chat/history/${convId}`, { method: 'DELETE' });
+                toggleHistory(); // refresh list
+            } catch(e) {}
+        }
+
+        function newChat() {
+            const body = document.getElementById('chatBody');
+            body.classList.remove('showing-history');
+            currentConvId = null;
+            chatHistory = [];
+            body.innerHTML = `<div class="chat-message ai"><div class="message-content markdown-body">Hello! I am Securix AI, your personal cybersecurity assistant. How can I help you today?</div></div>
+                <div class="quick-replies" id="quickReplies" style="display:flex">
+                    <button class="quick-reply-btn" onclick="sendQuickReply('What is Phishing?')">What is Phishing?</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('How do I secure my router?')">Secure my router</button>
+                    <button class="quick-reply-btn" onclick="sendQuickReply('Explain ransomware')">Explain ransomware</button>
+                </div>`;
         }
 
         function showError(msg) {
@@ -343,7 +420,7 @@
                     '&': '&amp;',
                     '<': '&lt;',
                     '>': '&gt;',
-                    "'": '&#39;',
+                    "'": '&#39;",
                     '"': '&quot;'
                 }[tag] || tag)
             );
