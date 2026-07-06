@@ -5,6 +5,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     initParticles();
     initStatsCounter();
+    initCardFlip();
 });
 
 
@@ -155,4 +156,44 @@ function initStatsCounter() {
     }, observerOptions);
 
     counters.forEach(c => observer.observe(c));
+}
+
+// 3D Card Flip on Scroll
+function initCardFlip() {
+    const selectors = [
+        '.threats-grid > .threat-card',
+        '.awareness-cards-grid > .awareness-card',
+        '.features-grid > .feature-card',
+        '.guides-grid > .guide-card',
+        '.stats-grid > .stat-card',
+        '.first-aid-grid > .first-aid-card',
+        '.info-cards-grid > .info-card',
+        '.checks-results-grid > .check-result-card',
+        '.net-hosts-grid > .net-host-card',
+        '.steps-container > .step-card',
+    ];
+
+    const cards = document.querySelectorAll(selectors.join(','));
+    if (cards.length === 0) return;
+
+    cards.forEach(card => {
+        const parent = card.parentElement;
+        parent.classList.add('perspective-grid');
+        card.classList.add('flip-card');
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const card = entry.target;
+                const siblings = Array.from(card.parentElement.children);
+                const index = siblings.indexOf(card);
+                card.style.transitionDelay = `${Math.min(index * 0.08, 0.8)}s`;
+                card.classList.add('flipped');
+                observer.unobserve(card);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    cards.forEach(c => observer.observe(c));
 }

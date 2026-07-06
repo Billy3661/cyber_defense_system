@@ -415,13 +415,22 @@
 {% block scripts %}
 <script>
 function switchSection(id, btn) {
-    // Hide all sections
     document.querySelectorAll(".awareness-section").forEach(s => s.classList.add("hidden"));
     document.querySelectorAll(".awareness-level-btn").forEach(b => b.classList.remove("active"));
-    // Show target
-    document.getElementById("section-" + id).classList.remove("hidden");
+    const target = document.getElementById("section-" + id);
+    target.classList.remove("hidden");
     btn.classList.add("active");
     event.preventDefault();
+    // Trigger card flip for newly visible cards
+    setTimeout(() => {
+        target.querySelectorAll('.awareness-card').forEach(c => {
+            if (!c.classList.contains('flipped')) {
+                c.classList.add('flip-card');
+                c.style.transitionDelay = '0s';
+                requestAnimationFrame(() => c.classList.add('flipped'));
+            }
+        });
+    }, 50);
 }
 
 // Password strength checker

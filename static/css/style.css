@@ -319,6 +319,19 @@
     padding: 0;
 }
 
+::selection {
+    background-color: var(--accent);
+    color: white;
+}
+
+html {
+    transition: background-color 0.3s ease;
+}
+
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
@@ -503,6 +516,12 @@ a:hover {
     transform: scale(1.15);
 }
 
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .nav-toggle {
     display: none;
     background: none;
@@ -542,6 +561,14 @@ a:hover {
     background-color: #2563eb;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-outline:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-outline {
@@ -745,6 +772,17 @@ a:hover {
 .stat-card:hover {
     transform: translateY(-5px);
     border-color: rgba(59, 130, 246, 0.2);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.feature-card:hover,
+.guide-card:hover,
+.threat-preview-card:hover,
+.threat-card:hover,
+.awareness-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+    border-color: rgba(59, 130, 246, 0.2);
 }
 
 .stat-icon {
@@ -942,16 +980,69 @@ a:hover {
     text-align: center;
 }
 
-.flash-success {
-    background-color: rgba(16, 185, 129, 0.15);
-    border: 1px solid var(--success);
-    color: var(--success);
+.flash-container {
+    max-width: 1200px;
+    margin: 1.25rem auto 0 auto;
+    padding: 0 2rem;
 }
 
-.flash-error {
-    background-color: rgba(239, 68, 68, 0.15);
+.flash-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.85rem 1.25rem;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    font-size: 0.88rem;
+    animation: flashSlideIn 0.4s ease;
+}
+
+@keyframes flashSlideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.flash-message.flash-success {
+    background-color: rgba(46, 213, 115, 0.12);
+    border: 1px solid #2ed573;
+    color: #2ed573;
+    box-shadow: 0 0 20px rgba(46, 213, 115, 0.22);
+}
+
+.flash-message.flash-error {
+    background-color: rgba(239, 68, 68, 0.12);
     border: 1px solid var(--error);
     color: var(--error);
+}
+
+.flash-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.flash-text {
+    font-weight: 500;
+}
+
+.flash-dismiss {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 0.2rem;
+    transition: opacity 0.2s;
+}
+
+.flash-dismiss:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .flash-container { padding: 0 1rem; }
 }
 
 .auth-card-wrap {
@@ -1356,6 +1447,12 @@ a:hover {
     gap: 0.75rem;
     font-size: 0.95rem;
     color: var(--text-secondary);
+    animation: checkItemIn 0.3s ease;
+}
+
+@keyframes checkItemIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 .check-spinner {
@@ -1375,7 +1472,24 @@ a:hover {
     height: 100%;
     background-color: var(--accent);
     width: 0;
-    transition: width 0.15s ease-out;
+    transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.scan-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: progressShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 /* Spinner inside button */
@@ -1404,6 +1518,7 @@ a:hover {
     border: 2px solid;
     padding: 2.5rem;
     border-radius: var(--border-radius);
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
 .verdict-icon {
@@ -2480,6 +2595,7 @@ a:hover {
     .hero-actions {
         justify-content: center;
     }
+    .hero-visual { height: 300px; }
     .detail-grid {
         grid-template-columns: 1fr;
     }
@@ -2862,21 +2978,234 @@ a:hover {
     .page-header { padding: 1.5rem 0 1rem; }
     .page-title { font-size: 1.6rem; }
     .page-subtitle { font-size: 0.85rem; }
+    .main-content { padding: 1rem 0; }
+
+    /* ── Flash Messages ── */
+    [style*="max-width: 1200px"][style*="margin: 1.25rem auto"] { padding: 0 1rem !important; }
+
+    /* ── Hero Section ── */
+    .hero { padding: 2rem 1rem 1rem; gap: 1.5rem; }
+    .hero-title { font-size: 2rem; }
+    .hero-subtitle { font-size: 0.9rem; }
+    .hero-badge { align-self: center; font-size: 0.75rem; padding: 0.35rem 0.75rem; }
+    .hero-actions { flex-direction: column; gap: 0.75rem; }
+    .hero-actions .btn { width: 100%; justify-content: center; }
+    .hero-visual { height: 220px; }
+    .cyber-globe { width: 160px; height: 160px; }
+    .globe-core { width: 48px; height: 48px; }
+    .globe-core .material-symbols-outlined { font-size: 1.5rem !important; }
+    @keyframes orbit-1 { 0% { transform: rotate(0deg) translateX(80px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(80px) rotate(-360deg); } }
+    .dot-1 { width: 8px; height: 8px; }
+    .hero-content { gap: 1rem; }
+
+    /* ── Quick Scan Widget ── */
+    .quick-scan-card { padding: 3rem 1.25rem 1.5rem; }
+    .quick-scan-card h2 { font-size: 1.3rem; }
+    .quick-scan-card p { font-size: 0.85rem; }
+    .quick-scan-form { flex-direction: column; gap: 0.75rem; }
+    .quick-scan-form .btn { width: 100%; justify-content: center; }
+    .quick-result { font-size: 0.85rem; }
+
+    /* ── Stats Section ── */
+    .stats-section { padding: 2rem 0; }
+    .stat-card { padding: 1rem; }
+    .stat-number { font-size: 1.5rem; }
+
+    /* ── Scanner Page ── */
+    .scanner-card { padding: 3rem 1.25rem 1.5rem; }
+    .scanner-card .scanner-header { font-size: 0.85rem; }
+    .scanner-main-input { font-size: 0.85rem; padding-left: 2.5rem; }
+    .scanner-prefix { left: 0.85rem !important; }
+    .example-urls .example-btn { font-size: 0.72rem; padding: 0.25rem 0.55rem; }
+    .example-label { font-size: 0.75rem; }
+    .scanner-tab { font-size: 0.78rem; padding: 0.45rem 0.65rem; flex: 1; text-align: center; justify-content: center; }
+    .scanner-tab .material-symbols-outlined { font-size: 1rem !important; }
+    .scanner-input-row { flex-direction: column; gap: 0.75rem; }
+    .scanner-btn { width: 100%; justify-content: center; }
+
+    /* ── Scan Progress ── */
+    .scan-progress-container { padding: 1.25rem; }
+    .scan-progress-title { font-size: 0.95rem; }
+    .check-item { font-size: 0.82rem; }
+
+    /* ── Verdict / Results ── */
+    .verdict-banner { flex-direction: column; text-align: center; gap: 1rem; padding: 1.5rem; }
+    .verdict-text { font-size: 1.6rem; }
+    .verdict-icon { font-size: 3rem !important; }
+    .verdict-url { font-size: 0.8rem; word-break: break-all; }
+    .verdict-score-wrap { width: 90px; height: 90px; }
+    .verdict-score svg { width: 90px; height: 90px; }
+    .score-number { font-size: 1.2rem; }
+    .checks-results-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+    .check-result-card { padding: 1rem; font-size: 0.85rem; }
+    .check-result-label { font-size: 0.9rem; }
+    .recommendations-panel { padding: 1.25rem; }
+    .rec-list li { font-size: 0.82rem; }
+
+    /* ── Info Cards ── */
+    .info-cards-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .info-card { padding: 1.25rem; }
+    .info-card h3 { font-size: 1.05rem; }
+
+    /* ── File Scanner ── */
+    .file-drop-zone { padding: 2rem 1rem; }
+    .file-drop-text { font-size: 0.85rem; }
+    .file-info-row { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+    .file-info-row .btn { width: 100%; justify-content: center; }
+
+    /* ── IP Intelligence ── */
+
+    /* ── Email Analyzer ── */
+    .analyzer-page .scanner-card [style*="display: flex"][style*="gap: 0.75rem"] { flex-direction: column; }
+    .analyzer-page .scanner-card button { width: 100%; justify-content: center; }
+    .analyzer-details-grid { grid-template-columns: 1fr !important; }
+    .analyzer-page .verdict-banner { padding: 1.25rem; }
+
+    /* ── Breach Checker ── */
+    .breach-page .tabs-navigation { gap: 0.5rem !important; }
+    .breach-page .tab-btn { font-size: 0.85rem !important; padding: 0.4rem 0.65rem !important; }
+    .breach-page .tab-btn .material-symbols-outlined { font-size: 1.1rem !important; }
+    .breach-check-table-wrap { overflow-x: auto; }
+
+    /* ── Threat Encyclopedia ── */
+    .filter-bar { gap: 0.5rem; }
+    .filter-btn { font-size: 0.78rem; padding: 0.35rem 0.85rem; }
+    .threat-card { padding: 1.25rem; }
+    .threat-card-title { font-size: 1.05rem; }
+    .threat-card-desc { font-size: 0.82rem; }
+
+    /* ── Threat Detail ── */
+    .threat-detail-hero { flex-direction: column; text-align: center; }
+    .threat-detail-icon-wrap { width: 70px; height: 70px; }
+    .threat-detail-icon { font-size: 2.2rem !important; }
+    .detail-section-card { padding: 1.25rem; }
+    .detail-section-card h2 { font-size: 1.2rem; }
+    .detail-list-item { font-size: 0.85rem; }
+    .quick-action-btn { padding: 1rem; }
+    .quick-action-btn span { font-size: 1.3rem !important; }
+    .quick-action-btn strong { font-size: 0.9rem; }
+    .quick-action-btn small { font-size: 0.78rem; }
+    .threat-alert-banner { flex-direction: column; text-align: center; padding: 1rem; }
+
+    /* ── Troubleshoot Guide ── */
+    .guide-card { padding: 1.25rem; }
+    .guide-title { font-size: 1.1rem; }
+    .guide-steps-count { font-size: 0.82rem; }
+    .warning-chip { font-size: 0.72rem; }
+    .emergency-banner { flex-direction: column; text-align: center; padding: 1.25rem; }
+    .ts-search-input { font-size: 0.88rem; padding: 0.75rem 1rem 0.75rem 2.5rem; }
+    .first-aid-card { padding: 1.25rem; }
+    .first-aid-card h4 { font-size: 1rem; }
+    .first-aid-card p { font-size: 0.82rem; }
+
+    /* ── Troubleshoot Detail (Steps) ── */
+    .step-card { padding: 1.25rem; gap: 1rem; }
+    .step-action { font-size: 1rem; }
+    .step-detail { font-size: 0.85rem; }
+    .ts-progress-tracker { padding: 1rem 1.25rem; gap: 1rem; flex-direction: column; text-align: center; }
+    .ts-progress-label { font-size: 0.85rem; }
+    .completion-card { padding: 2rem 1.25rem; }
+    .completion-card h2 { font-size: 1.3rem; }
+    .completion-actions { flex-direction: column; gap: 0.75rem; }
+    .completion-actions .btn { width: 100%; justify-content: center; }
+
+    /* ── Awareness Hub ── */
+    .awareness-level-btn { font-size: 0.78rem; padding: 0.5rem 1rem; }
+    .awareness-card { padding: 1.25rem; }
+    .awareness-card h3 { font-size: 1.05rem; }
+    .aw-list li { font-size: 0.82rem; }
+    .quick-ref-card { padding: 1.5rem; }
+    .quick-ref-card h2 { font-size: 1.2rem; }
+    .checklist-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .checklist-col h4 { font-size: 0.9rem; }
+    .check-item-label { font-size: 0.82rem; }
+    .pw-checker-widget { padding: 1.5rem; }
+    .pw-checker-widget h3 { font-size: 1.1rem; }
+
+    /* ── Features Grid ── */
+    .features-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .feature-card { padding: 1.25rem; }
+    .feature-card h3 { font-size: 1rem; }
+    .feature-card p { font-size: 0.82rem; }
+    .feature-icon-wrap { width: 44px; height: 44px; }
+    .feature-icon { font-size: 1.3rem !important; }
+
+    /* ── Threats Preview ── */
+    .threats-preview-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .threat-preview-card { padding: 1.25rem; }
+    .threat-preview-card h4 { font-size: 1rem; }
+    .threat-preview-card p { font-size: 0.82rem; }
+
+    /* ── Tips Card ── */
+    .tips-card { flex-direction: column; text-align: center; padding: 1rem; }
+    .tips-label { align-self: center; }
+    .tips-content { font-size: 0.85rem; }
+
+    /* ── Footer ── */
+    .footer { padding: 2.5rem 0 1.5rem; }
+    .footer-links { flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .footer-links a { font-size: 0.85rem; }
+
+    /* ── Auth Pages (Login/Register) ── */
+    .auth-card-wrap { margin: 2rem auto; }
+    .auth-card-wrap .quick-scan-card { padding: 1.25rem; }
+    .auth-card-wrap h2 { font-size: 1.3rem; }
+
+    /* ── Simulator ── */
+    .simulator-layout { grid-template-columns: 1fr; }
+    .inbox-sidebar { padding: 1rem; }
+    .email-item { padding: 0.6rem; }
+    .email-item-sender { font-size: 0.78rem; }
+    .email-item-subject { font-size: 0.75rem; }
+    .email-pane { padding: 1.25rem; }
+    .email-subject-line { font-size: 1.1rem; }
+    .decision-buttons { flex-direction: column; gap: 0.6rem; }
+    .decision-buttons .btn { width: 100%; justify-content: center; }
+    .feedback-panel { padding: 1rem; }
+
+    /* ── Chat Widget ── */
+    .chat-widget { bottom: 0.75rem; right: 0.75rem; }
+    .chat-window {
+        width: calc(100vw - 1.5rem);
+        max-width: 100%;
+        height: 75vh;
+        max-height: 600px;
+        right: 0;
+        bottom: 0;
+    }
+    .chat-toggle { width: 54px; height: 54px; }
+    .chat-toggle .material-symbols-outlined { font-size: 28px !important; }
+
+    /* ── Tables ── */
+    .net-ports-table { font-size: 0.75rem; }
+    .net-ports-table th, .net-ports-table td { padding: 0.35rem 0.4rem; }
+    .meta-table td { font-size: 0.82rem; }
+    table { font-size: 0.85rem; }
+    table td, table th { padding: 0.4rem 0.5rem; }
+
+    /* ── Scrollable tables wrapper ── */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ── Misc ── */
+    .section-header h2 { font-size: 1.3rem; }
+    .section-header p { font-size: 0.85rem; }
+    .section-badge { font-size: 0.7rem; }
+    .page-title .material-symbols-outlined { font-size: 1.8rem !important; }
+    .btn { font-size: 0.85rem; padding: 0.6rem 1rem; min-height: 44px; }
+    .example-urls { gap: 0.5rem; }
+    .external-link { font-size: 0.82rem; }
+    .resource-link { font-size: 0.82rem; }
+    .resource-links { grid-template-columns: 1fr; }
+    .quick-actions-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 
     /* ── Navbar ── */
-    .navbar { padding: 0 1rem; height: auto; min-height: 60px; }
-    .nav-container {
-        flex-wrap: nowrap;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-    }
     .nav-links { display: none !important; }
     .nav-toggle { display: flex !important; }
     .nav-actions { gap: 0.4rem; flex-shrink: 0; }
     .nav-logo { flex-shrink: 0; }
     .logo-text { font-size: 1.1rem; }
+    .theme-toggle-btn span:last-child { display: none; }
+    .theme-toggle-btn { padding: 0.35rem 0.6rem; }
 
     /* ── Dashboard cards ── */
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
@@ -2916,6 +3245,45 @@ a:hover {
     /* ── Footer ── */
     .footer-links { flex-wrap: wrap; gap: 0.5rem; }
     .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
+}
+
+/* Extra-small phones */
+@media (max-width: 400px) {
+    .hero { padding: 1.5rem 0.75rem 0.5rem; }
+    .hero-title { font-size: 1.5rem; }
+    .hero-visual { height: 160px; }
+    .cyber-globe { width: 120px; height: 120px; }
+    .globe-core { width: 36px; height: 36px; }
+    .globe-core .material-symbols-outlined { font-size: 1.2rem !important; }
+    @keyframes orbit-1 { 0% { transform: rotate(0deg) translateX(60px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); } }
+    .dot-1 { width: 6px; height: 6px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .stat-card { padding: 0.75rem; }
+    .stat-number { font-size: 1.25rem; }
+    .features-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+    .threats-preview-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+    .quick-scan-card h2 { font-size: 1.1rem; }
+    .scanner-card h2 { font-size: 1.1rem; }
+    .page-title { font-size: 1.3rem; }
+    .page-title .material-symbols-outlined { font-size: 1.4rem !important; }
+    .logo-text { font-size: 1rem !important; }
+    .logo-icon { font-size: 2.5rem !important; }
+    .scanner-card { padding: 2.5rem 0.85rem 1rem; }
+    .quick-scan-card { padding: 2.5rem 0.85rem 1.25rem; }
+    .hero-actions .btn { font-size: 0.82rem; padding: 0.55rem 0.85rem; }
+    .verdict-score-wrap { width: 70px; height: 70px; }
+    .verdict-score svg { width: 70px; height: 70px; }
+    .score-number { font-size: 1rem; }
+    .verdict-text { font-size: 1.2rem; }
+    .chat-toggle { width: 44px; height: 44px; }
+    .chat-toggle .material-symbols-outlined { font-size: 22px !important; }
+    .scanner-tab { font-size: 0.72rem; padding: 0.35rem 0.5rem; }
+    .filter-btn { font-size: 0.72rem; padding: 0.3rem 0.65rem; }
+    .awareness-level-btn { font-size: 0.72rem; padding: 0.4rem 0.65rem; }
+    .section-header h2 { font-size: 1.1rem; }
+    .feature-card p { display: none; }
+    .feature-tags { display: none; }
+    .threat-preview-card p { display: none; }
 }
 
 /* ─────────────────────────────────────────────
@@ -3358,6 +3726,202 @@ a:hover {
 .net-ports-table tr:hover td { background: rgba(59,130,246,0.05); }
 
 /* Light mode */
+/* ═══════════════════════════════════════════════════════
+   IP INTELLIGENCE PANEL
+   ═══════════════════════════════════════════════════════ */
+
+.ip-results-wrap {
+    margin-top: 1.75rem;
+}
+
+.ip-threat-banner {
+    border-radius: 14px;
+    border: 1px solid;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: rgba(0,0,0,0.2);
+    flex-wrap: wrap;
+}
+
+.ip-threat-icon {
+    font-size: 2.8rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.ip-threat-body {
+    flex: 1;
+    min-width: 160px;
+}
+
+.ip-threat-label {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.ip-threat-detail {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.ip-threat-score-wrap {
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.ip-threat-score {
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.ip-threat-score-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ip-section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ip-section-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.ip-section-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ip-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.ip-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.83rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 0.5rem;
+}
+
+.ip-info-label {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.ip-info-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: right;
+    word-break: break-all;
+}
+
+.ip-vt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+}
+
+.ip-vt-bar {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    text-align: center;
+}
+
+.ip-vt-count {
+    font-size: 1.4rem;
+    font-weight: 900;
+}
+
+.ip-vt-label-text {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.ip-flags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+.ip-flag-chip {
+    padding: 0.25rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.ip-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ip-footer-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.ip-copy-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.78rem;
+    gap: 4px;
+}
+
+@media (max-width: 768px) {
+    .ip-section-grid { grid-template-columns: 1fr; }
+    .ip-threat-banner { flex-direction: column; text-align: center; padding: 1rem; }
+    #ipVtBars { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important; gap: 0.5rem !important; }
+}
+
+[data-theme="light"] .ip-section-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.07);
+}
+
+[data-theme="light"] .ip-info-row {
+    border-bottom-color: rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .ip-vt-bar {
+    background: #f8faff;
+    border-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .ip-threat-banner {
+    background: #ffffff;
+}
+
 [data-theme="light"] .net-host-card { background: #ffffff; border-color: rgba(0,0,0,0.08); }
 [data-theme="light"] .net-host-card:hover { border-color: var(--accent); background: rgba(59,130,246,0.04); }
 [data-theme="light"] .net-ports-panel { background: #f8faff; border-color: rgba(0,0,0,0.08); }
@@ -3783,8 +4347,8 @@ a:hover {
     justify-content: center;
     align-items: center;
     gap: 5px;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
@@ -3809,28 +4373,52 @@ a:hover {
 
 /* Mobile menu drawer */
 .mobile-menu {
-    display: none;
+    display: flex;
     flex-direction: column;
     background: var(--bg-secondary);
     border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 0.5rem 0;
+    padding: 0;
     width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.35s ease;
 }
 
-.mobile-menu.open { display: flex; }
+.mobile-menu.open {
+    max-height: 600px;
+    padding: 0.5rem 0;
+}
 
 .mobile-nav-link {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.85rem 1.25rem;
+    min-height: 48px;
     color: var(--text-secondary);
     text-decoration: none;
     font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.2s;
     border-left: 3px solid transparent;
+    opacity: 0;
+    transform: translateX(-10px);
 }
+
+.mobile-menu.open .mobile-nav-link {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.mobile-menu.open .mobile-nav-link:nth-child(1) { transition-delay: 0.05s; }
+.mobile-menu.open .mobile-nav-link:nth-child(2) { transition-delay: 0.10s; }
+.mobile-menu.open .mobile-nav-link:nth-child(3) { transition-delay: 0.15s; }
+.mobile-menu.open .mobile-nav-link:nth-child(4) { transition-delay: 0.20s; }
+.mobile-menu.open .mobile-nav-link:nth-child(5) { transition-delay: 0.25s; }
+.mobile-menu.open .mobile-nav-link:nth-child(6) { transition-delay: 0.30s; }
+.mobile-menu.open .mobile-nav-link:nth-child(7) { transition-delay: 0.35s; }
+.mobile-menu.open .mobile-nav-link:nth-child(8) { transition-delay: 0.40s; }
+.mobile-menu.open .mobile-nav-link:nth-child(9) { transition-delay: 0.45s; }
 
 .mobile-nav-link:hover,
 .mobile-nav-link.active {
@@ -3847,4 +4435,112 @@ a:hover {
 .mobile-nav-link.active .material-symbols-outlined,
 .mobile-nav-link:hover .material-symbols-outlined {
     color: var(--accent);
+}
+
+
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+details summary {
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0.25rem 0;
+}
+
+details summary:hover {
+    opacity: 0.85;
+}
+
+/* Leaderboard Modal */
+#leaderboardModal:not(.hidden) {
+    display: flex !important;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* AI Debrief styling */
+.debrief-container {
+    border-left: 3px solid var(--info);
+}
+
+.debrief-container p {
+    line-height: 1.6;
+}
+
+/* Form elements consistency */
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .campaign-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   3D CARD FLIP ON SCROLL
+   ───────────────────────────────────────────── */
+
+.perspective-grid {
+    perspective: 1200px;
+}
+
+.flip-card {
+    opacity: 0;
+    transform: rotateY(90deg);
+    transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.5s ease;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
+.flip-card.flipped {
+    opacity: 1;
+    transform: rotateY(0deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flip-card {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
 }

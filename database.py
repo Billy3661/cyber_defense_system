@@ -1,3 +1,4 @@
+import json
 import sqlite3
 import os
 
@@ -78,6 +79,31 @@ def init_db():
             INSERT INTO malware_signatures (hash_value, threat_name, severity, details)
             VALUES (?, ?, ?, ?)
         """), default_sigs)
+
+    # ── Gamification tables ──
+    cur.execute(_p("""
+        CREATE TABLE IF NOT EXISTS user_phishing_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email_id TEXT DEFAULT '',
+            campaign_id INTEGER DEFAULT 0,
+            is_phishing INTEGER DEFAULT 0,
+            identified_correctly INTEGER DEFAULT 0,
+            response_time_ms INTEGER DEFAULT 0,
+            red_flags_identified INTEGER DEFAULT 0,
+            total_red_flags INTEGER DEFAULT 0,
+            session_id TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
+    cur.execute(_p("""
+        CREATE TABLE IF NOT EXISTS user_badges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            badge_id TEXT NOT NULL,
+            awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """))
 
     conn.commit()
     conn.close()
@@ -195,3 +221,46 @@ def add_malware_signature(hash_value, threat_name, severity, details):
     finally:
         conn.close()
     return success
+
+# ── Gamification Helpers ──
+
+def record_phishing_stat(username, email_id, campaign_id, is_phishing, identified_correctly, response_time_ms, red_flags_identified, total_red_flags, session_id):
+    execute_query("""
+        INSERT INTO user_phishing_stats (username, email_id, campaign_id, is_phishing, identified_correctly, response_time_ms, red_flags_identified, total_red_flags, session_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (username, email_id, campaign_id, 1 if is_phishing else 0, 1 if identified_correctly else 0, response_time_ms, red_flags_identified, total_red_flags, session_id))
+
+def get_user_stats(username):
+    return execute_query("SELECT * FROM user_phishing_stats WHERE username = ? ORDER BY created_at DESC", (username,), fetch_all=True)
+
+def get_user_badges(username):
+    return execute_query("SELECT * FROM user_badges WHERE username = ? ORDER BY awarded_at DESC", (username,), fetch_all=True)
+
+def award_badge(username, badge_id):
+    existing = execute_query("SELECT id FROM user_badges WHERE username = ? AND badge_id = ?", (username, badge_id), fetch_one=True)
+    if not existing:
+        execute_query("INSERT INTO user_badges (username, badge_id) VALUES (?, ?)", (username, badge_id))
+
+def get_leaderboard(limit=20):
+    return execute_query("""
+        SELECT username, COUNT(*) as total_attempts,
+               SUM(identified_correctly) as correct,
+               ROUND(AVG(CASE WHEN identified_correctly = 1 THEN 100.0 ELSE 0 END), 1) as accuracy,
+               SUM(response_time_ms) as total_time
+        FROM user_phishing_stats
+        GROUP BY username
+        ORDER BY accuracy DESC, total_attempts DESC
+        LIMIT ?
+    """, (limit,), fetch_all=True)
+
+def get_badge_leaderboard(limit=20):
+    return execute_query("""
+        SELECT b.username, COUNT(*) as badge_count,
+               ROUND(AVG(CASE WHEN s.identified_correctly = 1 THEN 100.0 ELSE 0 END), 1) as accuracy,
+               COUNT(s.id) as total_attempts
+        FROM user_badges b
+        LEFT JOIN user_phishing_stats s ON b.username = s.username
+        GROUP BY b.username
+        ORDER BY badge_count DESC, accuracy DESC
+        LIMIT ?
+    """, (limit,), fetch_all=True)

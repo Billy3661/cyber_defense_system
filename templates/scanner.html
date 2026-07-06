@@ -188,83 +188,80 @@
         </div>
 
         <!-- Rich Results Panel -->
-        <div class="hidden" id="ipLookupResults" style="margin-top:1.75rem;">
+        <div class="hidden ip-results-wrap" id="ipLookupResults">
 
             <!-- Threat Score Banner -->
-            <div id="ipThreatBanner" style="
-                border-radius:14px; border:1px solid; padding:1.25rem 1.5rem;
-                margin-bottom:1.5rem; display:flex; align-items:center; gap:1.25rem;
-                background:rgba(0,0,0,0.2); flex-wrap:wrap;">
-                <div id="ipThreatIcon" style="font-size:2.8rem; line-height:1; flex-shrink:0;"></div>
-                <div style="flex:1; min-width:160px;">
-                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:3px;">Threat Assessment</div>
-                    <div id="ipThreatLabel" style="font-size:1.25rem; font-weight:800;"></div>
-                    <div id="ipThreatDetail" style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px; line-height:1.5;"></div>
+            <div class="ip-threat-banner" id="ipThreatBanner">
+                <div class="ip-threat-icon" id="ipThreatIcon"></div>
+                <div class="ip-threat-body">
+                    <div class="ip-threat-score-label">Threat Assessment</div>
+                    <div class="ip-threat-label" id="ipThreatLabel"></div>
+                    <div class="ip-threat-detail" id="ipThreatDetail"></div>
                 </div>
-                <div style="text-align:center; flex-shrink:0;">
-                    <div id="ipThreatScore" style="font-size:2.2rem; font-weight:900; line-height:1;"></div>
-                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">Risk Score</div>
+                <div class="ip-threat-score-wrap">
+                    <div class="ip-threat-score" id="ipThreatScore"></div>
+                    <div class="ip-threat-score-label">Risk Score</div>
                 </div>
             </div>
 
             <!-- Geolocation -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
-                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+            <div class="ip-section-grid">
+                <div class="ip-section-card">
+                    <div class="ip-section-header" style="color:var(--accent);">
                         <span class="material-symbols-outlined" style="font-size:1rem;">location_on</span> Geolocation
                     </div>
-                    <div id="ipGeoSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                    <div class="ip-section-body" id="ipGeoSection"></div>
                 </div>
-                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem;">
-                    <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+                <div class="ip-section-card">
+                    <div class="ip-section-header" style="color:var(--info);">
                         <span class="material-symbols-outlined" style="font-size:1rem;">cell_tower</span> Network &amp; ASN
                     </div>
-                    <div id="ipNetSection" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                    <div class="ip-section-body" id="ipNetSection"></div>
                 </div>
             </div>
 
             <!-- WHOIS Information -->
-            <div id="ipWhoisSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
-                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--info); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+            <div class="ip-section-card" id="ipWhoisSection" style="display:none; margin-bottom:1rem;">
+                <div class="ip-section-header" style="color:var(--info);">
                     <span class="material-symbols-outlined" style="font-size:1rem;">description</span> WHOIS Record
                 </div>
-                <div id="ipWhoisBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                <div class="ip-section-body" id="ipWhoisBody"></div>
             </div>
 
             <!-- VirusTotal Breakdown -->
-            <div id="ipVtSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem;">
-                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--warning); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+            <div class="ip-section-card" id="ipVtSection" style="margin-bottom:1rem;">
+                <div class="ip-section-header" style="color:var(--warning);">
                     <span class="material-symbols-outlined" style="font-size:1rem;">security</span> VirusTotal Engine Breakdown
                 </div>
-                <div id="ipVtBars" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:0.75rem;"></div>
+                <div class="ip-vt-grid" id="ipVtBars"></div>
             </div>
 
             <!-- DNS Records -->
-            <div id="ipDnsSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
-                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+            <div class="ip-section-card" id="ipDnsSection" style="display:none; margin-bottom:1rem;">
+                <div class="ip-section-header" style="color:var(--accent);">
                     <span class="material-symbols-outlined" style="font-size:1rem;">dns</span> DNS Records
                 </div>
-                <div id="ipDnsBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                <div class="ip-section-body" id="ipDnsBody"></div>
             </div>
 
             <!-- SSL Certificate -->
-            <div id="ipSslSection" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:1.25rem; margin-bottom:1rem; display:none;">
-                <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--warning); font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:6px;">
+            <div class="ip-section-card" id="ipSslSection" style="display:none; margin-bottom:1rem;">
+                <div class="ip-section-header" style="color:var(--warning);">
                     <span class="material-symbols-outlined" style="font-size:1rem;">enhanced_encryption</span> SSL / TLS Certificate
                 </div>
-                <div id="ipSslBody" style="display:flex; flex-direction:column; gap:0.65rem;"></div>
+                <div class="ip-section-body" id="ipSslBody"></div>
             </div>
 
             <!-- Flags -->
-            <div id="ipFlagsRow" style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-bottom:1rem;"></div>
+            <div class="ip-flags-row" id="ipFlagsRow"></div>
 
             <!-- Footer -->
-            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
-                <div style="font-size:0.75rem; color:var(--text-muted);">
+            <div class="ip-footer">
+                <div class="ip-footer-note">
                     <span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; color:var(--info);">info</span>
                     Data from ipapi.co, VirusTotal, WHOIS, DNS, SSL. For informational use only.
                 </div>
-                <button onclick="copyIpReport()" class="btn btn-outline" style="padding:0.4rem 0.9rem; font-size:0.78rem; gap:4px;">
+                <button onclick="copyIpReport()" class="btn btn-outline ip-copy-btn">
                     <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
                 </button>
             </div>
@@ -594,16 +591,16 @@ document.getElementById("scanUrl")?.addEventListener("keydown", e => {
 let lastIpReport = null;
 
 function ipInfoRow(label, value, icon = '') {
-    return `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; font-size:0.83rem; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:0.5rem;">
-        <span style="color:var(--text-muted); flex-shrink:0;">${icon ? `<span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; margin-right:3px;">${icon}</span>` : ''}${label}</span>
-        <span style="color:var(--text-primary); font-weight:600; text-align:right; word-break:break-all;">${value || '—'}</span>
+    return `<div class="ip-info-row">
+        <span class="ip-info-label">${icon ? `<span class="material-symbols-outlined" style="font-size:0.9rem; vertical-align:-2px; margin-right:3px;">${icon}</span>` : ''}${label}</span>
+        <span class="ip-info-value">${value || '—'}</span>
     </div>`;
 }
 
 function vtBar(label, count, color) {
-    return `<div style="background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:0.7rem 0.85rem; text-align:center;">
-        <div style="font-size:1.4rem; font-weight:900; color:${color};">${count}</div>
-        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${label}</div>
+    return `<div class="ip-vt-bar">
+        <div class="ip-vt-count" style="color:${color};">${count}</div>
+        <div class="ip-vt-label-text">${label}</div>
     </div>`;
 }
 
@@ -776,8 +773,8 @@ async function performIpLookup() {
 
         // ── Render Flags ──
         document.getElementById('ipFlagsRow').innerHTML = flags.length
-            ? flags.map(f => `<span style="background:${f.color}15; border:1px solid ${f.color}40; color:${f.color}; padding:0.25rem 0.7rem; border-radius:50px; font-size:0.75rem; font-weight:700;">⚑ ${f.label}</span>`).join('')
-            : `<span style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success); padding:0.25rem 0.7rem; border-radius:50px; font-size:0.75rem; font-weight:700;">✓ No threat flags detected</span>`;
+            ? flags.map(f => `<span class="ip-flag-chip" style="background:${f.color}15; border:1px solid ${f.color}40; color:${f.color};">⚑ ${f.label}</span>`).join('')
+            : `<span class="ip-flag-chip" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success);">✓ No threat flags detected</span>`;
 
         document.getElementById('ipLookupResults').classList.remove('hidden');
         document.getElementById('netScannerStatusDot').className = 'scanner-status-dot done';

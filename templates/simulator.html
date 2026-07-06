@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Phishing Lab — Securix{% endblock %}
-{% block description %}Practice identifying phishing red flags in a mock email inbox game.{% endblock %}
+{% block description %}Practice identifying phishing red flags with AI-generated emails, get personalized debriefs, and track your progress.{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -8,9 +8,61 @@
         <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Phishing Lab</div>
         <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">phishing</span>Interactive Phishing Simulator</h1>
         <p class="page-subtitle">
-            Train your instincts in our interactive inbox game. Spot mismatched domain names, suspicious headers,
+            Train your instincts with AI-generated emails. Spot mismatched domains, suspicious headers,
             and high-pressure language to score points!
         </p>
+    </div>
+</div>
+
+<div class="container" style="margin-top: 1.5rem;">
+    <!-- Controls Row -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="difficultySelect" style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Difficulty:</label>
+            <select id="difficultySelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.85rem;">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <label for="countSelect" style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Emails:</label>
+            <select id="countSelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.85rem;">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="7">7</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" onclick="generateNewSession()" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">auto_awesome</span> Generate with AI
+        </button>
+        <button class="btn btn-outline" onclick="loadStaticEmails()" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">bookmark</span> Built-in Set
+        </button>
+        <button class="btn btn-outline" id="timedModeBtn" onclick="toggleTimedMode()" style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem;">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">timer</span> Timed Mode
+        </button>
+        <span id="timerDisplay" style="font-size: 0.9rem; font-weight: 700; color: var(--warning); display: none; margin-left: 0.5rem;"></span>
+        <span id="generationStatus" style="font-size: 0.8rem; color: var(--text-muted); margin-left: auto;"></span>
+    </div>
+
+    <!-- Stats Bar -->
+    <div id="statsBar" style="display: none; gap: 1.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius); font-size: 0.85rem;">
+        <span>Total: <strong id="statTotal">0</strong></span>
+        <span>Correct: <strong id="statCorrect" style="color: var(--success);">0</strong></span>
+        <span>Accuracy: <strong id="statAccuracy">0%</strong></span>
+        <span style="display: flex; align-items: center; gap: 0.3rem;">
+            <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--warning);">military_tech</span>
+            <strong>Badges: <span id="statBadges">0</span></strong>
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.3rem;" id="liveRankDisplay">
+            <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--accent);">leaderboard</span>
+            <strong>Rank: <span id="liveRank">-</span></strong>
+        </span>
+        <button class="btn btn-outline" onclick="toggleLeaderboard()" style="font-size: 0.8rem; padding: 0.3rem 0.75rem; margin-left: auto;">
+            <span class="material-symbols-outlined" style="font-size: 1rem;">leaderboard</span> Full Leaderboard
+        </button>
     </div>
 </div>
 
@@ -22,16 +74,27 @@
                 <h3><span class="material-symbols-outlined">inbox</span> Inbox</h3>
                 <span class="inbox-badge" id="inboxCount">0</span>
             </div>
-            <div class="email-list" id="emailList">
-                <!-- Loaded dynamically -->
+            <!-- Streak + Combo display -->
+            <div id="streakDisplay" style="display: none; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(239,68,68,0.1)); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; font-size: 0.85rem;">
+                <span class="streak-fire">🔥</span>
+                <span><strong id="streakCount">0</strong> streak</span>
+                <span style="margin-left: auto; color: var(--warning); font-weight: 700;" id="comboMultiplier">x1</span>
             </div>
+            <div class="email-list" id="emailList"></div>
             <div class="score-card">
-                <div class="score-label">Score</div>
-                <div class="score-value"><span id="currentScore">0</span> / <span id="totalQuestions">5</span></div>
+                <div class="score-label">
+                    <span>Score</span>
+                    <span id="streakIndicator" style="display: none; margin-left: 0.5rem; font-size: 0.75rem; color: var(--warning);">🔥</span>
+                </div>
+                <div class="score-value"><span id="currentScore">0</span> / <span id="totalQuestions">0</span></div>
+            </div>
+            <!-- Timer progress in sidebar (timed mode) -->
+            <div id="sidebarTimer" style="display: none; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden;">
+                <div id="sidebarTimerBar" style="height: 100%; width: 100%; background: var(--warning); border-radius: 2px; transition: width 0.3s linear;"></div>
             </div>
         </div>
 
-        <!-- Main pane: Email Reader & Decision Panel -->
+        <!-- Main pane -->
         <div class="email-pane" id="emailPane">
             <div class="empty-state" id="emptyState">
                 <span class="material-symbols-outlined" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;">drafts</span>
@@ -39,7 +102,6 @@
                 <p>Review the headers, sender address, and email links carefully.</p>
             </div>
 
-            <!-- Email View -->
             <div class="email-view hidden" id="emailView">
                 <div class="email-meta-header">
                     <div class="email-sender-avatar">
@@ -54,9 +116,7 @@
                     </div>
                 </div>
 
-                <div class="email-body" id="viewBody">
-                    <!-- HTML body goes here -->
-                </div>
+                <div class="email-body" id="viewBody"></div>
 
                 <!-- Decision buttons -->
                 <div class="decision-panel" id="decisionPanel">
@@ -71,17 +131,26 @@
                     </div>
                 </div>
 
-                <!-- Feedback & Explanations -->
+                <!-- Feedback Panel -->
                 <div class="feedback-panel hidden" id="feedbackPanel">
                     <div class="feedback-header">
                         <span class="feedback-verdict-icon material-symbols-outlined" id="feedbackIcon"></span>
                         <h3 id="feedbackTitle"></h3>
                     </div>
                     <p class="feedback-desc" id="feedbackDesc"></p>
-                    
+
                     <div class="red-flags-container hidden" id="redFlagsContainer">
                         <h4>🔍 Key Red Flags Spotted:</h4>
                         <ul class="red-flags-list" id="redFlagsList"></ul>
+                    </div>
+
+                    <!-- AI Debrief -->
+                    <div class="debrief-container hidden" id="debriefContainer" style="margin-top: 1rem; padding: 1rem; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.15); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                            <span class="material-symbols-outlined" style="color: var(--info); font-size: 1.2rem;" aria-hidden="true">psychology</span>
+                            <strong style="font-size: 0.9rem; color: var(--info);">AI Coach Says:</strong>
+                        </div>
+                        <p id="debriefText" style="font-size: 0.88rem; color: var(--text-secondary); margin: 0;"></p>
                     </div>
 
                     <div class="feedback-footer">
@@ -92,31 +161,259 @@
         </div>
     </div>
 </div>
+
+<!-- Confetti container -->
+<div id="confettiContainer" style="position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
+
+<!-- Leaderboard Modal -->
+<div id="leaderboardModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--border-radius); max-width: 700px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-symbols-outlined" style="color: var(--warning);">leaderboard</span> Leaderboard
+            </h2>
+            <button onclick="toggleLeaderboard()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.5rem;">✕</button>
+        </div>
+        <div id="leaderboardContent">
+            <p style="color: var(--text-muted); text-align: center;">Loading...</p>
+        </div>
+        <div style="margin-top: 1rem; text-align: center;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Your Badges</h3>
+            <div id="badgeDisplay" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Summary Modal -->
+<div id="summaryModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--border-radius); max-width: 500px; width: 100%; padding: 2rem; text-align: center;">
+        <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--accent); margin-bottom: 0.5rem;">celebration</span>
+        <h2 style="margin: 0 0 0.25rem;">Session Complete!</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;" id="summarySubtext">Here's how you did:</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--accent);" id="summaryScore">0/0</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Score</div>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--success);" id="summaryAccuracy">0%</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Accuracy</div>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--warning);" id="summaryStreak">0</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Best Streak</div>
+            </div>
+            <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--info);" id="summaryAvgTime">0s</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Avg Time</div>
+            </div>
+        </div>
+
+        <div id="summaryMessage" style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.5rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px;"></div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+            <button class="btn btn-primary" onclick="closeSummary(); loadStaticEmails();">Play Again</button>
+            <button class="btn btn-outline" onclick="closeSummary()">Close</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<style>
+#confettiContainer .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    animation: confettiFall 1.5s ease-out forwards;
+}
+@keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translateY(400px) rotate(720deg) scale(0.3); }
+}
+@keyframes shakeWrong {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-12px); }
+    40% { transform: translateX(12px); }
+    60% { transform: translateX(-8px); }
+    80% { transform: translateX(8px); }
+}
+.shake {
+    animation: shakeWrong 0.5s ease;
+}
+.bounce-correct {
+    animation: bounceIn 0.4s ease;
+}
+@keyframes bounceIn {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+</style>
 <script>
 let emails = [];
 let currentIndex = -1;
 let score = 0;
 let answeredCount = 0;
 const answeredIds = new Set();
+let decisionTimestamps = {};
+let sessionId = 'session_' + Date.now();
+let useAIEmails = false;
+
+// Streak tracking
+let currentStreak = 0;
+let bestStreak = 0;
+
+// Timed mode
+let timedMode = false;
+let timerInterval = null;
+let timeRemaining = 0;
+const TIMER_SECONDS = 20;
 
 document.addEventListener("DOMContentLoaded", () => {
-    loadEmails();
+    loadStaticEmails();
+    loadMyStats();
 });
 
-async function loadEmails() {
+function toggleTimedMode() {
+    timedMode = !timedMode;
+    const btn = document.getElementById("timedModeBtn");
+    const timerDisplay = document.getElementById("timerDisplay");
+    const sidebarTimer = document.getElementById("sidebarTimer");
+    if (timedMode) {
+        btn.style.borderColor = "var(--warning)";
+        btn.style.color = "var(--warning)";
+        timerDisplay.style.display = "inline";
+        sidebarTimer.style.display = "block";
+        // Start timer immediately if an unanswered email is open
+        if (currentIndex >= 0 && !answeredIds.has(emails[currentIndex].id)) {
+            startTimer();
+        }
+    } else {
+        btn.style.borderColor = "";
+        btn.style.color = "";
+        timerDisplay.style.display = "none";
+        sidebarTimer.style.display = "none";
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+}
+
+function startTimer() {
+    if (!timedMode) return;
+    stopTimer();
+    timeRemaining = TIMER_SECONDS;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        if (timeRemaining <= 0) {
+            stopTimer();
+            // Auto-submit wrong answer (timeout = miss)
+            if (!answeredIds.has(emails[currentIndex].id)) {
+                makeDecision(null);
+            }
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function updateTimerDisplay() {
+    const display = document.getElementById("timerDisplay");
+    const bar = document.getElementById("sidebarTimerBar");
+    display.textContent = "⏱ " + timeRemaining + "s";
+    if (timeRemaining <= 5) {
+        display.style.color = "var(--error)";
+    } else {
+        display.style.color = "var(--warning)";
+    }
+    if (bar) {
+        bar.style.width = (timeRemaining / TIMER_SECONDS * 100) + "%";
+        if (timeRemaining <= 5) {
+            bar.style.background = "var(--error)";
+        } else {
+            bar.style.background = "var(--warning)";
+        }
+    }
+}
+
+async function loadStaticEmails() {
+    document.getElementById("generationStatus").textContent = "Loading built-in emails...";
+    useAIEmails = false;
     try {
         const res = await fetch("/api/simulator/emails");
         emails = await res.json();
-        document.getElementById("inboxCount").textContent = emails.length;
-        document.getElementById("totalQuestions").textContent = emails.length;
-        renderEmailList();
-        selectEmail(0);
+        resetSession();
+        document.getElementById("generationStatus").textContent = "Built-in set loaded (" + emails.length + " emails)";
     } catch (err) {
-        console.error("Failed to load emails: ", err);
+        console.error("Failed to load emails:", err);
+        document.getElementById("generationStatus").textContent = "Failed to load emails";
     }
+}
+
+async function generateNewSession() {
+    const difficulty = document.getElementById("difficultySelect").value;
+    const count = parseInt(document.getElementById("countSelect").value);
+    const status = document.getElementById("generationStatus");
+    status.textContent = "Generating " + count + " " + difficulty + " emails with AI...";
+    useAIEmails = true;
+
+    try {
+        const res = await fetch("/api/simulator/generate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({count, difficulty})
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            status.textContent = "AI generation failed: " + data.error;
+            if (data.raw) console.error("Raw AI output:", data.raw);
+            return;
+        }
+
+        if (data.emails && data.emails.length > 0) {
+            emails = data.emails.map((e, i) => ({...e, id: e.id || (i + 1)}));
+            resetSession();
+            status.textContent = "AI generated " + emails.length + " emails (" + difficulty + ")";
+        } else {
+            status.textContent = "AI returned no emails. Try again.";
+        }
+    } catch (err) {
+        status.textContent = "Network error during generation.";
+        console.error(err);
+    }
+}
+
+function resetSession() {
+    currentIndex = -1;
+    score = 0;
+    answeredCount = 0;
+    answeredIds.clear();
+    decisionTimestamps = {};
+    sessionId = 'session_' + Date.now();
+    currentStreak = 0;
+    bestStreak = 0;
+    stopTimer();
+    updateStreakDisplay();
+    document.getElementById("currentScore").textContent = "0";
+    document.getElementById("inboxCount").textContent = emails.length;
+    document.getElementById("totalQuestions").textContent = emails.length;
+    document.getElementById("emptyState").classList.remove("hidden");
+    document.getElementById("emailView").classList.add("hidden");
+    document.getElementById("feedbackPanel").classList.add("hidden");
+    renderEmailList();
+    if (emails.length > 0) selectEmail(0);
 }
 
 function renderEmailList() {
@@ -124,17 +421,16 @@ function renderEmailList() {
     list.innerHTML = emails.map((email, idx) => {
         const isAnswered = answeredIds.has(email.id);
         const activeClass = idx === currentIndex ? "active" : "";
-        const answeredIcon = isAnswered 
-            ? `<span class="material-symbols-outlined mail-status" style="color: var(--success);">done</span>` 
+        const answeredIcon = isAnswered
+            ? `<span class="material-symbols-outlined mail-status" style="color: var(--success);">done</span>`
             : `<span class="material-symbols-outlined mail-status" style="color: var(--text-muted);">mail</span>`;
-
         return `
             <div class="email-item ${activeClass} ${isAnswered ? 'answered' : ''}" onclick="selectEmail(${idx})">
                 ${answeredIcon}
                 <div class="email-item-content">
-                    <div class="email-item-sender">${email.sender_name}</div>
-                    <div class="email-item-subject">${email.subject}</div>
-                    <div class="email-item-date">${email.date}</div>
+                    <div class="email-item-sender">${escapeHTML(email.sender_name)}</div>
+                    <div class="email-item-subject">${escapeHTML(email.subject)}</div>
+                    <div class="email-item-date">${email.date || ''}</div>
                 </div>
             </div>
         `;
@@ -144,33 +440,31 @@ function renderEmailList() {
 function selectEmail(idx) {
     if (idx < 0 || idx >= emails.length) return;
     currentIndex = idx;
-    
-    // Update active class in list
     const items = document.querySelectorAll(".email-item");
-    items.forEach((item, i) => {
-        if (i === idx) item.classList.add("active");
-        else item.classList.remove("active");
-    });
+    items.forEach((item, i) => item.classList.toggle("active", i === idx));
 
     const email = emails[idx];
-
-    // Hide empty state, show view
     document.getElementById("emptyState").classList.add("hidden");
     document.getElementById("emailView").classList.remove("hidden");
 
-    // Populate metadata
     document.getElementById("viewSubject").textContent = email.subject;
     document.getElementById("viewSenderName").textContent = email.sender_name;
     document.getElementById("viewSenderEmail").textContent = email.sender_email;
-    document.getElementById("viewDate").textContent = email.date;
+    document.getElementById("viewDate").textContent = email.date || '';
     document.getElementById("viewBody").innerHTML = email.body_html;
+
+    if (!decisionTimestamps[email.id]) {
+        decisionTimestamps[email.id] = { viewedAt: Date.now() };
+    }
 
     const isAnswered = answeredIds.has(email.id);
     if (isAnswered) {
-        showFeedback(email, false); // Just show the feedback panel without scoring again
+        showFeedback(email, false);
+        stopTimer();
     } else {
         document.getElementById("decisionPanel").classList.remove("hidden");
         document.getElementById("feedbackPanel").classList.add("hidden");
+        startTimer();
     }
 }
 
@@ -180,19 +474,146 @@ function makeDecision(selectedPhishing) {
 
     answeredIds.add(email.id);
     answeredCount++;
+    stopTimer();
+
+    if (selectedPhishing === null) {
+        // Timed out — treat as incorrect
+        currentStreak = 0;
+        updateStreakDisplay();
+        document.getElementById("currentScore").textContent = score;
+        const timing = decisionTimestamps[email.id] || {};
+        const responseTime = timing.viewedAt ? Date.now() - timing.viewedAt : TIMER_SECONDS * 1000;
+        renderEmailList();
+        showFeedback(email, true, false);
+        fetch("/api/phishing/stats", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                email_id: String(email.id),
+                campaign_id: 0,
+                is_phishing: email.is_phishing,
+                identified_correctly: false,
+                response_time_ms: responseTime,
+                red_flags_identified: 0,
+                total_red_flags: (email.red_flags && email.red_flags.length) || 0,
+                session_id: sessionId
+            })
+        }).then(() => loadMyStats()).catch(() => {});
+        fetchDebrief(email, false, false);
+        return;
+    }
 
     const correct = email.is_phishing === selectedPhishing;
+
     if (correct) {
-        score++;
+        currentStreak++;
+        if (currentStreak > bestStreak) bestStreak = currentStreak;
+        score += Math.min(currentStreak, 5);
         document.getElementById("currentScore").textContent = score;
+        spawnConfetti();
+        updateStreakDisplay();
+    } else {
+        currentStreak = 0;
+        updateStreakDisplay();
+        const pane = document.getElementById("emailPane");
+        pane.classList.remove("shake");
+        void pane.offsetWidth;
+        pane.classList.add("shake");
     }
+
+    const timing = decisionTimestamps[email.id] || {};
+    const responseTime = timing.viewedAt ? Date.now() - timing.viewedAt : 0;
+    const totalFlags = (email.red_flags && email.red_flags.length) || 0;
+    const flagsIdentified = correct ? totalFlags : 0;
 
     renderEmailList();
     showFeedback(email, true, correct);
+
+    fetch("/api/phishing/stats", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email_id: String(email.id),
+            campaign_id: 0,
+            is_phishing: email.is_phishing,
+            identified_correctly: correct,
+            response_time_ms: responseTime,
+            red_flags_identified: flagsIdentified,
+            total_red_flags: totalFlags,
+            session_id: sessionId
+        })
+    }).then(() => loadMyStats()).catch(() => {});
+
+    fetchDebrief(email, selectedPhishing, correct);
+}
+
+function spawnConfetti() {
+    const container = document.getElementById("confettiContainer");
+    const colors = ["#f59e0b", "#ef4444", "#3b82f6", "#10b981", "#8b5cf6", "#ec4899"];
+    for (let i = 0; i < 40; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = (Math.random() * 100) + "%";
+        piece.style.top = (Math.random() * 30 + 10) + "%";
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.width = (Math.random() * 6 + 4) + "px";
+        piece.style.height = (Math.random() * 6 + 4) + "px";
+        piece.style.animationDuration = (Math.random() * 1 + 1) + "s";
+        piece.style.animationDelay = (Math.random() * 0.3) + "s";
+        container.appendChild(piece);
+        setTimeout(() => piece.remove(), 2500);
+    }
+}
+
+function updateStreakDisplay() {
+    const el = document.getElementById("streakDisplay");
+    const streakCount = document.getElementById("streakCount");
+    const multiplier = document.getElementById("comboMultiplier");
+    const indicator = document.getElementById("streakIndicator");
+
+    streakCount.textContent = currentStreak;
+    const combo = Math.min(currentStreak, 5);
+    multiplier.textContent = "x" + Math.max(combo, 1);
+
+    if (currentStreak >= 2) {
+        el.style.display = "flex";
+        indicator.style.display = "inline";
+    } else {
+        el.style.display = "none";
+        indicator.style.display = "none";
+    }
+}
+
+async function fetchDebrief(email, userAnsweredPhishing, correct) {
+    try {
+        const res = await fetch("/api/simulator/debrief", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                email: {
+                    subject: email.subject,
+                    sender_name: email.sender_name,
+                    sender_email: email.sender_email,
+                    is_phishing: email.is_phishing
+                },
+                userAnsweredPhishing,
+                correct
+            })
+        });
+        const data = await res.json();
+        const debriefContainer = document.getElementById("debriefContainer");
+        const debriefText = document.getElementById("debriefText");
+        if (data.debrief) {
+            debriefText.textContent = data.debrief;
+            debriefContainer.classList.remove("hidden");
+        }
+    } catch (err) {}
 }
 
 function showFeedback(email, animate, correct = null) {
     document.getElementById("decisionPanel").classList.add("hidden");
+    document.getElementById("debriefContainer").classList.add("hidden");
+
     const feedbackPanel = document.getElementById("feedbackPanel");
     feedbackPanel.classList.remove("hidden");
 
@@ -208,6 +629,11 @@ function showFeedback(email, animate, correct = null) {
             feedbackIcon.style.color = "var(--success)";
             feedbackTitle.textContent = "Correct! Well spotted.";
             feedbackTitle.style.color = "var(--success)";
+            if (currentStreak >= 3) {
+                feedbackTitle.textContent = "Correct! 🔥 " + currentStreak + " in a row!";
+            } else if (currentStreak >= 2) {
+                feedbackTitle.textContent = "Correct! 🔥 Streak continues!";
+            }
         } else {
             feedbackIcon.textContent = "cancel";
             feedbackIcon.style.color = "var(--error)";
@@ -215,21 +641,20 @@ function showFeedback(email, animate, correct = null) {
             feedbackTitle.style.color = "var(--error)";
         }
     } else {
-        // Already answered review mode
         feedbackIcon.textContent = "info";
         feedbackIcon.style.color = "var(--info)";
         feedbackTitle.textContent = "Reviewing Email Analysis";
         feedbackTitle.style.color = "var(--text)";
     }
 
-    feedbackDesc.textContent = email.explanation;
+    feedbackDesc.textContent = email.explanation || '';
 
-    if (email.is_phishing && email.red_flags.length > 0) {
+    if (email.is_phishing && email.red_flags && email.red_flags.length > 0) {
         redFlagsContainer.classList.remove("hidden");
         redFlagsList.innerHTML = email.red_flags.map(f => `
             <li>
-                <strong>Target:</strong> <code class="highlight-warn">${f.target}</code>
-                <div style="margin-top: 0.25rem;">${f.reason}</div>
+                <strong>Target:</strong> <code class="highlight-warn">${escapeHTML(f.target)}</code>
+                <div style="margin-top: 0.25rem;">${escapeHTML(f.reason)}</div>
             </li>
         `).join("");
     } else {
@@ -245,9 +670,163 @@ function nextEmail() {
     if (currentIndex < emails.length - 1) {
         selectEmail(currentIndex + 1);
     } else {
-        // Finished
-        alert(`Game complete! You scored ${score} out of ${emails.length}.`);
+        showSummary();
     }
+}
+
+function showSummary() {
+    const total = emails.length;
+    const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+    const avgTime = calculateAvgTime();
+
+    document.getElementById("summaryScore").textContent = score + "/" + total;
+    document.getElementById("summaryAccuracy").textContent = accuracy + "%";
+    document.getElementById("summaryStreak").textContent = bestStreak;
+    document.getElementById("summaryAvgTime").textContent = avgTime + "s";
+
+    let msg = "";
+    if (accuracy >= 90) {
+        msg = "Outstanding! You're a phishing detection expert. 🏆 Keep training to maintain your edge!";
+    } else if (accuracy >= 70) {
+        msg = "Great job! You have a solid eye for threats. A bit more practice and you'll be elite.";
+    } else if (accuracy >= 50) {
+        msg = "Good effort! You're catching some threats but there's room to improve. Focus on sender addresses and urgency cues.";
+    } else {
+        msg = "Keep practicing! Phishing detection is a skill that improves with time. Pay attention to red flags like mismatched domains and urgent language.";
+    }
+    if (bestStreak >= 5) {
+        msg += " And that " + bestStreak + "-email streak was impressive! 🔥";
+    }
+    document.getElementById("summaryMessage").textContent = msg;
+
+    if (accuracy >= 90) {
+        spawnConfetti();
+        setTimeout(spawnConfetti, 500);
+    }
+
+    document.getElementById("summaryModal").classList.remove("hidden");
+}
+
+function closeSummary() {
+    document.getElementById("summaryModal").classList.add("hidden");
+}
+
+function calculateAvgTime() {
+    const times = Object.values(decisionTimestamps).filter(t => t.viewedAt);
+    if (times.length === 0) return "0";
+    const total = times.reduce((sum, t, i) => {
+        if (i === 0) return 0;
+        return sum + (t.viewedAt - times[i - 1].viewedAt);
+    }, 0);
+    return Math.round(total / Math.max(times.length - 1, 1) / 1000);
+}
+
+// ── Stats & Leaderboard ──
+
+async function loadMyStats() {
+    try {
+        const res = await fetch("/api/phishing/my-stats");
+        const data = await res.json();
+        if (data.error) return;
+
+        document.getElementById("statTotal").textContent = data.total;
+        document.getElementById("statCorrect").textContent = data.correct;
+        document.getElementById("statAccuracy").textContent = data.accuracy + "%";
+        document.getElementById("statBadges").textContent = data.badges ? data.badges.length : 0;
+        document.getElementById("statsBar").style.display = "flex";
+
+        // Update live rank
+        updateLiveRank();
+    } catch (err) {}
+}
+
+async function updateLiveRank() {
+    try {
+        const res = await fetch("/api/phishing/leaderboard");
+        const lb = await res.json();
+        const leaderboard = lb.leaderboard || [];
+        const username = '{{ session["username"] }}';
+        const idx = leaderboard.findIndex(u => u.username === username);
+        document.getElementById("liveRank").textContent = idx >= 0 ? "#" + (idx + 1) : "-";
+    } catch (err) {}
+}
+
+async function toggleLeaderboard() {
+    const modal = document.getElementById("leaderboardModal");
+    if (modal.classList.contains("hidden")) {
+        modal.classList.remove("hidden");
+        await loadLeaderboard();
+    } else {
+        modal.classList.add("hidden");
+    }
+}
+
+async function loadLeaderboard() {
+    const content = document.getElementById("leaderboardContent");
+    const badgeDisplay = document.getElementById("badgeDisplay");
+    try {
+        const [lbRes, statsRes, badgesRes] = await Promise.all([
+            fetch("/api/phishing/leaderboard"),
+            fetch("/api/phishing/my-stats"),
+            fetch("/api/badges")
+        ]);
+        const lb = await lbRes.json();
+        const stats = await statsRes.json();
+        const badgeDefs = await badgesRes.json();
+
+        const username = '{{ session["username"] }}';
+
+        let html = '<h3 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Accuracy Rankings</h3>';
+        html += '<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">';
+        html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><th style="padding:0.4rem 0.5rem;text-align:left;color:var(--text-muted);">#</th><th style="padding:0.4rem 0.5rem;text-align:left;color:var(--text-muted);">User</th><th style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">Accuracy</th><th style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">Attempts</th></tr></thead><tbody>';
+        (lb.leaderboard || []).forEach((u, i) => {
+            const isMe = u.username === username;
+            html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);${isMe ? 'background:rgba(59,130,246,0.08);' : ''}">
+                <td style="padding:0.4rem 0.5rem;">${i + 1}</td>
+                <td style="padding:0.4rem 0.5rem;font-weight:500;">${escapeHTML(u.username)}${isMe ? ' (you)' : ''}</td>
+                <td style="padding:0.4rem 0.5rem;text-align:right;color:${u.accuracy >= 90 ? 'var(--success)' : u.accuracy >= 70 ? 'var(--warning)' : 'var(--text-secondary)'};">${u.accuracy}%</td>
+                <td style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">${u.total_attempts}</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+
+        html += '<h3 style="font-size:0.95rem; margin:1.25rem 0 0.75rem;">Badge Rankings</h3>';
+        html += '<table style="width:100%; border-collapse:collapse; font-size:0.85rem;">';
+        html += '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><th style="padding:0.4rem 0.5rem;text-align:left;color:var(--text-muted);">#</th><th style="padding:0.4rem 0.5rem;text-align:left;color:var(--text-muted);">User</th><th style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">Badges</th><th style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">Accuracy</th></tr></thead><tbody>';
+        (lb.badge_leaderboard || []).forEach((u, i) => {
+            html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                <td style="padding:0.4rem 0.5rem;">${i + 1}</td>
+                <td style="padding:0.4rem 0.5rem;font-weight:500;">${escapeHTML(u.username)}</td>
+                <td style="padding:0.4rem 0.5rem;text-align:right;color:var(--warning);">${u.badge_count}</td>
+                <td style="padding:0.4rem 0.5rem;text-align:right;color:var(--text-muted);">${u.accuracy}%</td>
+            </tr>`;
+        });
+        html += '</tbody></table>';
+        content.innerHTML = html;
+
+        if (stats.badges && stats.badges.length > 0) {
+            badgeDisplay.innerHTML = stats.badges.map(b => {
+                const label = badgeDefs[b.badge_id] || b.badge_id;
+                return `<span style="padding:0.3rem 0.6rem;border-radius:20px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.2);color:var(--warning);font-size:0.8rem;" title="${escapeHTML(label)}">
+                    <span class="material-symbols-outlined" style="font-size:0.85rem;vertical-align:middle;">military_tech</span> ${escapeHTML(label)}
+                </span>`;
+            }).join('');
+        } else {
+            badgeDisplay.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;">No badges yet. Keep analyzing emails!</span>';
+        }
+    } catch (err) {
+        content.innerHTML = '<p style="color:var(--error);">Failed to load leaderboard.</p>';
+    }
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;',
+            "'": '&#39;', '"': '&quot;'
+        }[tag] || tag)
+    );
 }
 </script>
 {% endblock %}
