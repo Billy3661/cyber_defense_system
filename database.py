@@ -143,8 +143,20 @@ def create_conversation(username, title=""):
     return conv_id
 
 def add_message(conversation_id, role, content):
-    execute_query("INSERT INTO chat_messages (conversation_id, role, content) VALUES (?, ?, ?)", (conversation_id, role, content))
-    execute_query("UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", (conversation_id,))
+    conn = get_db_connection()
+    cur = conn.cursor()
+    if using_postgres():
+        cur.execute(_p("INSERT INTO chat_messages (conversation_id, role, content) VALUES (?, ?, ?) RETURNING id"), (conversation_id, role, content))
+        conn.commit()
+        msg_id = cur.fetchone()[0]
+    else:
+        cur.execute(_p("INSERT INTO chat_messages (conversation_id, role, content) VALUES (?, ?, ?)"), (conversation_id, role, content))
+        conn.commit()
+        msg_id = cur.lastrowid
+    cur.execute(_p("UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?"), (conversation_id,))
+    conn.commit()
+    conn.close()
+    return msg_id
 
 def update_conversation_title(conversation_id, title):
     execute_query("UPDATE chat_conversations SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", (title, conversation_id))
@@ -158,6 +170,9 @@ def get_messages(conversation_id):
 def delete_conversation(conversation_id):
     execute_query("DELETE FROM chat_messages WHERE conversation_id = ?", (conversation_id,))
     execute_query("DELETE FROM chat_conversations WHERE id = ?", (conversation_id,))
+
+def update_message(message_id, content):
+    execute_query("UPDATE chat_messages SET content = ? WHERE id = ?", (content, message_id))
 
 def delete_message(message_id):
     execute_query("DELETE FROM chat_messages WHERE id = ?", (message_id,))

@@ -252,7 +252,7 @@
             // User bubble
             const userDiv = document.createElement('div');
             userDiv.className = 'chat-message user';
-            userDiv.innerHTML = `<div class="message-content">${escapeHTML(message)}</div>`;
+            userDiv.innerHTML = `<div class="message-content">${escapeHTML(message)}</div><div class="msg-actions"></div>`;
             chatBody.appendChild(userDiv);
             scrollToBottom();
 
@@ -285,10 +285,23 @@
 
                 currentConvId = data.conversation_id;
 
+                // Store user message ID and add edit/delete actions
+                if (data.user_message_id) {
+                    userDiv.dataset.msgId = data.user_message_id;
+                    const actions = userDiv.querySelector('.msg-actions');
+                    actions.innerHTML = `
+                        <button class="msg-action-btn edit" onclick="editMessage(this)" title="Edit">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button class="msg-action-btn delete" onclick="deleteMessage(this)" title="Delete">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>`;
+                }
+
                 // AI bubble with typewriter
                 const aiDiv = document.createElement('div');
                 aiDiv.className = 'chat-message ai';
-                aiDiv.innerHTML = `<div class="message-content markdown-body"></div>`;
+                aiDiv.innerHTML = `<div class="message-content markdown-body"></div><div class="msg-actions"></div>`;
                 chatBody.appendChild(aiDiv);
                 const contentDiv = aiDiv.querySelector('.message-content');
                 const fullText = data.response || "";
@@ -301,6 +314,14 @@
                         setTimeout(typeNextChar, 12);
                     } else {
                         contentDiv.innerHTML = marked.parse(fullText);
+                        if (data.ai_message_id) {
+                            aiDiv.dataset.msgId = data.ai_message_id;
+                            const actions = aiDiv.querySelector('.msg-actions');
+                            actions.innerHTML = `
+                                <button class="msg-action-btn delete" onclick="deleteMessage(this)" title="Delete">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>`;
+                        }
                         scrollToBottom();
                     }
                 }
@@ -363,13 +384,22 @@
                     if (m.role === 'user') {
                         const div = document.createElement('div');
                         div.className = 'chat-message user';
-                        div.innerHTML = `<div class="message-content">${escapeHTML(m.content)}</div>`;
+                        div.dataset.msgId = m.id;
+                        div.innerHTML = `<div class="message-content">${escapeHTML(m.content)}</div>
+                            <div class="msg-actions">
+                                <button class="msg-action-btn edit" onclick="editMessage(this)" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+                                <button class="msg-action-btn delete" onclick="deleteMessage(this)" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                            </div>`;
                         body.appendChild(div);
                         chatHistory.push({role: 'user', content: m.content});
                     } else {
                         const div = document.createElement('div');
                         div.className = 'chat-message ai';
-                        div.innerHTML = `<div class="message-content markdown-body">${marked.parse(m.content)}</div>`;
+                        div.dataset.msgId = m.id;
+                        div.innerHTML = `<div class="message-content markdown-body">${marked.parse(m.content)}</div>
+                            <div class="msg-actions">
+                                <button class="msg-action-btn delete" onclick="deleteMessage(this)" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                            </div>`;
                         body.appendChild(div);
                         chatHistory.push({role: 'model', content: m.content});
                     }
@@ -382,10 +412,74 @@
         }
 
         async function deleteConv(convId) {
+            if (!confirm('Delete this entire conversation?')) return;
             try {
                 await fetch(`/api/chat/history/${convId}`, { method: 'DELETE' });
-                toggleHistory(); // refresh list
+                if (currentConvId === convId) newChat();
+                else toggleHistory();
             } catch(e) {}
+        }
+
+        function editMessage(btn) {
+            const msgDiv = btn.closest('.chat-message');
+            const contentDiv = msgDiv.querySelector('.message-content');
+            const original = contentDiv.textContent.trim();
+            msgDiv.dataset.originalContent = original;
+            contentDiv.innerHTML = `<textarea class="edit-textarea">${escapeHTML(original)}</textarea>
+                <div class="edit-actions">
+                    <button class="edit-save-btn" onclick="saveEdit(this, '${msgDiv.dataset.msgId}')">Save</button>
+                    <button class="edit-cancel-btn" onclick="cancelEdit(this)">Cancel</button>
+                </div>`;
+            const ta = contentDiv.querySelector('textarea');
+            ta.focus();
+            ta.setSelectionRange(ta.value.length, ta.value.length);
+        }
+
+        async function saveEdit(btn, msgId) {
+            const textarea = btn.closest('.message-content').querySelector('textarea');
+            const content = textarea.value.trim();
+            if (!content) return;
+            try {
+                const r = await fetch(`/api/chat/message/${msgId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const data = await r.json();
+                if (!r.ok || data.error) { showError(data.error || 'Failed to save'); return; }
+                const contentDiv = btn.closest('.message-content');
+                contentDiv.innerHTML = marked.parse(content);
+                const msgDiv = btn.closest('.chat-message');
+                const idx = Array.from(msgDiv.parentElement.children).indexOf(msgDiv);
+                if (chatHistory[idx]) chatHistory[idx].content = content;
+            } catch(e) {
+                showError('Failed to save edit');
+            }
+        }
+
+        function cancelEdit(btn) {
+            const msgDiv = btn.closest('.chat-message');
+            const contentDiv = msgDiv.querySelector('.message-content');
+            const original = msgDiv.dataset.originalContent || '';
+            const isUser = msgDiv.classList.contains('user');
+            contentDiv.innerHTML = isUser ? escapeHTML(original) : marked.parse(original);
+        }
+
+        async function deleteMessage(btn) {
+            if (!confirm('Delete this message?')) return;
+            const msgDiv = btn.closest('.chat-message');
+            const msgId = msgDiv.dataset.msgId;
+            if (!msgId) { msgDiv.remove(); return; }
+            try {
+                const r = await fetch(`/api/chat/message/${msgId}`, { method: 'DELETE' });
+                const data = await r.json();
+                if (!r.ok || data.error) { showError(data.error || 'Failed to delete'); return; }
+                const idx = Array.from(msgDiv.parentElement.children).indexOf(msgDiv);
+                if (chatHistory[idx]) chatHistory.splice(idx, 1);
+                msgDiv.remove();
+            } catch(e) {
+                showError('Failed to delete message');
+            }
         }
 
         function newChat() {

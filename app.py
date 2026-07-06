@@ -3114,7 +3114,7 @@ def api_chat():
             conv_id = database.create_conversation(username, user_message[:80])
 
         # Save user message
-        database.add_message(conv_id, "user", user_message)
+        user_msg_id = database.add_message(conv_id, "user", user_message)
 
         system_prompt = """You are Securix AI, a cybersecurity assistant. Answer in 2-4 short paragraphs maximum. Be direct and precise. Use Markdown only when it aids clarity (bullet points, bold). Never use emojis. If asked about a scan result, interpret it specifically. If you don't know, say so."""
 
@@ -3152,7 +3152,7 @@ def api_chat():
         reply_text = groq_response.json()["choices"][0]["message"]["content"]
 
         # Save AI response + update title with first user message
-        database.add_message(conv_id, "assistant", reply_text)
+        ai_msg_id = database.add_message(conv_id, "assistant", reply_text)
 
         # Update title to first user message if still default
         convs = database.get_conversations(username)
@@ -3161,7 +3161,7 @@ def api_chat():
                 database.update_conversation_title(conv_id, user_message[:80])
                 break
 
-        return jsonify({"response": reply_text, "conversation_id": conv_id})
+        return jsonify({"response": reply_text, "conversation_id": conv_id, "user_message_id": user_msg_id, "ai_message_id": ai_msg_id})
 
     except req.exceptions.Timeout:
         return jsonify({"error": "AI took too long to respond. Please try again."}), 504
@@ -3207,6 +3207,17 @@ def chat_delete_conversation(conv_id):
     if not any(c["id"] == conv_id for c in convs):
         return jsonify({"error": "Conversation not found"}), 404
     database.delete_conversation(conv_id)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/chat/message/<int:msg_id>", methods=["PUT"])
+@login_required
+def chat_update_message(msg_id):
+    data = request.json
+    content = data.get("content", "").strip()
+    if not content:
+        return jsonify({"error": "Empty content"}), 400
+    database.update_message(msg_id, content)
     return jsonify({"ok": True})
 
 
