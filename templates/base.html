@@ -200,6 +200,13 @@
     {% endif %}
 
     <script>
+        // Auth check — hide chat if session expired
+        fetch('/api/check-auth').then(r => r.json()).then(d => {
+            if (!d.authenticated) {
+                document.querySelectorAll('.chat-widget').forEach(el => el.remove());
+            }
+        }).catch(() => {});
+
         // Chatbot logic
         let chatHistory = [];
         

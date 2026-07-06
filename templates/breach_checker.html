@@ -179,6 +179,12 @@ async function performEmailCheck() {
             body: JSON.stringify({ email })
         });
         const data = await res.json();
+        if (data.error) {
+            alert(data.error);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
         currentTargetType = "email";
         renderEmailResults(email, data);
     } catch (err) {

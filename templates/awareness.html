@@ -384,27 +384,55 @@
     <!-- Quick Reference Card -->
     <div class="quick-ref-card" id="quickRefCard">
         <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">bolt</span>Essential Security Checklist</h2>
+
+        <!-- Daily Streak + Tip -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.6rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 0.6rem 1rem;">
+                <span class="material-symbols-outlined" style="color: #f59e0b; font-size: 1.6rem;">local_fire_department</span>
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Daily Visit Streak</div>
+                    <div id="dailyStreakDisplay" style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;">-- days</div>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 200px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 0.6rem 1rem;">
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Daily Security Tip</div>
+                <div id="dailyTipDisplay" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;"></div>
+            </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div id="checklistStats" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+                <span id="checklistProgressText">0 of 12 completed</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); border-radius: 20px; height: 10px; overflow: hidden;">
+                <div id="checklistBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--warning), var(--success)); border-radius: 20px; transition: width 0.5s ease;"></div>
+            </div>
+        </div>
+
+        <div id="confettiContainer" style="position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
+
         <div class="checklist-grid">
             <div class="checklist-col">
-                <h4>Daily Habits</h4>
-                <label class="check-item-label"><input type="checkbox" /> Think before you click</label>
-                <label class="check-item-label"><input type="checkbox" /> Verify unexpected requests</label>
-                <label class="check-item-label"><input type="checkbox" /> Lock devices when away</label>
-                <label class="check-item-label"><input type="checkbox" /> Use secure networks only</label>
+                <h4><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -3px;">wb_sunny</span> Daily Habits</h4>
+                <label class="check-item-label" data-key="click"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">touch_app</span> Think before you click</label>
+                <label class="check-item-label" data-key="verify"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">verified_user</span> Verify unexpected requests</label>
+                <label class="check-item-label" data-key="lock"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">lock</span> Lock devices when away</label>
+                <label class="check-item-label" data-key="network"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">wifi</span> Use secure networks only</label>
             </div>
             <div class="checklist-col">
-                <h4>Weekly</h4>
-                <label class="check-item-label"><input type="checkbox" /> Review account activity</label>
-                <label class="check-item-label"><input type="checkbox" /> Update software and apps</label>
-                <label class="check-item-label"><input type="checkbox" /> Check for unusual logins</label>
-                <label class="check-item-label"><input type="checkbox" /> Verify backup status</label>
+                <h4><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -3px;">calendar_view_week</span> Weekly</h4>
+                <label class="check-item-label" data-key="activity"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">manage_search</span> Review account activity</label>
+                <label class="check-item-label" data-key="update"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">system_update</span> Update software and apps</label>
+                <label class="check-item-label" data-key="logins"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">login</span> Check for unusual logins</label>
+                <label class="check-item-label" data-key="backup"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">backup</span> Verify backup status</label>
             </div>
             <div class="checklist-col">
-                <h4>Monthly</h4>
-                <label class="check-item-label"><input type="checkbox" /> Audit app permissions</label>
-                <label class="check-item-label"><input type="checkbox" /> Review connected devices</label>
-                <label class="check-item-label"><input type="checkbox" /> Check breach alerts</label>
-                <label class="check-item-label"><input type="checkbox" /> Update router firmware</label>
+                <h4><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -3px;">calendar_month</span> Monthly</h4>
+                <label class="check-item-label" data-key="permissions"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">security</span> Audit app permissions</label>
+                <label class="check-item-label" data-key="devices"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">devices</span> Review connected devices</label>
+                <label class="check-item-label" data-key="breaches"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">warning</span> Check breach alerts</label>
+                <label class="check-item-label" data-key="firmware"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">router</span> Update router firmware</label>
             </div>
         </div>
     </div>
@@ -479,5 +507,114 @@ function togglePwVisibility() {
         btn.textContent = "visibility";
     }
 }
+
+// ── Daily Streak ──
+(function() {
+    const STREAK_KEY = "securix_daily_streak";
+    const today = new Date().toDateString();
+    let streakData;
+    try { streakData = JSON.parse(localStorage.getItem(STREAK_KEY)) || { count: 0, last: "" }; }
+    catch { streakData = { count: 0, last: "" }; }
+
+    if (streakData.last !== today) {
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (streakData.last === yesterday) { streakData.count++; }
+        else { streakData.count = 1; }
+        streakData.last = today;
+        localStorage.setItem(STREAK_KEY, JSON.stringify(streakData));
+    }
+
+    const el = document.getElementById("dailyStreakDisplay");
+    if (el) {
+        const c = streakData.count;
+        el.textContent = c + " day" + (c !== 1 ? "s" : "");
+    }
+})();
+
+// ── Daily Security Tip ──
+(function() {
+    const tips = [
+        "Never reuse passwords across multiple sites — use a password manager.",
+        "Enable 2FA on every account that supports it.",
+        "Phishing emails often create urgency — pause before clicking.",
+        "Public WiFi is a hotspot for attackers — always use a VPN.",
+        "Lock your screen every time you step away from your desk.",
+        "Update your software promptly — patches fix known vulnerabilities.",
+        "Backup critical files using the 3-2-1 rule: 3 copies, 2 media, 1 offsite.",
+        "Review app permissions regularly — revoke what you don't use.",
+        "If a deal sounds too good to be true, it's probably a scam.",
+        "Use unique email aliases for different services to reduce tracking.",
+        "Don't plug unknown USB drives into your computer.",
+        "Verify the sender before acting on unexpected email requests.",
+        "Use ad-blockers to reduce the risk of malvertising.",
+        "Check for HTTPS before entering sensitive data on any website.",
+        "Log out of accounts on shared or public devices.",
+    ];
+    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    const el = document.getElementById("dailyTipDisplay");
+    if (el) el.textContent = tips[dayOfYear % tips.length];
+})();
+
+// ── Interactive Checklist ──
+(function() {
+    const CHECKLIST_KEY = "securix_checklist";
+    function getChecks() { try { return JSON.parse(localStorage.getItem(CHECKLIST_KEY)) || {}; } catch { return {}; } }
+    function saveChecks(checks) { localStorage.setItem(CHECKLIST_KEY, JSON.stringify(checks)); }
+
+    const items = document.querySelectorAll(".check-item-label");
+    const total = items.length;
+    let checks = getChecks();
+    let prevMilestone = -1;
+
+    items.forEach((label, i) => {
+        const cb = label.querySelector("input[type=checkbox]");
+        const key = label.dataset.key || "item_" + i;
+        if (checks[key]) cb.checked = true;
+        cb.addEventListener("change", () => {
+            checks[key] = cb.checked;
+            saveChecks(checks);
+            updateProgress();
+            if (cb.checked) {
+                const done = Object.values(checks).filter(Boolean).length;
+                const pct = Math.round((done / total) * 100);
+                if (pct > 0 && pct % 25 === 0 && pct !== prevMilestone) {
+                    prevMilestone = pct;
+                    spawnConfetti(pct);
+                }
+            }
+        });
+    });
+
+    function updateProgress() {
+        const done = Object.values(checks).filter(Boolean).length;
+        const pct = Math.round((done / total) * 100);
+        const bar = document.getElementById("checklistBar");
+        const txt = document.getElementById("checklistProgressText");
+        if (bar) bar.style.width = pct + "%";
+        if (txt) txt.textContent = done + " of " + total + " completed";
+    }
+
+    function spawnConfetti(milestone) {
+        const c = document.getElementById("confettiContainer");
+        if (!c) return;
+        const colors = ["#f59e0b","#ef4444","#3b82f6","#10b981","#8b5cf6","#ec4899"];
+        const count = milestone === 100 ? 80 : 40;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement("div");
+            p.style.cssText = "position:absolute;width:"+(Math.random()*6+4)+"px;height:"+(Math.random()*6+4)+"px;border-radius:2px;left:"+(Math.random()*100)+"%;top:"+(Math.random()*30+10)+"%;background:"+colors[Math.floor(Math.random()*colors.length)]+";animation:confettiFall "+(Math.random()*1+1)+"s ease-out forwards;animation-delay:"+(Math.random()*0.3)+"s";
+            c.appendChild(p);
+            setTimeout(() => p.remove(), 2500);
+        }
+    }
+
+    updateProgress();
+
+    if (!document.getElementById("confettiKeyframes")) {
+        const s = document.createElement("style");
+        s.id = "confettiKeyframes";
+        s.textContent = "@keyframes confettiFall{0%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}100%{opacity:0;transform:translateY(400px) rotate(720deg) scale(0.3)}}";
+        document.head.appendChild(s);
+    }
+})();
 </script>
 {% endblock %}

@@ -8,7 +8,7 @@
         <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Email Analyzer</div>
         <h1 class="page-title"><span class="material-symbols-outlined" style="font-size: 2.5rem; vertical-align: middle; margin-right: 0.5rem;">alternate_email</span>Email Header Analyzer</h1>
         <p class="page-subtitle">
-            Paste raw headers from any email client (Outlook, Gmail, Apple Mail) to check authentication alignments, SPF/DKIM validation, and spoofing indicators.
+            Paste raw headers to check SPF, DKIM, DMARC, and detect spoofing.
         </p>
     </div>
 </div>
@@ -23,13 +23,13 @@
 
         <div style="margin-top: 1rem;">
             <label for="rawHeaders" style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-                Raw Email Headers (Received, From, DKIM-Signature, etc.)
+                Raw Email Headers
             </label>
             <textarea 
                 id="rawHeaders" 
                 class="form-control" 
-                rows="8" 
-                placeholder="Delivered-To: user@example.com&#10;Received: by 2002:a05:620a:2184:b0:4c1:83d7:5c80...&#10;ARC-Seal: i=1; a=rsa-sha256; t=1719213812; cv=none...&#10;From: Support <support@paypal.com>&#10;To: customer@example.com&#10;Subject: Account Notification"
+                rows="6" 
+                placeholder="From: Support <support@paypal.com>&#10;Received-SPF: pass (domain.com designates 1.2.3.4 as sender)&#10;Authentication-Results: dkim=pass header.i=@paypal.com; spf=pass; dmarc=pass&#10;Return-Path: <support@paypal.com>"
                 style="width: 100%; background: #0f172a; border: 1px solid var(--border); color: #fff; font-family: monospace; padding: 0.75rem; border-radius: 8px; font-size: 0.85rem; resize: vertical;"
             ></textarea>
         </div>
@@ -139,47 +139,21 @@
 let currentEmailData = null;
 
 const SAMPLES = {
-    safe: `Delivered-To: user@gmail.com
-Received: by 2002:a05:6830:178b:b0:538:1a42:910d with SMTP id a11csp4859068otj;
-        Mon, 22 Jun 2026 14:15:30 -0700 (PDT)
-X-Google-Smtp-Source: AGHTeb27+L21u2tJSDC
-Received-SPF: pass (google.com: domain of 3-r80yxakab8re@support.google.com designates 209.85.220.69 as authorized sender) client-ip=209.85.220.69;
-Authentication-Results: mx.google.com;
-       dkim=pass header.i=@google.com header.s=20230601 header.b=OaW2H9mX;
-       spf=pass (google.com: domain of 3-r80yxakab8re@support.google.com designates 209.85.220.69 as authorized sender) smtp.mailfrom=3-r80yxakab8re@support.google.com;
-       dmarc=pass (p=reject sp=reject dis=none) header.from=google.com
-From: Google Security Team <no-reply@accounts.google.com>
-To: user@gmail.com
-Subject: Security alert: New sign-in detected on Windows
-Date: Mon, 22 Jun 2026 14:15:30 -0700
+    safe: `From: Google Security Team <no-reply@accounts.google.com>
+Received-SPF: pass (google.com designates 209.85.220.69 as authorized sender)
+Authentication-Results: dkim=pass header.i=@google.com; spf=pass; dmarc=pass header.from=google.com
 Return-Path: <no-reply@accounts.google.com>
 Reply-To: <no-reply@accounts.google.com>`,
 
-    spoofed: `Delivered-To: customer@company.corp
-Received: by corporate-mx-gateway.corp id ABC12345;
-        Mon, 22 Jun 2026 09:10:00 -0400
-Received-SPF: pass (company.corp: domain of support@mass-mailer-marketing.net designates 192.168.10.45 as authorized sender)
-Authentication-Results: company.corp;
-       dkim=pass header.i=@mass-mailer-marketing.net header.s=s1;
-       dmarc=fail (p=reject) header.from=paypal.com
-From: PayPal Billing Service <service@paypal.com>
-To: customer@company.corp
-Subject: Urgent: Invoice for Transaction PP-94820
-Date: Mon, 22 Jun 2026 09:10:00 -0400
+    spoofed: `From: PayPal Billing Service <service@paypal.com>
+Received-SPF: pass (company.corp designates 192.168.10.45 as authorized sender)
+Authentication-Results: dkim=pass header.i=@mass-mailer-marketing.net; dmarc=fail header.from=paypal.com
 Return-Path: <support@mass-mailer-marketing.net>
 Reply-To: <paypal-resolutions@mass-mailer-marketing.net>`,
 
-    spf_fail: `Delivered-To: ceo@company.corp
-Received: by corporate-mx-gateway.corp id XYZ98765;
-        Sun, 21 Jun 2026 18:30:15 -0400
-Received-SPF: fail (company.corp: domain of service@netflix.com does not designate 88.99.112.5 as authorized sender)
-Authentication-Results: company.corp;
-       dkim=fail header.i=@netflix.com;
-       dmarc=fail header.from=netflix.com
-From: Netflix Billing Helpdesk <billing-update@netflix.com>
-To: ceo@company.corp
-Subject: Account Suspended: Please update your subscription details
-Date: Sun, 21 Jun 2026 18:30:15 -0400
+    spf_fail: `From: Netflix Billing Helpdesk <billing-update@netflix.com>
+Received-SPF: fail (netflix.com does not designate 88.99.112.5 as authorized sender)
+Authentication-Results: dkim=fail header.i=@netflix.com; dmarc=fail header.from=netflix.com
 Return-Path: <billing-update@netflix.com>`
 };
 
