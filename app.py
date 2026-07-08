@@ -384,6 +384,72 @@ def check_password_breached(password: str) -> int:
         print(f"Error checking password breach: {e}")
         return -1
 
+# ─────────────────────────────────────────────
+#  CLOUDFLARE RADAR INTEGRATION
+# ─────────────────────────────────────────────
+
+CLOUDFLARE_RADAR_TOKEN = os.environ.get("CLOUDFLARE_RADAR_TOKEN", "")
+CLOUDFLARE_RADAR_BASE = "https://api.cloudflare.com/client/v4/radar"
+
+RADAR_RANK_BUCKETS = {
+    "100": "Top 100",
+    "1000": "Top 1,000",
+    "10000": "Top 10,000",
+    "100000": "Top 100,000",
+    "200000": "Top 200,000",
+    "500000": "Top 500,000",
+    "1000000": "Top 1,000,000",
+    "2000000": "Top 2,000,000",
+    "5000000": "Top 5,000,000",
+    "10000000": "Top 10,000,000",
+}
+
+def check_cloudflare_radar(domain: str) -> dict:
+    if not CLOUDFLARE_RADAR_TOKEN:
+        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": "Cloudflare Radar not configured — set CLOUDFLARE_RADAR_TOKEN in .env"}
+    try:
+        headers = {"Authorization": f"Bearer {CLOUDFLARE_RADAR_TOKEN}", "Content-Type": "application/json"}
+        resp = req.get(f"{CLOUDFLARE_RADAR_BASE}/ranking/domain/{domain}", headers=headers, timeout=4.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            rank_data = data.get("result", {}).get("details_0", {})
+            rank = rank_data.get("rank")
+            bucket = str(rank_data.get("bucket", ""))
+            categories = rank_data.get("categories", [])
+            cat_names = [c.get("name", "") for c in categories if c.get("name")]
+            bucket_label = RADAR_RANK_BUCKETS.get(bucket, "")
+            if not bucket_label and bucket:
+                clean = bucket.lstrip(">")
+                try:
+                    bucket_label = f"Top {int(clean):,}"
+                except ValueError:
+                    bucket_label = ""
+            is_unranked = bucket.startswith(">")
+
+            if rank is not None and rank <= 100:
+                detail = f"#{rank} globally — highly reputable domain"
+                status = "pass"
+            elif is_unranked:
+                detail = "Not found in Cloudflare top rankings — low global visibility"
+                status = "info"
+            elif bucket_label:
+                detail = f"{bucket_label} — well-established domain"
+                status = "pass"
+            else:
+                detail = "Not in Cloudflare rankings"
+                status = "info"
+
+            if cat_names:
+                detail += f" | Categories: {', '.join(cat_names[:3])}"
+
+            return {"label": "Cloudflare Domain Ranking", "status": status, "detail": detail}
+        elif resp.status_code == 429:
+            return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": "Rate limited by Cloudflare Radar API"}
+        else:
+            return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": f"Cloudflare Radar returned status {resp.status_code}"}
+    except Exception as e:
+        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": f"Could not check Cloudflare Radar: {str(e)}"}
+
 MOCK_BREACH_DB = [
     {
         "email": "test@example.com",
@@ -1396,6 +1462,10 @@ def analyze_url(url: str) -> dict:
             result["score"] += vt_res["score_addition"]
             del vt_res["score_addition"]
         result["checks"].append(vt_res)
+
+        # ── Check 13: Cloudflare Radar Domain Ranking ──
+        radar_res = check_cloudflare_radar(domain)
+        result["checks"].append(radar_res)
 
     except Exception as e:
         result["score"] += 50
