@@ -336,16 +336,18 @@
             <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--accent);">science</span>How It Works</h3>
             <ul>
                 <li>Checks for HTTPS encryption</li>
-                <li>Cross-references known malicious domains</li>
                 <li>Detects URL shorteners</li>
                 <li>Scans for suspicious phishing keywords</li>
                 <li>Analyzes domain extension (TLD)</li>
                 <li>Detects raw IP addresses as hosts</li>
                 <li>Checks for excessive subdomains</li>
-                <li>Measures URL length anomalies</li>
-                <li>Detects encoded/obfuscated characters</li>
+                <li>Detects URL obfuscation (length + encoded chars)</li>
                 <li>Verifies DNS resolution</li>
                 <li>Cloudflare Radar domain ranking &amp; categories</li>
+                <li><strong>URLhaus</strong> active malware database lookup</li>
+                <li><strong>VirusTotal</strong> multi-engine reputation check</li>
+                <li><strong>Google Safe Browsing</strong> blocklist check</li>
+                <li><strong>AbuseIPDB</strong> IP reputation lookup</li>
             </ul>
         </div>
         <div class="info-card" id="infoTips">
@@ -366,12 +368,11 @@
         <div class="info-card" id="infoLimitations">
             <h3><span class="material-symbols-outlined" style="font-size: 1.5rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">warning</span>Limitations</h3>
             <ul>
-                <li>Heuristic analysis — not 100% accurate</li>
-                <li>New malicious sites may not be flagged</li>
-                <li>Shortened URLs hide final destination</li>
-                <li>Some legitimate sites may score poorly</li>
+                <li>No automated tool is 100% accurate</li>
+                <li>New malicious sites may not yet be in threat databases</li>
+                <li>Some legitimate sites may trigger heuristic flags</li>
+                <li>Requires API keys for full threat intelligence coverage</li>
                 <li>Always combine with other security tools</li>
-                <li>Use VirusTotal for comprehensive scans</li>
             </ul>
             <a href="https://www.virustotal.com" target="_blank" rel="noopener" class="external-link">
                 <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 4px;">open_in_new</span>Check VirusTotal for deeper analysis
@@ -385,18 +386,18 @@
 <script>
 const CHECKS_META = [
     { label: "HTTPS Secure Connection" },
-    { label: "Known Malicious Domain" },
     { label: "URL Shortener" },
     { label: "Suspicious Keywords" },
     { label: "Suspicious TLD" },
     { label: "IP Address as Host" },
     { label: "Excessive Subdomains" },
-    { label: "URL Length" },
-    { label: "Encoded / Special Characters" },
+    { label: "URL Obfuscation" },
     { label: "DNS Resolution" },
     { label: "URLhaus Threat Check" },
     { label: "VirusTotal Reputation Check" },
     { label: "Cloudflare Domain Ranking" },
+    { label: "Google Safe Browsing" },
+    { label: "AbuseIPDB Reputation" },
 ];
 
 const RECOMMENDATIONS = {

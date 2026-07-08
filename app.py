@@ -391,6 +391,18 @@ def check_password_breached(password: str) -> int:
 CLOUDFLARE_RADAR_TOKEN = os.environ.get("CLOUDFLARE_RADAR_TOKEN", "")
 CLOUDFLARE_RADAR_BASE = "https://api.cloudflare.com/client/v4/radar"
 
+# ─────────────────────────────────────────────
+#  GOOGLE SAFE BROWSING INTEGRATION
+# ─────────────────────────────────────────────
+
+GOOGLE_SAFEBROWSING_KEY = os.environ.get("GOOGLE_SAFEBROWSING_KEY", "")
+
+# ─────────────────────────────────────────────
+#  ABUSEIPDB INTEGRATION
+# ─────────────────────────────────────────────
+
+ABUSEIPDB_KEY = os.environ.get("ABUSEIPDB_KEY", "")
+
 RADAR_RANK_BUCKETS = {
     "100": "Top 100",
     "1000": "Top 1,000",
@@ -466,6 +478,86 @@ def get_cloudflare_radar_raw(domain: str) -> dict:
             return {"error": f"Cloudflare Radar returned status {resp.status_code}"}
     except Exception as e:
         return {"error": f"Could not check Cloudflare Radar: {str(e)}"}
+
+
+def check_google_safebrowsing(url: str) -> dict:
+    if not GOOGLE_SAFEBROWSING_KEY:
+        return {"label": "Google Safe Browsing", "status": "info", "detail": "Google Safe Browsing not configured — set GOOGLE_SAFEBROWSING_KEY in .env"}
+    try:
+        body = {
+            "client": {"clientId": "securix", "clientVersion": "1.0"},
+            "threatInfo": {
+                "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+                "platformTypes": ["ANY_PLATFORM"],
+                "threatEntryTypes": ["URL"],
+                "threatEntries": [{"url": url}],
+            },
+        }
+        resp = req.post(
+            f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={GOOGLE_SAFEBROWSING_KEY}",
+            json=body, timeout=4.0,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            matches = data.get("matches", [])
+            if matches:
+                threat_types = set(m.get("threatType", "UNKNOWN") for m in matches)
+                return {
+                    "label": "Google Safe Browsing",
+                    "status": "fail",
+                    "detail": f"Flagged! Threats detected: {', '.join(threat_types)}",
+                    "score_addition": 80,
+                }
+            else:
+                return {"label": "Google Safe Browsing", "status": "pass", "detail": "URL not found in Google Safe Browsing blocklists"}
+        else:
+            return {"label": "Google Safe Browsing", "status": "info", "detail": f"Google Safe Browsing returned status {resp.status_code}"}
+    except Exception as e:
+        return {"label": "Google Safe Browsing", "status": "info", "detail": f"Could not check Google Safe Browsing: {str(e)}"}
+
+
+def check_abuseipdb(domain: str) -> dict:
+    if not ABUSEIPDB_KEY:
+        return {"label": "AbuseIPDB Reputation", "status": "info", "detail": "AbuseIPDB not configured — set ABUSEIPDB_KEY in .env"}
+    try:
+        # Resolve domain to IP first
+        ip = socket.gethostbyname(domain)
+        headers = {"Key": ABUSEIPDB_KEY, "Accept": "application/json"}
+        params = {"ipAddress": ip, "maxAgeInDays": "90", "verbose": False}
+        resp = req.get("https://api.abuseipdb.com/api/v2/check", headers=headers, params=params, timeout=4.0)
+        if resp.status_code == 200:
+            data = resp.json().get("data", {})
+            confidence = data.get("abuseConfidenceScore", 0)
+            total_reports = data.get("totalReports", 0)
+            isp = data.get("isp", "Unknown")
+            domain_info = data.get("domain", "")
+            usage = data.get("usageType", "")
+
+            if confidence >= 50:
+                return {
+                    "label": "AbuseIPDB Reputation",
+                    "status": "fail",
+                    "detail": f"IP flagged! Confidence: {confidence}%, Reports: {total_reports}, ISP: {isp}",
+                    "score_addition": round(confidence * 0.8),
+                }
+            elif confidence >= 10:
+                return {
+                    "label": "AbuseIPDB Reputation",
+                    "status": "warn",
+                    "detail": f"Low reputation. Confidence: {confidence}%, Reports: {total_reports}, ISP: {isp}",
+                    "score_addition": round(confidence * 0.4),
+                }
+            else:
+                return {"label": "AbuseIPDB Reputation", "status": "pass", "detail": f"Clean reputation (confidence: {confidence}%), ISP: {isp}"}
+        elif resp.status_code == 429:
+            return {"label": "AbuseIPDB Reputation", "status": "info", "detail": "Rate limited by AbuseIPDB API"}
+        else:
+            return {"label": "AbuseIPDB Reputation", "status": "info", "detail": f"AbuseIPDB returned status {resp.status_code}"}
+    except socket.gaierror:
+        return {"label": "AbuseIPDB Reputation", "status": "info", "detail": "Could not resolve domain to check AbuseIPDB"}
+    except Exception as e:
+        return {"label": "AbuseIPDB Reputation", "status": "info", "detail": f"Could not check AbuseIPDB: {str(e)}"}
+
 
 MOCK_BREACH_DB = [
     {
@@ -639,7 +731,7 @@ MALICIOUS_DOMAINS = {
 
 SUSPICIOUS_KEYWORDS = [
     "login", "signin", "account", "verify", "update", "secure",
-    "banking", "paypal", "amazon", "microsoft", "apple", "google",
+    "banking", "paypal", "amazon", "microsoft", "apple",
     "password", "credential", "confirm", "validate", "authorize",
     "wallet", "bitcoin", "crypto", "prize", "winner", "free",
     "click", "urgent", "suspended", "locked", "limited",
@@ -1370,14 +1462,13 @@ TROUBLESHOOT_GUIDES = [
 def analyze_url(url: str) -> dict:
     result = {
         "url": url,
-        "score": 0,          # 0 = safe, higher = more suspicious
+        "score": 0,
         "verdict": "Safe",
         "verdict_color": "#00d2ff",
         "checks": [],
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-    # Normalize
     if not url.startswith(("http://", "https://")):
         url = "http://" + url
 
@@ -1390,99 +1481,110 @@ def analyze_url(url: str) -> dict:
         if parsed.scheme == "https":
             result["checks"].append({"label": "HTTPS Secure Connection", "status": "pass", "detail": "URL uses HTTPS encryption"})
         else:
-            result["score"] += 20
+            result["score"] += 10
             result["checks"].append({"label": "HTTPS Secure Connection", "status": "fail", "detail": "URL uses insecure HTTP – data is unencrypted"})
 
-        # ── Check 2: Known malicious domain ──
-        if domain in MALICIOUS_DOMAINS:
-            result["score"] += 60
-            result["checks"].append({"label": "Known Malicious Domain", "status": "fail", "detail": f"'{domain}' is listed as a known suspicious/malicious domain"})
-        else:
-            result["checks"].append({"label": "Known Malicious Domain", "status": "pass", "detail": "Domain not found in known malicious domain list"})
-
-        # ── Check 3: URL shortener ──
+        # ── Check 2: URL shortener ──
         if is_shortener_domain(domain):
-            result["score"] += 30
-            result["checks"].append({"label": "URL Shortener Detected", "status": "warn", "detail": "URL shorteners can hide malicious destinations"})
+            result["score"] += 10
+            result["checks"].append({"label": "URL Shortener", "status": "info", "detail": "URL uses a shortening service — destination should be verified"})
         else:
             result["checks"].append({"label": "URL Shortener", "status": "pass", "detail": "No URL shortener detected"})
 
-        # ── Check 4: Suspicious keywords ──
-        found_keywords = [kw for kw in SUSPICIOUS_KEYWORDS if kw in full_url_lower]
+        # ── Check 3: Suspicious keywords (path + query only) ──
+        path_query = parsed.path + "?" + parsed.query if parsed.query else parsed.path
+        path_query_lower = path_query.lower()
+        found_keywords = [kw for kw in SUSPICIOUS_KEYWORDS if kw in path_query_lower]
         if len(found_keywords) >= 3:
-            result["score"] += 25
-            result["checks"].append({"label": "Suspicious Keywords", "status": "fail", "detail": f"Found {len(found_keywords)} suspicious keywords: {', '.join(found_keywords[:5])}"})
-        elif len(found_keywords) >= 1:
             result["score"] += 10
-            result["checks"].append({"label": "Suspicious Keywords", "status": "warn", "detail": f"Found keywords: {', '.join(found_keywords[:5])}"})
+            result["checks"].append({"label": "Suspicious Keywords", "status": "info", "detail": f"Found {len(found_keywords)} suspicious keywords: {', '.join(found_keywords[:5])}"})
+        elif len(found_keywords) >= 1:
+            result["score"] += 5
+            result["checks"].append({"label": "Suspicious Keywords", "status": "info", "detail": f"Found keywords: {', '.join(found_keywords[:5])}"})
         else:
             result["checks"].append({"label": "Suspicious Keywords", "status": "pass", "detail": "No suspicious keywords detected in URL"})
 
-        # ── Check 5: Suspicious TLD ──
+        # ── Check 4: Suspicious TLD ──
         suspicious_tld_found = [tld for tld in SUSPICIOUS_TLDS if domain.endswith(tld)]
         if suspicious_tld_found:
-            result["score"] += 20
-            result["checks"].append({"label": "Suspicious TLD", "status": "warn", "detail": f"Top-level domain '{suspicious_tld_found[0]}' is commonly associated with malicious activity"})
+            result["score"] += 10
+            result["checks"].append({"label": "Suspicious TLD", "status": "info", "detail": f"Top-level domain '{suspicious_tld_found[0]}' is uncommon — verify legitimacy"})
         else:
             result["checks"].append({"label": "Suspicious TLD", "status": "pass", "detail": "Domain extension appears legitimate"})
 
-        # ── Check 6: IP address as host ──
+        # ── Check 5: IP address as host ──
         ip_pattern = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
         if ip_pattern.match(domain):
-            result["score"] += 30
-            result["checks"].append({"label": "IP Address as Host", "status": "fail", "detail": "Using raw IP address instead of domain name is highly suspicious"})
+            result["score"] += 15
+            result["checks"].append({"label": "IP Address as Host", "status": "warn", "detail": "Using raw IP address instead of domain name is unusual"})
         else:
             result["checks"].append({"label": "IP Address as Host", "status": "pass", "detail": "Domain name used (not raw IP address)"})
 
-        # ── Check 7: Excessive subdomains ──
+        # ── Check 6: Excessive subdomains ──
         subdomain_count = len(domain.split(".")) - 2
         if subdomain_count > 3:
-            result["score"] += 20
-            result["checks"].append({"label": "Excessive Subdomains", "status": "warn", "detail": f"Found {subdomain_count} subdomains – phishing sites often use many subdomains to mimic legitimate URLs"})
+            result["score"] += 5
+            result["checks"].append({"label": "Excessive Subdomains", "status": "info", "detail": f"Found {subdomain_count} subdomains — verify this is expected"})
         else:
             result["checks"].append({"label": "Excessive Subdomains", "status": "pass", "detail": "Normal subdomain depth"})
 
-        # ── Check 8: URL length ──
-        if len(url) > 150:
-            result["score"] += 15
-            result["checks"].append({"label": "URL Length", "status": "warn", "detail": f"URL is very long ({len(url)} chars) – malicious URLs are often obfuscated with extra parameters"})
-        else:
-            result["checks"].append({"label": "URL Length", "status": "pass", "detail": f"URL length is normal ({len(url)} chars)"})
-
-        # ── Check 9: Special characters ──
+        # ── Check 7: URL Obfuscation (path + query only) ──
+        obfuscation_signals = 0
+        path_query_check = parsed.path + "?" + parsed.query if parsed.query else parsed.path
+        if len(path_query_check) > 100:
+            obfuscation_signals += 1
         special_chars = ["%40", "%2F", "@", "//"]
-        found_special = [c for c in special_chars if c in url]
+        found_special = [c for c in special_chars if c in path_query_check]
         if found_special:
-            result["score"] += 15
-            result["checks"].append({"label": "Encoded / Special Characters", "status": "warn", "detail": "URL contains encoded or obfuscated characters commonly used in phishing URLs"})
+            obfuscation_signals += 1
+        if obfuscation_signals >= 2:
+            result["score"] += 10
+            result["checks"].append({"label": "URL Obfuscation", "status": "warn", "detail": "URL appears obfuscated (long + encoded chars) — phishing sites often hide their true destination"})
+        elif obfuscation_signals == 1:
+            result["score"] += 5
+            result["checks"].append({"label": "URL Obfuscation", "status": "info", "detail": "Minor obfuscation signals detected"})
         else:
-            result["checks"].append({"label": "Encoded / Special Characters", "status": "pass", "detail": "No suspicious character encoding detected"})
+            result["checks"].append({"label": "URL Obfuscation", "status": "pass", "detail": "No obfuscation detected"})
 
-        # ── Check 10: DNS Resolve ──
+        # ── Check 8: DNS Resolution ──
         try:
             socket.gethostbyname(domain)
             result["checks"].append({"label": "DNS Resolution", "status": "pass", "detail": f"Domain '{domain}' resolves successfully"})
         except socket.gaierror:
             result["score"] += 10
-            result["checks"].append({"label": "DNS Resolution", "status": "warn", "detail": f"Could not resolve domain '{domain}' – may be offline or non-existent"})
+            result["checks"].append({"label": "DNS Resolution", "status": "warn", "detail": f"Could not resolve domain '{domain}' — may be offline or non-existent"})
 
-        # ── Check 11: URLhaus API Check ──
+        # ── Check 9: URLhaus API Check ──
         urlhaus_res = check_urlhaus(url)
         if "score_addition" in urlhaus_res:
             result["score"] += urlhaus_res["score_addition"]
             del urlhaus_res["score_addition"]
         result["checks"].append(urlhaus_res)
 
-        # ── Check 12: VirusTotal API Check ──
+        # ── Check 10: VirusTotal API Check ──
         vt_res = check_virustotal(url)
         if "score_addition" in vt_res:
             result["score"] += vt_res["score_addition"]
             del vt_res["score_addition"]
         result["checks"].append(vt_res)
 
-        # ── Check 13: Cloudflare Radar Domain Ranking ──
+        # ── Check 11: Cloudflare Radar Domain Ranking ──
         radar_res = check_cloudflare_radar(domain)
         result["checks"].append(radar_res)
+
+        # ── Check 12: Google Safe Browsing ──
+        gsb_res = check_google_safebrowsing(url)
+        if "score_addition" in gsb_res:
+            result["score"] += gsb_res["score_addition"]
+            del gsb_res["score_addition"]
+        result["checks"].append(gsb_res)
+
+        # ── Check 13: AbuseIPDB Reputation ──
+        abuse_res = check_abuseipdb(domain)
+        if "score_addition" in abuse_res:
+            result["score"] += abuse_res["score_addition"]
+            del abuse_res["score_addition"]
+        result["checks"].append(abuse_res)
 
     except Exception as e:
         result["score"] += 50
