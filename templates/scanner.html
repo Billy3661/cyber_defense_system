@@ -2,6 +2,11 @@
 {% block title %}Scanner — Securix{% endblock %}
 {% block description %}Scan URLs, files, and networks for threats, malware, and security vulnerabilities.{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
 {% block content %}
 <style>
     /* Mode and view toggle active states */
@@ -218,6 +223,11 @@
                     </div>
                     <div class="ip-section-body" id="ipNetSection"></div>
                 </div>
+            </div>
+
+            <!-- Map -->
+            <div class="ip-section-card" id="ipMapSection" style="height:260px; margin-bottom:1rem; padding:0; overflow:hidden; display:none;">
+                <div id="ipMap" style="width:100%; height:100%; border-radius:var(--border-radius);"></div>
             </div>
 
             <!-- WHOIS Information -->
@@ -710,6 +720,21 @@ async function performIpLookup() {
                 ipInfoRow('Network Type', d.ip_type || 'Standard Unicast', 'category') +
                 ipInfoRow('Currency', d.currency_name ? `${d.currency_name} (${d.currency})` : '—', 'payments') +
                 ipInfoRow('Languages', d.languages || '—', 'translate');
+
+            // ── Render Map ──
+            const mapSection = document.getElementById('ipMapSection');
+            const mapContainer = document.getElementById('ipMap');
+            if (d.latitude && d.longitude) {
+                mapSection.style.display = 'block';
+                if (window._ipMap) { window._ipMap.remove(); window._ipMap = null; }
+                window._ipMap = L.map(mapContainer, { zoomControl: false, attributionControl: false }).setView([d.latitude, d.longitude], 10);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(window._ipMap);
+                L.marker([d.latitude, d.longitude]).addTo(window._ipMap)
+                    .bindPopup(`<b>${d.ip || ''}</b><br>${[d.city, d.region, d.country_name].filter(Boolean).join(', ')}`);
+                setTimeout(() => window._ipMap && window._ipMap.invalidateSize(), 200);
+            } else {
+                mapSection.style.display = 'none';
+            }
         } else {
             document.getElementById('ipGeoSection').innerHTML = ipInfoRow('Geolocation', 'Unavailable', 'search_off');
             document.getElementById('ipNetSection').innerHTML = ipInfoRow('Network', 'Unavailable', 'search_off');
