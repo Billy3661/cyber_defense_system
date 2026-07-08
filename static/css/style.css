@@ -282,8 +282,9 @@
 }
 
 [data-theme="light"] .user-dropdown {
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 /* Theme toggle button */
@@ -807,11 +808,11 @@ a:hover {
 }
 
 .quick-scan-card, .scanner-card {
-    background-color: rgba(15, 23, 42, 0.95);
-    border: 1px solid rgba(59, 130, 246, 0.15);
+    background-color: #1e334d;
+    border: 1.5px solid rgba(59, 130, 246, 0.45);
     border-radius: var(--border-radius);
     padding: 4.5rem 3rem 3rem 3rem;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 50px rgba(59, 130, 246, 0.08);
     position: relative;
 }
 
@@ -822,8 +823,8 @@ a:hover {
     left: 0;
     right: 0;
     height: 38px;
-    background: rgba(30, 41, 59, 0.5);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgb(26, 40, 65);
+    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
 }
@@ -836,8 +837,9 @@ a:hover {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: #ef4444; /* red dot */
-    box-shadow: 14px 0 0 #f59e0b, 28px 0 0 #10b981; /* yellow & green dots */
+    background-color: #ef4444;
+    box-shadow: 14px 0 0 #f59e0b, 28px 0 0 #10b981;
+    opacity: 0.6;
 }
 
 .section-badge {
@@ -4034,13 +4036,13 @@ a:hover {
     right: 0;
     top: 100%;
     margin-top: 0.5rem;
-    background: var(--surface-light);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #1a253d;
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: 8px;
     min-width: 160px;
     padding: 0.5rem 0;
     z-index: 100;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .user-dropdown a {

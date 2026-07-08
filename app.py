@@ -405,8 +405,39 @@ RADAR_RANK_BUCKETS = {
 }
 
 def check_cloudflare_radar(domain: str) -> dict:
+    raw = get_cloudflare_radar_raw(domain)
+    if "error" in raw:
+        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": raw["error"]}
+    if raw.get("not_found"):
+        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": "Not found in Cloudflare top rankings — low global visibility"}
+    rank = raw.get("rank")
+    bucket = raw.get("bucket", "")
+    bucket_label = raw.get("bucket_label", "")
+    is_unranked = bucket.startswith(">")
+    cat_names = raw.get("categories", [])
+
+    if rank is not None and rank <= 100:
+        detail = f"#{rank} globally — highly reputable domain"
+        status = "pass"
+    elif is_unranked:
+        detail = "Not found in Cloudflare top rankings — low global visibility"
+        status = "info"
+    elif bucket_label:
+        detail = f"{bucket_label} — well-established domain"
+        status = "pass"
+    else:
+        detail = "Not in Cloudflare rankings"
+        status = "info"
+
+    if cat_names:
+        detail += f" | Categories: {', '.join(cat_names[:3])}"
+
+    return {"label": "Cloudflare Domain Ranking", "status": status, "detail": detail}
+
+
+def get_cloudflare_radar_raw(domain: str) -> dict:
     if not CLOUDFLARE_RADAR_TOKEN:
-        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": "Cloudflare Radar not configured — set CLOUDFLARE_RADAR_TOKEN in .env"}
+        return {"error": "Cloudflare Radar not configured — set CLOUDFLARE_RADAR_TOKEN in .env"}
     try:
         headers = {"Authorization": f"Bearer {CLOUDFLARE_RADAR_TOKEN}", "Content-Type": "application/json"}
         resp = req.get(f"{CLOUDFLARE_RADAR_BASE}/ranking/domain/{domain}", headers=headers, timeout=4.0)
@@ -425,30 +456,16 @@ def check_cloudflare_radar(domain: str) -> dict:
                 except ValueError:
                     bucket_label = ""
             is_unranked = bucket.startswith(">")
-
-            if rank is not None and rank <= 100:
-                detail = f"#{rank} globally — highly reputable domain"
-                status = "pass"
-            elif is_unranked:
-                detail = "Not found in Cloudflare top rankings — low global visibility"
-                status = "info"
-            elif bucket_label:
-                detail = f"{bucket_label} — well-established domain"
-                status = "pass"
-            else:
-                detail = "Not in Cloudflare rankings"
-                status = "info"
-
-            if cat_names:
-                detail += f" | Categories: {', '.join(cat_names[:3])}"
-
-            return {"label": "Cloudflare Domain Ranking", "status": status, "detail": detail}
+            result = {"rank": rank, "bucket": bucket, "bucket_label": bucket_label, "categories": cat_names}
+            if rank is None and is_unranked:
+                result["not_found"] = True
+            return result
         elif resp.status_code == 429:
-            return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": "Rate limited by Cloudflare Radar API"}
+            return {"error": "Rate limited by Cloudflare Radar API"}
         else:
-            return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": f"Cloudflare Radar returned status {resp.status_code}"}
+            return {"error": f"Cloudflare Radar returned status {resp.status_code}"}
     except Exception as e:
-        return {"label": "Cloudflare Domain Ranking", "status": "info", "detail": f"Could not check Cloudflare Radar: {str(e)}"}
+        return {"error": f"Could not check Cloudflare Radar: {str(e)}"}
 
 MOCK_BREACH_DB = [
     {
@@ -3138,12 +3155,18 @@ def api_ip_intelligence():
     except Exception:
         ssl_info = None
 
+    # ── Cloudflare Radar Ranking ──
+    radar_ranking = None
+    if not is_ip:
+        radar_ranking = get_cloudflare_radar_raw(query)
+
     return jsonify({
         "geo": geo_data,
         "vt": vt_stats,
         "whois": whois_data,
         "dns": dns_records,
         "ssl": ssl_info,
+        "radar": radar_ranking,
     })
 
 
