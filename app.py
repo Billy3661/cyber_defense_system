@@ -1744,13 +1744,11 @@ def authorize_google():
         user_info = resp.json()
     except Exception as e:
         logging.exception("Google OAuth callback failed: %s", e)
-        flash("Google login failed or was canceled.", "error")
-        return redirect(url_for('login'))
+        return f"<h2>OAuth Error</h2><pre>%s</pre><a href='/login'>Back to login</a>" % str(e), 400
 
     email = user_info.get('email', '').strip().lower()
     if not email:
-        flash("Could not retrieve email from Google.", "error")
-        return redirect(url_for('login'))
+        return "<h2>Error</h2><p>Could not retrieve email from Google.</p><a href='/login'>Back to login</a>", 400
     
     try:
         user = database.get_user_by_username(email)
@@ -1759,20 +1757,17 @@ def authorize_google():
             created = database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
             if not created:
                 logging.error("Failed to create user via Google OAuth: %s", email)
-                flash("Account creation failed. Please try again.", "error")
-                return redirect(url_for('login'))
+                return "<h2>Error</h2><p>Account creation failed.</p><a href='/login'>Back to login</a>", 500
             user = database.get_user_by_username(email)
             if not user:
                 logging.error("User not found after create: %s", email)
-                flash("Account creation failed. Please try again.", "error")
-                return redirect(url_for('login'))
+                return "<h2>Error</h2><p>User not found after creation.</p><a href='/login'>Back to login</a>", 500
             flash("Your Google account has been registered successfully!", "success")
         else:
             flash(f"Welcome back, {email}! You are now securely logged in.", "success")
     except Exception as e:
         logging.exception("Database error during Google OAuth: %s", e)
-        flash("An error occurred during sign-in. Please try again.", "error")
-        return redirect(url_for('login'))
+        return f"<h2>Database Error</h2><pre>%s</pre><a href='/login'>Back to login</a>" % str(e), 500
     
     session["user_id"] = user["id"]
     session["username"] = user["username"]
