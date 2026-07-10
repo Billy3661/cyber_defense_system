@@ -681,19 +681,26 @@ if not app.secret_key:
     app.secret_key = secrets.token_hex(32)
     logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
 
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
-    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    api_base_url='https://www.googleapis.com/oauth2/v1/',
-    client_kwargs={'scope': 'openid email profile'},
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
-)
+_google_client_id = os.environ.get("GOOGLE_CLIENT_ID")
+_google_client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+google = None
+if _google_client_id and _google_client_secret:
+    oauth = OAuth(app)
+    google = oauth.register(
+        name='google',
+        client_id=_google_client_id,
+        client_secret=_google_client_secret,
+        access_token_url='https://accounts.google.com/o/oauth2/token',
+        access_token_params=None,
+        authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params=None,
+        api_base_url='https://www.googleapis.com/oauth2/v1/',
+        client_kwargs={'scope': 'openid email profile'},
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+    )
+    logging.info("Google OAuth initialized successfully.")
+else:
+    logging.info("Google OAuth not configured — skipping registration.")
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -707,13 +714,13 @@ if not app.debug:
 
 # Cache busting for static assets
 @app.context_processor
-def inject_cache_bust():
+def inject_globals():
     import os
     css_path = os.path.join(app.root_path, "static", "css", "style.css")
     js_path = os.path.join(app.root_path, "static", "js", "main.js")
     css_mtime = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
     js_mtime = int(os.path.getmtime(js_path)) if os.path.exists(js_path) else 0
-    return dict(cache_bust=str(css_mtime + js_mtime))
+    return dict(cache_bust=str(css_mtime + js_mtime), google_oauth_enabled=google is not None)
 
 
 # ─────────────────────────────────────────────
@@ -1721,11 +1728,17 @@ def login():
 
 @app.route('/login/google')
 def login_google():
+    if google is None:
+        flash("Google sign-in is not configured.", "error")
+        return redirect(url_for('login'))
     redirect_uri = url_for('authorize_google', _external=True)
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/authorize/google')
 def authorize_google():
+    if google is None:
+        flash("Google sign-in is not configured.", "error")
+        return redirect(url_for('login'))
     try:
         token = google.authorize_access_token()
         resp = google.get('userinfo')
@@ -1739,23 +1752,19 @@ def authorize_google():
         flash("Could not retrieve email from Google.", "error")
         return redirect(url_for('login'))
     
-    # Check if user exists
     user = database.get_user_by_username(email)
     
     if not user:
-        # Create user with a dummy password hash to prevent normal login
         database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
         user = database.get_user_by_username(email)
         flash("Your Google account has been registered successfully!", "success")
     else:
         flash(f"Welcome back, {email}! You are now securely logged in.", "success")
     
-    # Log them in
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["profile_image"] = user["profile_image"] if user["profile_image"] else ""
     
-    # Load saved VT API key from DB into session
     saved_key = database.get_user_vt_key(user["username"])
     if saved_key:
         session["vt_api_key"] = saved_key
