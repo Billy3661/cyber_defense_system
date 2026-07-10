@@ -29,6 +29,15 @@ def _p(query):
         return q
     return query
 
+def _exec_safe(conn, cur, query):
+    try:
+        cur.execute(_p(query))
+        return True
+    except Exception:
+        if using_postgres():
+            conn.rollback()
+        return False
+
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -42,10 +51,7 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """))
-    try:
-        cur.execute(_p("ALTER TABLE users ADD COLUMN profile_image TEXT DEFAULT ''"))
-    except Exception:
-        pass
+    _exec_safe(conn, cur, "ALTER TABLE users ADD COLUMN profile_image TEXT DEFAULT ''")
 
     cur.execute(_p("""
         CREATE TABLE IF NOT EXISTS user_settings (
@@ -55,10 +61,7 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """))
-    try:
-        cur.execute(_p("ALTER TABLE user_settings ADD COLUMN wigle_api_key TEXT DEFAULT ''"))
-    except Exception:
-        pass
+    _exec_safe(conn, cur, "ALTER TABLE user_settings ADD COLUMN wigle_api_key TEXT DEFAULT ''")
 
     cur.execute(_p("""
         CREATE TABLE IF NOT EXISTS malware_signatures (
