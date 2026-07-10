@@ -29,50 +29,82 @@ def _p(query):
         return q
     return query
 
-def _exec_safe(conn, cur, query):
-    try:
-        cur.execute(_p(query))
-        return True
-    except Exception:
-        if using_postgres():
-            conn.rollback()
-        return False
-
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS users (
+    # Phase 1: Create all tables
+    for ddl in [
+        """CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             profile_image TEXT DEFAULT '',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-    _exec_safe(conn, cur, "ALTER TABLE users ADD COLUMN profile_image TEXT DEFAULT ''")
-
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS user_settings (
+        )""",
+        """CREATE TABLE IF NOT EXISTS user_settings (
             username TEXT PRIMARY KEY,
             vt_api_key TEXT DEFAULT '',
             wigle_api_key TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-    _exec_safe(conn, cur, "ALTER TABLE user_settings ADD COLUMN wigle_api_key TEXT DEFAULT ''")
-
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS malware_signatures (
+        )""",
+        """CREATE TABLE IF NOT EXISTS malware_signatures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             hash_value TEXT UNIQUE NOT NULL,
             threat_name TEXT NOT NULL,
             severity TEXT NOT NULL,
             details TEXT NOT NULL
-        )
-    """))
+        )""",
+        """CREATE TABLE IF NOT EXISTS user_phishing_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email_id TEXT DEFAULT '',
+            campaign_id INTEGER DEFAULT 0,
+            is_phishing INTEGER DEFAULT 0,
+            identified_correctly INTEGER DEFAULT 0,
+            response_time_ms INTEGER DEFAULT 0,
+            red_flags_identified INTEGER DEFAULT 0,
+            total_red_flags INTEGER DEFAULT 0,
+            session_id TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS user_badges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            badge_id TEXT NOT NULL,
+            awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS chat_conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            title TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+        """CREATE TABLE IF NOT EXISTS chat_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
+    ]:
+        cur.execute(_p(ddl))
+    conn.commit()
 
+    # Phase 2: Safe ALTER TABLE attempts (may fail if column already exists)
+    for alter in [
+        "ALTER TABLE users ADD COLUMN profile_image TEXT DEFAULT ''",
+        "ALTER TABLE user_settings ADD COLUMN wigle_api_key TEXT DEFAULT ''",
+    ]:
+        try:
+            cur.execute(_p(alter))
+            conn.commit()
+        except Exception:
+            if using_postgres():
+                conn.rollback()
+
+    # Phase 3: Seed data
     cur.execute(_p("SELECT COUNT(*) FROM malware_signatures"))
     if cur.fetchone()[0] == 0:
         default_sigs = [
@@ -86,51 +118,6 @@ def init_db():
             INSERT INTO malware_signatures (hash_value, threat_name, severity, details)
             VALUES (?, ?, ?, ?)
         """), default_sigs)
-
-    # ── Gamification tables ──
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS user_phishing_stats (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            email_id TEXT DEFAULT '',
-            campaign_id INTEGER DEFAULT 0,
-            is_phishing INTEGER DEFAULT 0,
-            identified_correctly INTEGER DEFAULT 0,
-            response_time_ms INTEGER DEFAULT 0,
-            red_flags_identified INTEGER DEFAULT 0,
-            total_red_flags INTEGER DEFAULT 0,
-            session_id TEXT DEFAULT '',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS user_badges (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            badge_id TEXT NOT NULL,
-            awarded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-
-    # ── Chat History tables ──
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS chat_conversations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL,
-            title TEXT DEFAULT '',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-    cur.execute(_p("""
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            conversation_id INTEGER NOT NULL,
-            role TEXT NOT NULL,
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
 
     conn.commit()
     conn.close()
