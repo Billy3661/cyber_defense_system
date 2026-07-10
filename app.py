@@ -695,7 +695,7 @@ If you did not request this, please change your password immediately."""
 
         msg = MIMEText(body)
         msg['To'] = to_email
-        msg['From'] = to_email
+        msg['From'] = f'Securix <{to_email}>'
         msg['Subject'] = "New sign-in to your Securix account"
 
         raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
