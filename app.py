@@ -695,7 +695,7 @@ if _google_client_id and _google_client_secret:
         access_token_url='https://oauth2.googleapis.com/token',
         authorize_url='https://accounts.google.com/o/oauth2/auth',
         api_base_url='https://www.googleapis.com/oauth2/v1/',
-        client_kwargs={'scope': 'openid email profile'},
+        client_kwargs={'scope': 'email profile'},
     )
     logging.info("Google OAuth initialized successfully.")
 else:
