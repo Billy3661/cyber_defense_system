@@ -12,6 +12,10 @@ def get_db_connection():
         import psycopg2
         conn = psycopg2.connect(DATABASE_URL)
         conn.autocommit = False
+        with conn.cursor() as cur:
+            cur.execute("CREATE SCHEMA IF NOT EXISTS securix_schema;")
+            cur.execute("SET search_path TO securix_schema;")
+        conn.commit()
         return conn
     conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "cyber_defense.db"))
     conn.row_factory = sqlite3.Row

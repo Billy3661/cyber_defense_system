@@ -3167,11 +3167,28 @@ def api_ip_intelligence():
         except Exception:
             return jsonify({"error": "Could not resolve domain"}), 400
 
-    # ── Geolocation (ipapi.co) ──
+    # ── Geolocation (ipwho.is) ──
     geo_data = None
     try:
-        geo_res = req.get(f"https://ipapi.co/{lookup_target}/json/", timeout=5.0)
-        geo_data = geo_res.json()
+        geo_res = req.get(f"https://ipwho.is/{lookup_target}", timeout=5.0)
+        data = geo_res.json()
+        if data.get("success"):
+            geo_data = {
+                "ip": data.get("ip"),
+                "country_code": data.get("country_code"),
+                "country_name": data.get("country"),
+                "city": data.get("city"),
+                "region": data.get("region"),
+                "timezone": data.get("timezone", {}).get("id"),
+                "latitude": data.get("latitude"),
+                "longitude": data.get("longitude"),
+                "asn": data.get("connection", {}).get("asn"),
+                "org": data.get("connection", {}).get("org"),
+                "ip_type": data.get("type"),
+                "currency_name": None,
+                "currency": None,
+                "languages": None
+            }
     except Exception:
         pass
 
