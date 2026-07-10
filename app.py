@@ -17,8 +17,7 @@ import whois
 import dns.resolver
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from email.mime.text import MIMEText
 from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
@@ -685,21 +684,32 @@ if not app.secret_key:
     logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# ── Email Notification ──
-_SENDGRID_KEY = os.environ.get("SENDGRID_API_KEY")
-
-def send_login_notification(to_email, is_new=False):
-    if not _SENDGRID_KEY:
-        return
+# ── Email Notification via Gmail API ──
+def send_gmail_notification(access_token, to_email, is_new=False):
     try:
         action = "created" if is_new else "signed in to"
         body = f"""Your Google account ({to_email}) was used to {action} Securix at {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}.
 
 If this was you, no further action is needed.
 If you did not request this, please change your password immediately."""
-        message = Mail(from_email=to_email, to_emails=to_email, subject="New sign-in to your Securix account", plain_text_content=body)
-        SendGridAPIClient(_SENDGRID_KEY).send(message)
-        logging.info("Login notification sent to %s", to_email)
+
+        msg = MIMEText(body)
+        msg['To'] = to_email
+        msg['From'] = to_email
+        msg['Subject'] = "New sign-in to your Securix account"
+
+        raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+
+        resp = req.post(
+            'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+            headers={'Authorization': f'Bearer {access_token}'},
+            json={'raw': raw},
+            timeout=10
+        )
+        if resp.status_code == 200:
+            logging.info("Login notification sent to %s", to_email)
+        else:
+            logging.error("Gmail API error: %s", resp.text)
     except Exception as e:
         logging.exception("Failed to send login notification to %s: %s", to_email, e)
 
@@ -714,8 +724,9 @@ if _google_client_id and _google_client_secret:
         client_secret=_google_client_secret,
         access_token_url='https://oauth2.googleapis.com/token',
         authorize_url='https://accounts.google.com/o/oauth2/auth',
+        authorize_params={'access_type': 'offline', 'prompt': 'consent'},
         api_base_url='https://www.googleapis.com/oauth2/v1/',
-        client_kwargs={'scope': 'email profile'},
+        client_kwargs={'scope': 'email profile https://www.googleapis.com/auth/gmail.send'},
     )
     logging.info("Google OAuth initialized successfully.")
 else:
@@ -1762,6 +1773,7 @@ def authorize_google():
         token = google.authorize_access_token()
         resp = google.get('userinfo')
         user_info = resp.json()
+        _gmail_token = token.get('access_token')
     except Exception as e:
         logging.exception("Google OAuth callback failed: %s", e)
         return f"<h2>OAuth Error</h2><pre>%s</pre><a href='/login'>Back to login</a>" % str(e), 400
@@ -1799,7 +1811,8 @@ def authorize_google():
     if saved_key:
         session["vt_api_key"] = saved_key
     
-    send_login_notification(email, is_new=is_new_user)
+    if _gmail_token:
+        send_gmail_notification(_gmail_token, email, is_new=is_new_user)
     return redirect(url_for('index'))
 
 @app.route("/edit-profile", methods=["GET", "POST"])
