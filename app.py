@@ -692,13 +692,10 @@ if _google_client_id and _google_client_secret:
         name='google',
         client_id=_google_client_id,
         client_secret=_google_client_secret,
-        access_token_url='https://accounts.google.com/o/oauth2/token',
-        access_token_params=None,
+        access_token_url='https://oauth2.googleapis.com/token',
         authorize_url='https://accounts.google.com/o/oauth2/auth',
-        authorize_params=None,
         api_base_url='https://www.googleapis.com/oauth2/v1/',
         client_kwargs={'scope': 'openid email profile'},
-        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
     )
     logging.info("Google OAuth initialized successfully.")
 else:
