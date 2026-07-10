@@ -17,6 +17,7 @@ import whois
 import dns.resolver
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import database
 
@@ -679,6 +680,20 @@ app.secret_key = os.environ.get("SECRET_KEY")
 if not app.secret_key:
     app.secret_key = secrets.token_hex(32)
     logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
+
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get("GOOGLE_CLIENT_ID"),
+    client_secret=os.environ.get("GOOGLE_CLIENT_SECRET"),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    client_kwargs={'scope': 'openid email profile'},
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration'
+)
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -1703,6 +1718,49 @@ def login():
             return redirect(url_for("login"))
 
     return render_template("login.html", login_failed=False)
+
+@app.route('/login/google')
+def login_google():
+    redirect_uri = url_for('authorize_google', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/authorize/google')
+def authorize_google():
+    try:
+        token = google.authorize_access_token()
+        resp = google.get('userinfo')
+        user_info = resp.json()
+    except Exception as e:
+        flash("Google login failed or was canceled.", "error")
+        return redirect(url_for('login'))
+
+    email = user_info.get('email', '').strip().lower()
+    if not email:
+        flash("Could not retrieve email from Google.", "error")
+        return redirect(url_for('login'))
+    
+    # Check if user exists
+    user = database.get_user_by_username(email)
+    
+    if not user:
+        # Create user with a dummy password hash to prevent normal login
+        database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
+        user = database.get_user_by_username(email)
+        flash("Your Google account has been registered successfully!", "success")
+    else:
+        flash(f"Welcome back, {email}! You are now securely logged in.", "success")
+    
+    # Log them in
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+    session["profile_image"] = user["profile_image"] if user["profile_image"] else ""
+    
+    # Load saved VT API key from DB into session
+    saved_key = database.get_user_vt_key(user["username"])
+    if saved_key:
+        session["vt_api_key"] = saved_key
+        
+    return redirect(url_for('index'))
 
 @app.route("/edit-profile", methods=["GET", "POST"])
 @login_required
