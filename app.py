@@ -17,6 +17,8 @@ import whois
 import dns.resolver
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
@@ -682,6 +684,30 @@ if not app.secret_key:
     app.secret_key = secrets.token_hex(32)
     logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+# ── Email Notification ──
+_SENDGRID_KEY = os.environ.get("SENDGRID_API_KEY")
+_SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "noreply@securix.app")
+
+def send_login_notification(to_email, is_new=False):
+    if not _SENDGRID_KEY:
+        logging.warning("SENDGRID_API_KEY not set — skipping login notification to %s", to_email)
+        return
+    try:
+        action = "created" if is_new else "signed in to"
+        subject = f"New sign-in to your Securix account"
+        body = f"""
+Your Google account ({to_email}) was used to {action} Securix at {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}.
+
+If this was you, no further action is needed.
+If you did not request this, please change your password immediately.
+"""
+        message = Mail(from_email=_SENDER_EMAIL, to_emails=to_email, subject=subject, plain_text_content=body.strip())
+        sg = SendGridAPIClient(_SENDGRID_KEY)
+        sg.send(message)
+        logging.info("Login notification sent to %s", to_email)
+    except Exception as e:
+        logging.exception("Failed to send login notification to %s: %s", to_email, e)
 
 _google_client_id = os.environ.get("GOOGLE_CLIENT_ID")
 _google_client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -1753,6 +1779,7 @@ def authorize_google():
     try:
         user = database.get_user_by_username(email)
         
+        is_new_user = False
         if not user:
             created = database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
             if not created:
@@ -1762,6 +1789,7 @@ def authorize_google():
             if not user:
                 logging.error("User not found after create: %s", email)
                 return "<h2>Error</h2><p>User not found after creation.</p><a href='/login'>Back to login</a>", 500
+            is_new_user = True
             flash("Your Google account has been registered successfully!", "success")
         else:
             flash(f"Welcome back, {email}! You are now securely logged in.", "success")
@@ -1776,7 +1804,8 @@ def authorize_google():
     saved_key = database.get_user_vt_key(user["username"])
     if saved_key:
         session["vt_api_key"] = saved_key
-        
+    
+    send_login_notification(email, is_new=is_new_user)
     return redirect(url_for('index'))
 
 @app.route("/edit-profile", methods=["GET", "POST"])
