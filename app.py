@@ -687,24 +687,18 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # ── Email Notification ──
 _SENDGRID_KEY = os.environ.get("SENDGRID_API_KEY")
-_SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "noreply@securix.app")
 
 def send_login_notification(to_email, is_new=False):
     if not _SENDGRID_KEY:
-        logging.warning("SENDGRID_API_KEY not set — skipping login notification to %s", to_email)
         return
     try:
         action = "created" if is_new else "signed in to"
-        subject = f"New sign-in to your Securix account"
-        body = f"""
-Your Google account ({to_email}) was used to {action} Securix at {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}.
+        body = f"""Your Google account ({to_email}) was used to {action} Securix at {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}.
 
 If this was you, no further action is needed.
-If you did not request this, please change your password immediately.
-"""
-        message = Mail(from_email=_SENDER_EMAIL, to_emails=to_email, subject=subject, plain_text_content=body.strip())
-        sg = SendGridAPIClient(_SENDGRID_KEY)
-        sg.send(message)
+If you did not request this, please change your password immediately."""
+        message = Mail(from_email=to_email, to_emails=to_email, subject="New sign-in to your Securix account", plain_text_content=body)
+        SendGridAPIClient(_SENDGRID_KEY).send(message)
         logging.info("Login notification sent to %s", to_email)
     except Exception as e:
         logging.exception("Failed to send login notification to %s: %s", to_email, e)
