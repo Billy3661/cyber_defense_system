@@ -1752,14 +1752,27 @@ def authorize_google():
         flash("Could not retrieve email from Google.", "error")
         return redirect(url_for('login'))
     
-    user = database.get_user_by_username(email)
-    
-    if not user:
-        database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
+    try:
         user = database.get_user_by_username(email)
-        flash("Your Google account has been registered successfully!", "success")
-    else:
-        flash(f"Welcome back, {email}! You are now securely logged in.", "success")
+        
+        if not user:
+            created = database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
+            if not created:
+                logging.error("Failed to create user via Google OAuth: %s", email)
+                flash("Account creation failed. Please try again.", "error")
+                return redirect(url_for('login'))
+            user = database.get_user_by_username(email)
+            if not user:
+                logging.error("User not found after create: %s", email)
+                flash("Account creation failed. Please try again.", "error")
+                return redirect(url_for('login'))
+            flash("Your Google account has been registered successfully!", "success")
+        else:
+            flash(f"Welcome back, {email}! You are now securely logged in.", "success")
+    except Exception as e:
+        logging.exception("Database error during Google OAuth: %s", e)
+        flash("An error occurred during sign-in. Please try again.", "error")
+        return redirect(url_for('login'))
     
     session["user_id"] = user["id"]
     session["username"] = user["username"]
