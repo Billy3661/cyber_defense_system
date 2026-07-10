@@ -17,6 +17,7 @@ import whois
 import dns.resolver
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 import database
@@ -680,6 +681,7 @@ app.secret_key = os.environ.get("SECRET_KEY")
 if not app.secret_key:
     app.secret_key = secrets.token_hex(32)
     logging.warning("No SECRET_KEY env var set. Generated a temporary key. Sessions will be invalidated on restart.")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 _google_client_id = os.environ.get("GOOGLE_CLIENT_ID")
 _google_client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -1731,7 +1733,7 @@ def login_google():
     if google is None:
         flash("Google sign-in is not configured.", "error")
         return redirect(url_for('login'))
-    redirect_uri = url_for('authorize_google', _external=True)
+    redirect_uri = url_for('authorize_google', _external=True, _scheme='https')
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/authorize/google')
@@ -1744,6 +1746,7 @@ def authorize_google():
         resp = google.get('userinfo')
         user_info = resp.json()
     except Exception as e:
+        logging.exception("Google OAuth callback failed: %s", e)
         flash("Google login failed or was canceled.", "error")
         return redirect(url_for('login'))
 
