@@ -3,8 +3,10 @@ import sqlite3
 import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL and "sslmode" not in DATABASE_URL:
-    DATABASE_URL += "?sslmode=require"
+if DATABASE_URL:
+    sep = "&" if "?" in DATABASE_URL else "?"
+    if "sslmode" not in DATABASE_URL:
+        DATABASE_URL += f"{sep}sslmode=require"
 
 def using_postgres():
     return DATABASE_URL is not None

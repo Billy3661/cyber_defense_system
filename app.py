@@ -33,7 +33,10 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # Initialize database
-database.init_db()
+try:
+    database.init_db()
+except Exception as e:
+    logging.error("Database initialization failed: %s", e)
 
 # ─────────────────────────────────────────────
 #  API HELPERS & MOCK DATABASES
