@@ -3188,8 +3188,9 @@ a:hover {
     }
     .inbox-sidebar {
         padding: 0.75rem;
-        max-height: 40vh;
+        max-height: 35vh;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .email-item { padding: 0.6rem; }
     .email-item-sender { font-size: 0.78rem; }
@@ -3211,7 +3212,9 @@ a:hover {
     .debrief-container p { font-size: 0.82rem; }
 
     /* ── Controls Row ── */
-    .simulator-controls-wrap { flex-direction: column; align-items: stretch; gap: 0.75rem !important; }
+    .simulator-controls-wrap {
+        flex-direction: column; align-items: stretch; gap: 0.75rem !important;
+    }
     .simulator-controls-wrap .btn { width: 100%; justify-content: center; }
     .simulator-controls-wrap select { flex: 1; }
 
@@ -3223,6 +3226,22 @@ a:hover {
         justify-content: space-between;
     }
     .simulator-stats-bar .btn { margin-left: 0 !important; width: 100%; justify-content: center; margin-top: 0.5rem; }
+
+    /* ── Compact header on mobile ── */
+    .simulator-page .page-header .page-title { font-size: 1.2rem; }
+    .simulator-page .page-header .page-subtitle { display: none; }
+
+    /* ── Prevent horizontal scroll bounce ── */
+    html, body { overflow-x: hidden; }
+    .container.simulator-page { overflow-x: hidden; }
+
+    /* ── Simulator scroll containment ── */
+    .inbox-sidebar { overscroll-behavior: contain; }
+    .email-body { overscroll-behavior: contain; }
+
+    /* ── Prevent scroll jumps ── */
+    .page-header { position: relative; z-index: 1; }
+    .simulator-page { overflow: visible; }
 
     /* ── Session Summary Modal ── */
     #summaryModal > div { padding: 1.25rem !important; max-width: 90vw !important; }
