@@ -2616,6 +2616,20 @@ a:hover {
         grid-template-columns: 1fr;
     }
     .nav-toggle {
+        display: flex !important;
+    }
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-secondary);
+        flex-direction: column;
+        padding: 1rem 2rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .nav-links.active {
         display: flex;
     }
     .nav-links {
