@@ -16,7 +16,7 @@
 
 <div class="container" style="margin-top: 1.5rem;">
     <!-- Controls Row -->
-    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius);">
+    <div class="simulator-controls-wrap" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 1rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius);">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <label for="difficultySelect" style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">Difficulty:</label>
             <select id="difficultySelect" style="padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: var(--bg-tertiary); color: var(--text-primary); font-size: 0.85rem;">
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Stats Bar -->
-    <div id="statsBar" style="display: none; gap: 1.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius); font-size: 0.85rem;">
+    <div id="statsBar" class="simulator-stats-bar" style="display: none; gap: 1.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1.25rem; background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--border-radius); font-size: 0.85rem;">
         <span>Total: <strong id="statTotal">0</strong></span>
         <span>Correct: <strong id="statCorrect" style="color: var(--success);">0</strong></span>
         <span>Accuracy: <strong id="statAccuracy">0%</strong></span>

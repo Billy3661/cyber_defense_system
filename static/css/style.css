@@ -2874,9 +2874,23 @@ a:hover {
     line-height: 1.6;
     border: 1px solid rgba(255, 255, 255, 0.05);
     text-align: left;
+    overflow-wrap: break-word;
+    overflow-x: hidden;
 }
 .email-body p {
     margin-bottom: 1rem;
+}
+.email-body img {
+    max-width: 100%;
+    height: auto;
+}
+.email-body table {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+}
+.email-body a {
+    word-break: break-all;
 }
 .sim-btn {
     display: inline-block;
@@ -3168,16 +3182,74 @@ a:hover {
     .auth-card-wrap h2 { font-size: 1.3rem; }
 
     /* ── Simulator ── */
-    .simulator-layout { grid-template-columns: 1fr; }
-    .inbox-sidebar { padding: 1rem; }
+    .simulator-layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    .inbox-sidebar {
+        padding: 0.75rem;
+        max-height: 40vh;
+        overflow-y: auto;
+    }
     .email-item { padding: 0.6rem; }
     .email-item-sender { font-size: 0.78rem; }
     .email-item-subject { font-size: 0.75rem; }
-    .email-pane { padding: 1.25rem; }
-    .email-subject-line { font-size: 1.1rem; }
+    .email-pane { padding: 1rem; min-height: auto; overflow-x: hidden; }
+    .email-subject-line { font-size: 1.1rem; word-break: break-word; }
+    .email-sender-line { font-size: 0.8rem; word-break: break-all; }
+    .email-body { padding: 1rem; font-size: 0.88rem; overflow-x: auto; word-break: break-word; min-height: 150px; }
+    .email-meta-header { gap: 0.75rem; flex-wrap: wrap; }
+    .email-sender-avatar { width: 40px; height: 40px; }
+    .email-sender-avatar span { font-size: 1.4rem; }
     .decision-buttons { flex-direction: column; gap: 0.6rem; }
     .decision-buttons .btn { width: 100%; justify-content: center; }
     .feedback-panel { padding: 1rem; }
+    .feedback-header { flex-wrap: wrap; }
+    .feedback-header h3 { font-size: 1rem; }
+    .red-flags-list li { font-size: 0.82rem; }
+    .debrief-container { padding: 0.75rem; }
+    .debrief-container p { font-size: 0.82rem; }
+
+    /* ── Controls Row ── */
+    .simulator-controls-wrap { flex-direction: column; align-items: stretch; gap: 0.75rem !important; }
+    .simulator-controls-wrap .btn { width: 100%; justify-content: center; }
+    .simulator-controls-wrap select { flex: 1; }
+
+    /* ── Stats Bar ── */
+    .simulator-stats-bar {
+        flex-wrap: wrap !important;
+        gap: 0.75rem !important;
+        padding: 0.75rem !important;
+        justify-content: space-between;
+    }
+    .simulator-stats-bar .btn { margin-left: 0 !important; width: 100%; justify-content: center; margin-top: 0.5rem; }
+
+    /* ── Session Summary Modal ── */
+    #summaryModal > div { padding: 1.25rem !important; max-width: 90vw !important; }
+    #summaryModal .material-symbols-outlined { font-size: 2.2rem !important; }
+    #summaryModal h2 { font-size: 1.2rem; }
+    #summaryModal [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.6rem !important;
+    }
+    #summaryModal [style*="padding: 1rem"][style*="background: var(--bg-tertiary)"] {
+        padding: 0.6rem !important;
+    }
+    #summaryModal [style*="font-size: 2rem"] {
+        font-size: 1.5rem !important;
+    }
+    #summaryModal [style*="display: flex"][style*="gap: 0.75rem"][style*="justify-content: center"] {
+        flex-direction: column;
+    }
+    #summaryModal [style*="display: flex"][style*="gap: 0.75rem"][style*="justify-content: center"] .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── Leaderboard Modal ── */
+    #leaderboardModal > div { padding: 1.25rem !important; max-width: 95vw !important; margin: 0.5rem !important; }
+    #leaderboardModal table { font-size: 0.78rem; }
+    #leaderboardModal th, #leaderboardModal td { padding: 0.3rem 0.35rem !important; }
 
     /* ── Chat Widget ── */
     .chat-widget { bottom: 0.75rem; right: 0.75rem; }
