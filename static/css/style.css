@@ -4553,6 +4553,13 @@ a:hover {
 /* Hide hamburger on desktop */
 .nav-toggle { display: none; }
 
+/* Show hamburger on touch devices regardless of viewport width */
+@media (hover: none) and (pointer: coarse) {
+    .nav-toggle { display: flex !important; }
+    .nav-links { display: none !important; position: absolute; top: 100%; left: 0; width: 100%; background-color: var(--bg-secondary); flex-direction: column; padding: 1rem 2rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    .nav-links.active { display: flex !important; }
+}
+
 /* Hamburger icon */
 .nav-toggle {
     flex-direction: column;
