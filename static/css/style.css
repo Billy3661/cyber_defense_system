@@ -2678,6 +2678,8 @@ a:hover {
 
 .simulator-page {
     margin-top: 1rem;
+    max-width: 100%;
+    overflow: hidden;
 }
 .simulator-layout {
     display: grid;
@@ -2876,6 +2878,11 @@ a:hover {
     text-align: left;
     overflow-wrap: break-word;
     overflow-x: hidden;
+    max-width: 100%;
+}
+.email-body * {
+    max-width: 100% !important;
+    box-sizing: border-box;
 }
 .email-body p {
     margin-bottom: 1rem;
