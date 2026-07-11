@@ -1938,6 +1938,26 @@ def scanner():
     return render_template("scanner.html", vt_key_active=vt_key_active)
 
 
+@app.route("/qr-scanner")
+@login_required
+def qr_scanner():
+    return render_template("qr_scanner.html")
+
+
+@app.route("/api/scan-url", methods=["POST"])
+@login_required
+def api_scan_url():
+    data = request.get_json()
+    url = data.get("url", "").strip()
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
+    result = analyze_url(url)
+    session["links_scanned"] = session.get("links_scanned", 0) + 1
+    return jsonify(result)
+
+
 @app.route("/api/scan", methods=["POST"])
 @login_required
 def api_scan():
