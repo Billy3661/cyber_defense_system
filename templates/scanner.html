@@ -78,6 +78,9 @@
         <button class="scanner-tab" id="tabNetwork" onclick="switchTab('network')">
             <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">travel_explore</span> Domain Intelligence
         </button>
+        <button class="scanner-tab" id="tabQR" onclick="switchTab('qr')">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">qr_code_scanner</span> QR Scanner
+        </button>
     </div>
 
     <!-- URL Scanner Card -->
@@ -282,6 +285,76 @@
                 <button onclick="copyIpReport()" class="btn btn-outline ip-copy-btn">
                     <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> Copy Report
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Scanner Card -->
+    <div class="scanner-card hidden" id="qrScannerCard">
+        <div class="scanner-header">
+            <div class="scanner-status-dot"></div>
+            <span>Scan a QR code with your camera or upload an image</span>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+            <button class="btn btn-primary btn-sm" id="qrCamBtn" onclick="qrSwitchMode('camera')" style="flex: 1; justify-content: center; font-size: 0.85rem;">
+                <span class="material-symbols-outlined" style="font-size: 1rem;">photo_camera</span> Camera
+            </button>
+            <button class="btn btn-outline btn-sm" id="qrUpBtn" onclick="qrSwitchMode('upload')" style="flex: 1; justify-content: center; font-size: 0.85rem;">
+                <span class="material-symbols-outlined" style="font-size: 1rem;">upload</span> Upload Image
+            </button>
+        </div>
+
+        <!-- Camera -->
+        <div id="qrCameraSection">
+            <div id="qr-reader" style="width: 100%; border-radius: 8px; overflow: hidden;"></div>
+            <div id="qrCameraStatus" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                Click "Start Camera" to begin scanning
+            </div>
+            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem; justify-content: center;">
+                <button class="btn btn-primary btn-sm" id="qrStartBtn" onclick="qrStartCamera()">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">play_arrow</span> Start Camera
+                </button>
+                <button class="btn btn-outline btn-sm" id="qrStopBtn" onclick="qrStopCamera()" style="display: none;">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">stop</span> Stop
+                </button>
+            </div>
+        </div>
+
+        <!-- Upload -->
+        <div id="qrUploadSection" style="display: none;">
+            <div id="qrDropZone" style="border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('qrFileInput').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--accent)';" ondragleave="this.style.borderColor='rgba(255,255,255,0.15)';" ondrop="qrHandleDrop(event)">
+                <span class="material-symbols-outlined" style="font-size: 2.5rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">cloud_upload</span>
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0;">Drag & drop a QR code image or click to browse</p>
+                <input type="file" id="qrFileInput" accept="image/*" style="display: none;" onchange="qrHandleFile(event)">
+            </div>
+            <div id="qrUploadPreview" style="display: none; margin-top: 1rem; text-align: center;">
+                <img id="qrPreviewImg" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);" alt="QR preview">
+                <p id="qrUploadStatus" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Decoding...</p>
+            </div>
+        </div>
+
+        <!-- Decoded URL -->
+        <div id="qrDecodedSection" style="display: none; margin-top: 1rem; padding: 0.75rem 1rem; background: var(--bg-tertiary); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-symbols-outlined" style="font-size: 1rem; color: var(--accent);">link</span>
+                <span id="qrDecodedUrl" style="flex: 1; font-size: 0.85rem; word-break: break-all; font-family: var(--font-mono);"></span>
+                <button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('qrDecodedUrl').textContent)" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; flex-shrink: 0;">
+                    <span class="material-symbols-outlined" style="font-size: 0.9rem;">content_copy</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visit Warning Modal (QR) -->
+    <div id="qrVisitWarning" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+        <div style="background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--border-radius); max-width: 420px; width: 100%; padding: 1.5rem; text-align: center;">
+            <span class="material-symbols-outlined" style="font-size: 2.5rem; color: var(--warning); display: block; margin-bottom: 0.5rem;">warning</span>
+            <h3 style="margin: 0 0 0.5rem; color: var(--warning);">Caution Recommended</h3>
+            <p id="qrWarningMsg" style="font-size: 0.88rem; color: var(--text-secondary); margin: 0 0 1.25rem;"></p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                <a id="qrWarningLink" href="#" target="_blank" rel="noopener" class="btn btn-primary" onclick="document.getElementById('qrVisitWarning').classList.add('hidden')">Visit Anyway</a>
+                <button class="btn btn-outline" onclick="document.getElementById('qrVisitWarning').classList.add('hidden')">Cancel</button>
             </div>
         </div>
     </div>
@@ -911,13 +984,15 @@ function switchTab(tab) {
     const urlCard  = document.getElementById("scannerCard");
     const fileCard = document.getElementById("fileScannerCard");
     const netCard  = document.getElementById("networkScannerCard");
+    const qrCard   = document.getElementById("qrScannerCard");
     const tabUrl   = document.getElementById("tabUrl");
     const tabFile  = document.getElementById("tabFile");
     const tabNet   = document.getElementById("tabNetwork");
+    const tabQR    = document.getElementById("tabQR");
     const infoCards = document.getElementById("urlInfoCards");
 
-    [urlCard, fileCard, netCard].forEach(c => c?.classList.add("hidden"));
-    [tabUrl, tabFile, tabNet].forEach(t => t?.classList.remove("active"));
+    [urlCard, fileCard, netCard, qrCard].forEach(c => c?.classList.add("hidden"));
+    [tabUrl, tabFile, tabNet, tabQR].forEach(t => t?.classList.remove("active"));
 
     if (tab === "url") {
         urlCard.classList.remove("hidden");
@@ -926,6 +1001,10 @@ function switchTab(tab) {
     } else if (tab === "file") {
         fileCard.classList.remove("hidden");
         tabFile.classList.add("active");
+        infoCards?.classList.add("hidden");
+    } else if (tab === "qr") {
+        qrCard.classList.remove("hidden");
+        tabQR.classList.add("active");
         infoCards?.classList.add("hidden");
     } else {
         netCard.classList.remove("hidden");
@@ -1680,6 +1759,172 @@ async function performFileScan() {
     btn.disabled = false;
     document.getElementById("fileScanBtnIcon").textContent = "security";
     document.getElementById("fileScanBtnText").textContent = "Analyze File";
+}
+</script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+// ── QR Scanner ──
+let qrHtml5 = null;
+let qrDecoded = '';
+let qrResult = null;
+let qrCamRunning = false;
+
+function qrSwitchMode(mode) {
+    if (mode === 'camera') {
+        document.getElementById('qrCameraSection').style.display = '';
+        document.getElementById('qrUploadSection').style.display = 'none';
+        document.getElementById('qrCamBtn').className = 'btn btn-primary btn-sm';
+        document.getElementById('qrUpBtn').className = 'btn btn-outline btn-sm';
+    } else {
+        qrStopCamera();
+        document.getElementById('qrCameraSection').style.display = 'none';
+        document.getElementById('qrUploadSection').style.display = '';
+        document.getElementById('qrCamBtn').className = 'btn btn-outline btn-sm';
+        document.getElementById('qrUpBtn').className = 'btn btn-primary btn-sm';
+    }
+}
+
+function qrStartCamera() {
+    const status = document.getElementById('qrCameraStatus');
+    status.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; animation: spin 1s linear infinite;">sync</span> Starting camera...';
+    qrHtml5 = new Html5Qrcode("qr-reader");
+    qrHtml5.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+        (text) => qrOnDecoded(text),
+        () => {}
+    ).then(() => {
+        qrCamRunning = true;
+        status.innerHTML = '<span style="color: var(--success);">Scanning... Point camera at a QR code</span>';
+        document.getElementById('qrStartBtn').style.display = 'none';
+        document.getElementById('qrStopBtn').style.display = '';
+    }).catch(() => {
+        status.innerHTML = '<span style="color: var(--error);">Camera unavailable. Try uploading an image instead.</span>';
+    });
+}
+
+function qrStopCamera() {
+    if (qrHtml5 && qrCamRunning) {
+        qrHtml5.stop().then(() => {
+            qrCamRunning = false;
+            document.getElementById('qrStartBtn').style.display = '';
+            document.getElementById('qrStopBtn').style.display = 'none';
+            document.getElementById('qrCameraStatus').textContent = 'Camera stopped.';
+        }).catch(() => {});
+    }
+}
+
+function qrHandleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+    if (e.dataTransfer.files[0]) qrDecodeFile(e.dataTransfer.files[0]);
+}
+
+function qrHandleFile(e) {
+    if (e.target.files[0]) qrDecodeFile(e.target.files[0]);
+}
+
+function qrDecodeFile(file) {
+    const preview = document.getElementById('qrUploadPreview');
+    const img = document.getElementById('qrPreviewImg');
+    const status = document.getElementById('qrUploadStatus');
+    preview.style.display = '';
+    img.src = URL.createObjectURL(file);
+    status.textContent = 'Decoding...';
+    status.style.color = '';
+
+    const tempId = 'qr-temp-' + Date.now();
+    const tempDiv = document.createElement('div');
+    tempDiv.id = tempId;
+    tempDiv.style.display = 'none';
+    document.body.appendChild(tempDiv);
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const image = new Image();
+        image.onload = function() {
+            const canvas = document.createElement('canvas');
+            const sz = Math.max(image.width, image.height);
+            canvas.width = sz; canvas.height = sz;
+            canvas.getContext('2d').drawImage(image, 0, 0, sz, sz);
+            canvas.toBlob(function(blob) {
+                const scanner = new Html5Qrcode(tempId);
+                scanner.scanFile(new File([blob], "qr.png", {type: "image/png"}), true)
+                    .then(decoded => {
+                        qrOnDecoded(decoded);
+                        status.innerHTML = '<span style="color: var(--success);">Decoded!</span>';
+                        scanner.clear().catch(()=>{});
+                        tempDiv.remove();
+                    })
+                    .catch(() => {
+                        status.innerHTML = '<span style="color: var(--error);">No QR code found. Try a clearer image.</span>';
+                        tempDiv.remove();
+                    });
+            }, 'image/png');
+        };
+        image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function qrOnDecoded(url) {
+    if (!url || url === qrDecoded) return;
+    qrDecoded = url;
+    qrStopCamera();
+    document.getElementById('qrDecodedUrl').textContent = url;
+    document.getElementById('qrDecodedSection').style.display = '';
+    qrAutoScan(url);
+}
+
+async function qrAutoScan(url) {
+    document.getElementById('scanProgress').classList.remove('hidden');
+    document.getElementById('resultsContainer').classList.add('hidden');
+    const bar = document.getElementById('progressBar');
+    bar.style.width = '10%';
+    try {
+        await new Promise(r => setTimeout(r, 200));
+        bar.style.width = '30%';
+        const res = await fetch('/api/scan-url', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url })
+        });
+        bar.style.width = '70%';
+        const data = await res.json();
+        bar.style.width = '100%';
+        await new Promise(r => setTimeout(r, 300));
+        document.getElementById('scanProgress').classList.add('hidden');
+        qrResult = data;
+        renderResults(data);
+        if (data.score >= 35) {
+            const origUrl = data.url;
+            const vBtn = document.getElementById('visitBtnWrap');
+            if (vBtn) vBtn.remove();
+            const wrap = document.createElement('div');
+            wrap.id = 'visitBtnWrap';
+            wrap.style.cssText = 'margin-top:1rem;text-align:center;';
+            wrap.innerHTML = '<button class="btn btn-outline" onclick="qrVisit(\'' + origUrl + '\',' + data.score + ')" style="border-color:var(--warning);color:var(--warning);"><span class="material-symbols-outlined" style="font-size:1rem;">open_in_new</span> Visit Site (Caution)</button>';
+            document.getElementById('resultsContainer').appendChild(wrap);
+        } else if (data.url) {
+            const origUrl = data.url;
+            const vBtn = document.getElementById('visitBtnWrap');
+            if (vBtn) vBtn.remove();
+            const wrap = document.createElement('div');
+            wrap.id = 'visitBtnWrap';
+            wrap.style.cssText = 'margin-top:1rem;text-align:center;';
+            wrap.innerHTML = '<button class="btn btn-primary" onclick="window.open(\'' + origUrl + '\',\'_blank\',\'noopener,noreferrer\')" style="padding:0.6rem 1.5rem;"><span class="material-symbols-outlined" style="font-size:1rem;">open_in_new</span> Visit Site</button>';
+            document.getElementById('resultsContainer').appendChild(wrap);
+        }
+    } catch (err) {
+        document.getElementById('scanProgress').classList.add('hidden');
+        alert('Scan failed. Check your connection.');
+    }
+}
+
+function qrVisit(url, score) {
+    document.getElementById('qrWarningMsg').textContent = 'This URL was rated suspicious (risk score: ' + score + '%). Visit at your own risk.';
+    document.getElementById('qrWarningLink').href = url;
+    document.getElementById('qrVisitWarning').classList.remove('hidden');
 }
 </script>
 {% endblock %}

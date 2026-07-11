@@ -1636,40 +1636,64 @@ def analyze_url(url: str) -> dict:
             result["score"] += 10
             result["checks"].append({"label": "DNS Resolution", "status": "warn", "detail": f"Could not resolve domain '{domain}' — may be offline or non-existent"})
 
-        # ── Check 9: URLhaus API Check ──
-        urlhaus_res = check_urlhaus(url)
+        # ── API Checks (parallel) ──
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        def _run_check(fn, *args):
+            return fn(*args)
+
+        api_checks = [
+            ("urlhaus", check_urlhaus, (url,)),
+            ("virustotal", check_virustotal, (url,)),
+            ("cloudflare", check_cloudflare_radar, (domain,)),
+            ("safebrowsing", check_google_safebrowsing, (url,)),
+            ("abuseipdb", check_abuseipdb, (domain,)),
+            ("otx", check_otx_alienvault, (domain,)),
+        ]
+
+        api_results = {}
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = {executor.submit(_run_check, fn, *args): name for name, fn, args in api_checks}
+            for future in as_completed(futures):
+                name = futures[future]
+                try:
+                    api_results[name] = future.result()
+                except Exception:
+                    api_results[name] = {"label": name, "status": "info", "detail": f"Check timed out"}
+
+        # ── Check 9: URLhaus ──
+        urlhaus_res = api_results["urlhaus"]
         if "score_addition" in urlhaus_res:
             result["score"] += urlhaus_res["score_addition"]
             del urlhaus_res["score_addition"]
         result["checks"].append(urlhaus_res)
 
-        # ── Check 10: VirusTotal API Check ──
-        vt_res = check_virustotal(url)
+        # ── Check 10: VirusTotal ──
+        vt_res = api_results["virustotal"]
         if "score_addition" in vt_res:
             result["score"] += vt_res["score_addition"]
             del vt_res["score_addition"]
         result["checks"].append(vt_res)
 
-        # ── Check 11: Cloudflare Radar Domain Ranking ──
-        radar_res = check_cloudflare_radar(domain)
-        result["checks"].append(radar_res)
+        # ── Check 11: Cloudflare Radar ──
+        result["checks"].append(api_results["cloudflare"])
 
         # ── Check 12: Google Safe Browsing ──
-        gsb_res = check_google_safebrowsing(url)
+        gsb_res = api_results["safebrowsing"]
         if "score_addition" in gsb_res:
             result["score"] += gsb_res["score_addition"]
             del gsb_res["score_addition"]
         result["checks"].append(gsb_res)
 
-        # ── Check 13: AbuseIPDB Reputation ──
-        abuse_res = check_abuseipdb(domain)
+        # ── Check 13: AbuseIPDB ──
+        abuse_res = api_results["abuseipdb"]
         if "score_addition" in abuse_res:
             result["score"] += abuse_res["score_addition"]
             del abuse_res["score_addition"]
         result["checks"].append(abuse_res)
 
-        # ── Check 14: OTX AlienVault Reputation ──
-        otx_res = check_otx_alienvault(domain)
+        # ── Check 14: OTX AlienVault ──
+        otx_res = api_results["otx"]
         if "score_addition" in otx_res:
             result["score"] += otx_res["score_addition"]
             del otx_res["score_addition"]

@@ -41,9 +41,6 @@
                 <a href="{{ url_for('simulator') }}" class="nav-link {% if request.endpoint == 'simulator' %}active{% endif %}">
                     <span class="nav-icon material-symbols-outlined">phishing</span> Phishing Lab
                 </a>
-                <a href="{{ url_for('qr_scanner') }}" class="nav-link {% if request.endpoint == 'qr_scanner' %}active{% endif %}">
-                    <span class="nav-icon material-symbols-outlined">qr_code_scanner</span> QR Scanner
-                </a>
                 <a href="{{ url_for('threats') }}" class="nav-link {% if request.endpoint in ['threats','threat_detail'] %}active{% endif %}">
                     <span class="nav-icon material-symbols-outlined">warning</span> Threats
                 </a>
