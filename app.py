@@ -565,6 +565,61 @@ def check_abuseipdb(domain: str) -> dict:
         return {"label": "AbuseIPDB Reputation", "status": "info", "detail": f"Could not check AbuseIPDB: {str(e)}"}
 
 
+def check_otx_alienvault(domain: str) -> dict:
+    try:
+        resp = req.get(
+            f"https://otx.alienvault.com/api/v1/indicators/domain/{domain}/general",
+            headers={"Accept": "application/json"},
+            timeout=4.0,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            pulse_count = data.get("pulse_info", {}).get("count", 0)
+            reputation = data.get("reputation", 0)
+            country = data.get("country_name", "Unknown")
+            asn = data.get("asn", "Unknown")
+
+            if pulse_count >= 10:
+                return {
+                    "label": "OTX AlienVault Reputation",
+                    "status": "fail",
+                    "detail": f"Flagged in {pulse_count} threat pulses. Country: {country}, ASN: {asn}. Reputation score: {reputation}",
+                    "score_addition": min(pulse_count * 3, 60),
+                }
+            elif pulse_count >= 3:
+                return {
+                    "label": "OTX AlienVault Reputation",
+                    "status": "warn",
+                    "detail": f"Mentioned in {pulse_count} threat pulses. Country: {country}, ASN: {asn}. Reputation score: {reputation}",
+                    "score_addition": pulse_count * 2,
+                }
+            elif pulse_count >= 1:
+                return {
+                    "label": "OTX AlienVault Reputation",
+                    "status": "info",
+                    "detail": f"Mentioned in {pulse_count} threat pulse(s). Country: {country}, ASN: {asn}",
+                    "score_addition": 5,
+                }
+            else:
+                return {
+                    "label": "OTX AlienVault Reputation",
+                    "status": "pass",
+                    "detail": f"No threat pulses found. Country: {country}, ASN: {asn}. Domain appears clean across {data.get('reputation', 0)} reputation sources.",
+                }
+        elif resp.status_code == 404:
+            return {
+                "label": "OTX AlienVault Reputation",
+                "status": "pass",
+                "detail": "Domain not found in OTX threat intelligence database — no known threats.",
+            }
+        elif resp.status_code == 429:
+            return {"label": "OTX AlienVault Reputation", "status": "info", "detail": "Rate limited by OTX API"}
+        else:
+            return {"label": "OTX AlienVault Reputation", "status": "info", "detail": f"OTX returned status {resp.status_code}"}
+    except Exception as e:
+        return {"label": "OTX AlienVault Reputation", "status": "info", "detail": f"Could not check OTX AlienVault: {str(e)}"}
+
+
 MOCK_BREACH_DB = [
     {
         "email": "test@example.com",
@@ -1612,6 +1667,13 @@ def analyze_url(url: str) -> dict:
             result["score"] += abuse_res["score_addition"]
             del abuse_res["score_addition"]
         result["checks"].append(abuse_res)
+
+        # ── Check 14: OTX AlienVault Reputation ──
+        otx_res = check_otx_alienvault(domain)
+        if "score_addition" in otx_res:
+            result["score"] += otx_res["score_addition"]
+            del otx_res["score_addition"]
+        result["checks"].append(otx_res)
 
     except Exception as e:
         result["score"] += 50
