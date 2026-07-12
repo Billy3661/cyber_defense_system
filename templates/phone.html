@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Phone Intelligence — Securix{% endblock %}
+{% block description %}Analyze phone numbers for spam, carrier info, line type, and threat indicators.{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="container">
+        <div class="breadcrumb"><a href="/">Dashboard</a> <span>›</span> Phone Intelligence</div>
+        <h1 class="page-title">Phone Intelligence</h1>
+        <p class="page-subtitle">
+            Analyze any phone number — detect spam, identify carriers, check line type, and assess risk.
+        </p>
+    </div>
+</div>
+
+<div class="container scanner-page">
+    <div class="scan-form-wrap" style="max-width:700px;margin:0 auto 2rem;">
+        <form id="phoneForm" onsubmit="scanPhone(event)" style="display:flex;gap:0.75rem;align-items:stretch;">
+            <div style="flex:1;">
+                <input type="tel" id="phoneInput" placeholder="Enter phone number (e.g. +254712345678, +14155552671)"
+                    style="width:100%;padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(255,255,255,0.08);
+                    background:var(--bg-tertiary);color:var(--text-primary);font-size:1rem;font-family:'JetBrains Mono',monospace;"
+                    required autocomplete="off" />
+            </div>
+            <button type="submit" class="btn btn-primary" id="scanBtn">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">search</span> Scan
+            </button>
+        </form>
+        <p style="text-align:center;margin-top:0.75rem;color:var(--text-secondary);font-size:0.82rem;">
+            Supports international format. Include country code for best results.
+        </p>
+    </div>
+
+    <div id="loading" style="display:none;text-align:center;padding:3rem 0;">
+        <div class="spinner" style="width:40px;height:40px;border:3px solid rgba(59,130,246,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;"></div>
+        <p style="color:var(--text-secondary);">Analyzing number...</p>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+
+    <div id="error" style="display:none;text-align:center;padding:2rem;color:#ef4444;"></div>
+
+    <div id="results" style="display:none;max-width:800px;margin:0 auto;">
+        <!-- Risk Banner -->
+        <div id="riskBanner" style="border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;border:1px solid;">
+            <span class="material-symbols-outlined" id="riskIcon" style="font-size:2rem;"></span>
+            <div>
+                <div id="riskLevel" style="font-size:1.1rem;font-weight:700;"></div>
+                <div id="riskSummary" style="font-size:0.85rem;opacity:0.8;margin-top:0.2rem;"></div>
+            </div>
+        </div>
+
+        <!-- Number Info Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Phone Number</div>
+                <div id="rE164" style="font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:600;word-break:break-all;"></div>
+                <div id="rNational" style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.2rem;"></div>
+            </div>
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Country</div>
+                <div id="rCountry" style="font-size:1rem;font-weight:600;"></div>
+                <div id="rISO" style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.2rem;"></div>
+            </div>
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Carrier</div>
+                <div id="rCarrier" style="font-size:1rem;font-weight:600;"></div>
+            </div>
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Line Type</div>
+                <div id="rLineType" style="font-size:1rem;font-weight:600;"></div>
+            </div>
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Location</div>
+                <div id="rLocation" style="font-size:1rem;font-weight:600;"></div>
+            </div>
+            <div class="stat-card" style="text-align:left;align-items:flex-start;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem;">Timezone(s)</div>
+                <div id="rTimezone" style="font-size:0.85rem;"></div>
+            </div>
+        </div>
+
+        <!-- Spam Score -->
+        <div id="spamSection" style="display:none;margin-bottom:1.5rem;">
+            <div class="stat-card" style="padding:1.25rem 1.5rem;align-items:stretch;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+                    <span style="font-weight:600;">Spam Score</span>
+                    <span id="spamValue" style="font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:800;"></span>
+                </div>
+                <div style="background:rgba(255,255,255,0.05);border-radius:9999px;height:10px;overflow:hidden;">
+                    <div id="spamBar" style="height:100%;border-radius:9999px;transition:width 0.6s ease;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.75rem;color:var(--text-secondary);">
+                    <span>0 — Clean</span>
+                    <span>50 — Suspicious</span>
+                    <span>100 — Dangerous</span>
+                </div>
+                <div id="spamReports" style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-secondary);"></div>
+            </div>
+        </div>
+
+        <!-- Indicators -->
+        <div id="indicatorsSection" style="margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">Threat Indicators</h3>
+            <div id="indicatorsList" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+        </div>
+
+        <!-- Validity -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+            <div class="stat-card" style="padding:1rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;">Valid Number</div>
+                <div id="rValid" style="font-size:1rem;font-weight:600;"></div>
+            </div>
+            <div class="stat-card" style="padding:1rem;">
+                <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;">Possible Number</div>
+                <div id="rPossible" style="font-size:1rem;font-weight:600;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function scanPhone(e) {
+    e.preventDefault();
+    const phone = document.getElementById('phoneInput').value.trim();
+    if (!phone) return;
+
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('scanBtn').disabled = true;
+
+    try {
+        const resp = await fetch('/api/scan-phone', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({phone})
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+            throw new Error(data.error || 'Scan failed');
+        }
+        renderResults(data);
+    } catch (err) {
+        document.getElementById('error').textContent = err.message;
+        document.getElementById('error').style.display = 'block';
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('scanBtn').disabled = false;
+    }
+}
+
+function renderResults(d) {
+    document.getElementById('rE164').textContent = d.e164 || d.input;
+    document.getElementById('rNational').textContent = d.national || '';
+    document.getElementById('rCountry').textContent = d.country_name || d.country_iso || '—';
+    document.getElementById('rISO').textContent = d.country_iso ? 'ISO: ' + d.country_iso : '';
+    document.getElementById('rCarrier').textContent = d.carrier || 'Unknown';
+    document.getElementById('rLineType').textContent = d.line_type || 'Unknown';
+    document.getElementById('rLocation').textContent = d.location || d.country_name || '—';
+    document.getElementById('rTimezone').textContent = d.timezones.length ? d.timezones.join(', ') : '—';
+    document.getElementById('rValid').innerHTML = d.valid
+        ? '<span style="color:#22c55e;">&#10003; Valid</span>'
+        : '<span style="color:#ef4444;">&#10007; Invalid</span>';
+    document.getElementById('rPossible').innerHTML = d.possible
+        ? '<span style="color:#22c55e;">&#10003; Possible</span>'
+        : '<span style="color:#ef4444;">&#10007; Unlikely</span>';
+
+    const banner = document.getElementById('riskBanner');
+    banner.style.borderColor = d.risk_color + '40';
+    banner.style.background = d.risk_color + '12';
+    document.getElementById('riskIcon').textContent = d.risk_level.includes('High') ? 'warning'
+        : d.risk_level.includes('Medium') ? 'info'
+        : d.risk_level.includes('Clean') ? 'verified'
+        : d.risk_level.includes('Invalid') ? 'error'
+        : 'help';
+    document.getElementById('riskIcon').style.color = d.risk_color;
+    document.getElementById('riskLevel').textContent = d.risk_level;
+    document.getElementById('riskLevel').style.color = d.risk_color;
+
+    const summary = d.indicators.length ? d.indicators[0] : 'No additional data available.';
+    document.getElementById('riskSummary').textContent = summary;
+
+    const spamSection = document.getElementById('spamSection');
+    if (d.spam_score !== null && d.spam_score !== undefined) {
+        spamSection.style.display = 'block';
+        const score = Math.min(100, Math.max(0, d.spam_score));
+        const color = score >= 70 ? '#ef4444' : score >= 40 ? '#f97316' : score >= 10 ? '#eab308' : '#22c55e';
+        document.getElementById('spamValue').textContent = score + '/100';
+        document.getElementById('spamValue').style.color = color;
+        document.getElementById('spamBar').style.width = score + '%';
+        document.getElementById('spamBar').style.background = color;
+        let reportText = d.total_reports + ' report' + (d.total_reports !== 1 ? 's' : '') + ' from community';
+        if (d.last_reported) {
+            const ago = timeAgo(d.last_reported);
+            reportText += ' · Last flagged ' + ago;
+        }
+        document.getElementById('spamReports').textContent = reportText;
+    } else {
+        spamSection.style.display = 'none';
+    }
+
+    const list = document.getElementById('indicatorsList');
+    list.innerHTML = '';
+    if (d.indicators.length) {
+        d.indicators.forEach(ind => {
+            const color = ind.includes('High') || ind.includes('scammer') || ind.includes('Invalid') || ind.includes('overcharge')
+                ? '#ef4444' : ind.includes('Moderate') || ind.includes('Caution') ? '#f97316'
+                : ind.includes('No') || ind.includes('cannot') ? '#6b7280' : '#22c55e';
+            list.innerHTML += '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 1rem;border-radius:8px;background:' + color + '10;border:1px solid ' + color + '30;font-size:0.88rem;">'
+                + '<span class="material-symbols-outlined" style="font-size:1rem;color:' + color + ';">'
+                + (ind.includes('High') || ind.includes('scammer') ? 'warning' : ind.includes('No') || ind.includes('cannot') ? 'help' : 'info')
+                + '</span>' + escapeHTML(ind) + '</div>';
+        });
+    }
+
+    document.getElementById('results').style.display = 'block';
+}
+
+function timeAgo(dateStr) {
+    const now = new Date();
+    const then = new Date(dateStr);
+    const diff = Math.floor((now - then) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[tag]||tag));
+}
+</script>
+{% endblock %}

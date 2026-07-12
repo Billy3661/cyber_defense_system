@@ -73,6 +73,8 @@ if not app.debug:
 #  CONTEXT PROCESSORS & ERROR HANDLERS
 # ─────────────────────────────────────────────
 
+app.config["ADMIN_USERNAME"] = os.environ.get("ADMIN_USERNAME", "").strip().lower()
+
 @app.context_processor
 def inject_globals():
     import os as _os
@@ -83,7 +85,7 @@ def inject_globals():
     return dict(
         cache_bust=str(css_mtime + js_mtime),
         google_oauth_enabled=google is not None,
-        admin_username=os.environ.get("ADMIN_USERNAME", "").strip().lower(),
+        admin_username=app.config["ADMIN_USERNAME"],
     )
 
 
@@ -121,6 +123,7 @@ from blueprints.simulator import simulator_bp
 from blueprints.breach import breach_bp
 from blueprints.chat import chat_bp
 from blueprints.admin import admin_bp
+from blueprints.phone import phone_bp
 
 app.register_blueprint(main_bp)
 app.register_blueprint(auth_bp)
@@ -129,6 +132,7 @@ app.register_blueprint(simulator_bp)
 app.register_blueprint(breach_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(phone_bp)
 
 
 # ─────────────────────────────────────────────

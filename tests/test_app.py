@@ -77,14 +77,14 @@ class TestAppFactoryAndConfiguration:
     def test_testing_config(self, app):
         assert app.config["TESTING"] is True
 
-    def test_all_seven_blueprints_registered(self, app):
+    def test_all_eight_blueprints_registered(self, app):
         blueprint_names = set(app.blueprints.keys())
-        expected = {"main", "auth", "scanner", "simulator", "breach", "chat", "admin"}
+        expected = {"main", "auth", "scanner", "simulator", "breach", "chat", "admin", "phone"}
         assert blueprint_names == expected
 
     def test_route_count(self, app):
         rules = [r for r in app.url_map.iter_rules() if r.endpoint != "static"]
-        assert len(rules) == 53
+        assert len(rules) == 55
 
 
 # ============================================================
@@ -689,8 +689,7 @@ class TestAdminPanel:
     def test_admin_dashboard_loads_for_admin(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        import os
-        os.environ["ADMIN_USERNAME"] = "testadmin"
+        app.config["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -698,13 +697,11 @@ class TestAdminPanel:
         resp = client.get("/admin/")
         assert resp.status_code == 200
         assert b"Dashboard" in resp.data
-        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_users_page(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        import os
-        os.environ["ADMIN_USERNAME"] = "testadmin"
+        app.config["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -712,13 +709,11 @@ class TestAdminPanel:
         resp = client.get("/admin/users")
         assert resp.status_code == 200
         assert b"Users" in resp.data
-        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_signatures_page(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        import os
-        os.environ["ADMIN_USERNAME"] = "testadmin"
+        app.config["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -726,16 +721,68 @@ class TestAdminPanel:
         resp = client.get("/admin/signatures")
         assert resp.status_code == 200
         assert b"Malware Signatures" in resp.data
-        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_no_admin_configured(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        import os
-        os.environ.pop("ADMIN_USERNAME", None)
+        app.config["ADMIN_USERNAME"] = ""
         database.create_user("someuser", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
             sess["username"] = "someuser"
         resp = client.get("/admin/")
         assert resp.status_code == 302
+
+
+# ============================================================
+# 9. PHONE INTELLIGENCE
+# ============================================================
+
+class TestPhoneIntelligence:
+
+    def test_phone_page_requires_login(self, client):
+        resp = client.get("/phone-intelligence")
+        assert resp.status_code == 302
+        assert "/login" in resp.headers["Location"]
+
+    def test_phone_page_loads(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("phoneuser", generate_password_hash("pass1234"))
+        with client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "phoneuser"
+        resp = client.get("/phone-intelligence")
+        assert resp.status_code == 200
+        assert b"Phone Intelligence" in resp.data
+
+    def test_api_scan_phone_empty(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("phoneuser2", generate_password_hash("pass1234"))
+        with client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "phoneuser2"
+        resp = client.post("/api/scan-phone", json={"phone": ""})
+        assert resp.status_code == 400
+
+    def test_api_scan_phone_valid(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("phoneuser3", generate_password_hash("pass1234"))
+        with client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "phoneuser3"
+        resp = client.post("/api/scan-phone", json={"phone": "+14155552671"})
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["valid"] is True
+        assert data["country_iso"] == "US"
+        assert "e164" in data
+        assert "risk_level" in data
+
+    def test_parse_and_enrich_invalid(self):
+        from blueprints.phone import parse_and_enrich
+        result = parse_and_enrich("not-a-number")
+        assert result["valid"] is False
+        assert result["e164"] == "" or result["possible"] is False

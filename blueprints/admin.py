@@ -1,7 +1,7 @@
 import os
 import json
 from functools import wraps
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 import database
 from helpers import login_required
 
@@ -9,7 +9,7 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 def _admin_username():
-    return os.environ.get("ADMIN_USERNAME", "").strip().lower()
+    return current_app.config.get("ADMIN_USERNAME", "")
 
 
 def admin_required(f):
