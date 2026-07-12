@@ -21,6 +21,8 @@ services:
         sync: false
       - key: HIBP_API_KEY
         sync: false
+      - key: NUMLOOKUP_API_KEY
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: GOOGLE_CLIENT_ID

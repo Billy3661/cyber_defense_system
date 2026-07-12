@@ -84,7 +84,7 @@ class TestAppFactoryAndConfiguration:
 
     def test_route_count(self, app):
         rules = [r for r in app.url_map.iter_rules() if r.endpoint != "static"]
-        assert len(rules) == 55
+        assert len(rules) == 56
 
 
 # ============================================================
@@ -858,3 +858,88 @@ class TestPhoneIntelligence:
         flagged_count = sum(1 for v in spam.values() if v in ("flagged", "negative"))
         assert flagged_count >= 1
         assert result["risk_level"] in ("High Risk", "Caution")
+
+    def test_numlookup_enrichment_returns_dict(self):
+        from blueprints.phone import parse_and_enrich
+        with patch("blueprints.phone.req.get") as mock_get:
+            def side_effect(url, **kwargs):
+                resp = MagicMock()
+                resp.status_code = 200
+                url_str = str(url)
+                if "numlookupapi" in url_str:
+                    resp.json.return_value = {
+                        "carrier": "AT&T Mobility",
+                        "line_type": "mobile",
+                        "location": "San Francisco",
+                        "valid": True,
+                        "is_prepaid": False,
+                        "international_format": "+14155552671",
+                    }
+                elif "calltracer" in url_str:
+                    resp.json.return_value = {"reports": {"spam_score": None, "total": 0, "last_reported_at": None}}
+                else:
+                    resp.text = "No user reports"
+                return resp
+            mock_get.side_effect = side_effect
+            result = parse_and_enrich("+14155552671")
+        assert "numlookup" in result
+        assert isinstance(result["numlookup"], dict)
+
+    def test_hibp_phone_check_returns_dict(self):
+        from blueprints.phone import parse_and_enrich
+        with patch("blueprints.phone.req.get") as mock_get:
+            def side_effect(url, **kwargs):
+                resp = MagicMock()
+                resp.status_code = 404
+                url_str = str(url)
+                if "haveibeenpwned" in url_str:
+                    pass
+                elif "calltracer" in url_str:
+                    resp.json.return_value = {"reports": {"spam_score": None, "total": 0, "last_reported_at": None}}
+                    return resp
+                else:
+                    resp.text = "No user reports"
+                return resp
+            mock_get.side_effect = side_effect
+            result = parse_and_enrich("+14155552671")
+        assert "hibp_phone" in result
+        assert isinstance(result["hibp_phone"], dict)
+
+    def test_phone_pdf_endpoint_requires_data(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("pdfuser", generate_password_hash("pass1234"))
+        with client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "pdfuser"
+        resp = client.post("/api/phone-report/pdf", json={})
+        assert resp.status_code == 400
+
+    def test_phone_pdf_endpoint_generates(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("pdfuser2", generate_password_hash("pass1234"))
+        with client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["username"] = "pdfuser2"
+        scan_data = {
+            "e164": "+14155552671",
+            "input": "+14155552671",
+            "valid": True,
+            "country_name": "United States",
+            "country_iso": "US",
+            "carrier": "AT&T",
+            "line_type": "Mobile",
+            "location": "San Francisco",
+            "timezones": ["America/Los_Angeles"],
+            "spam_score": None,
+            "risk_level": "No Data",
+            "risk_color": "#6b7280",
+            "indicators": [],
+            "spam_databases": {},
+            "hibp_phone": {},
+            "numlookup": {},
+        }
+        resp = client.post("/api/phone-report/pdf", json={"data": scan_data})
+        assert resp.status_code == 200
+        assert resp.content_type == "application/pdf"

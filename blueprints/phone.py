@@ -1,18 +1,27 @@
 import re
+import os
 import logging
+from datetime import datetime
+from io import BytesIO
 import phonenumbers
 from phonenumbers import carrier, timezone as tz_module, geocoder, phonenumberutil
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, send_file
 import requests as req
-from helpers import login_required, limiter
+from helpers import login_required, limiter, HIBP_API_KEY
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 phone_bp = Blueprint("phone", __name__)
 
 CALLTRACER_BASE = "https://calltracer.io/api/lookup"
+NUMLOOKUP_BASE = "https://api.numlookupapi.com/v1/validate"
+NUMLOOKUP_KEY = os.environ.get("NUMLOOKUP_API_KEY", "")
 
 
 def _check_messaging_apps(e164):
-    """Generate WhatsApp and Telegram check links + detect patterns."""
+    """Generate WhatsApp and Telegram check links."""
     digits_only = re.sub(r"[^\d]", "", e164)
     return {
         "whatsapp_link": f"https://wa.me/{digits_only}",
@@ -91,6 +100,75 @@ def _check_spam_databases(e164, digits):
     return results
 
 
+def _numlookup_enrich(digits, country_iso):
+    """Enrich phone data via NumLookup API (free tier: 100 req/month)."""
+    if not NUMLOOKUP_KEY:
+        return {}
+    try:
+        resp = req.get(
+            NUMLOOKUP_BASE,
+            params={"apikey": NUMLOOKUP_KEY, "number": digits},
+            timeout=8,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            return {
+                "carrier": data.get("carrier", ""),
+                "line_type": data.get("line_type", ""),
+                "location": data.get("location", ""),
+                "valid": data.get("valid"),
+                "is_prepaid": data.get("is_prepaid", False),
+                "international_format": data.get("international_format", ""),
+                "country_name": data.get("country_name", ""),
+            }
+    except Exception as e:
+        logging.debug("NumLookup failed for %s: %s", digits, e)
+    return {}
+
+
+def _check_hibp_phone(e164):
+    """Check if a phone number appears in known data breaches via HIBP."""
+    if not HIBP_API_KEY:
+        return {"available": False, "reason": "HIBP API key not configured"}
+    try:
+        resp = req.get(
+            f"https://haveibeenpwned.com/api/v3/breachedaccount/{e164}",
+            headers={
+                "hibp-api-key": HIBP_API_KEY,
+                "User-Agent": "Securix-CyberDefense",
+            },
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            breaches = resp.json()
+            return {
+                "available": True,
+                "breached": True,
+                "breach_count": len(breaches),
+                "breaches": [
+                    {
+                        "name": b.get("Name", ""),
+                        "title": b.get("Title", ""),
+                        "domain": b.get("Domain", ""),
+                        "date": b.get("BreachDate", ""),
+                        "data_classes": b.get("DataClasses", []),
+                    }
+                    for b in breaches[:10]
+                ],
+            }
+        elif resp.status_code == 404:
+            return {"available": True, "breached": False, "breach_count": 0, "breaches": []}
+        elif resp.status_code == 401:
+            return {"available": False, "reason": "Invalid HIBP API key"}
+        elif resp.status_code == 429:
+            return {"available": False, "reason": "HIBP rate limit exceeded"}
+        else:
+            return {"available": False, "reason": f"HIBP returned status {resp.status_code}"}
+    except Exception as e:
+        logging.debug("HIBP phone lookup failed for %s: %s", e164, e)
+        return {"available": False, "reason": "HIBP request failed"}
+
+
 def parse_and_enrich(raw_number):
     """Parse a phone number with phonenumbers lib and enrich with all sources."""
     result = {
@@ -115,6 +193,8 @@ def parse_and_enrich(raw_number):
         "indicators": [],
         "messaging_links": {},
         "spam_databases": {},
+        "numlookup": {},
+        "hibp_phone": {},
     }
 
     cleaned = re.sub(r"[^\d+]", "", raw_number.strip())
@@ -167,6 +247,18 @@ def parse_and_enrich(raw_number):
     result["messaging_links"] = _check_messaging_apps(result["e164"])
     result["spam_databases"] = _check_spam_databases(result["e164"], digits)
 
+    numlookup_data = _numlookup_enrich(digits, result["country_iso"])
+    if numlookup_data:
+        result["numlookup"] = numlookup_data
+        if numlookup_data.get("carrier") and not result["carrier"]:
+            result["carrier"] = numlookup_data["carrier"]
+        if numlookup_data.get("line_type") and result["line_type"] in ("Unknown", ""):
+            result["line_type"] = numlookup_data["line_type"].title()
+        if numlookup_data.get("location") and not result["location"]:
+            result["location"] = numlookup_data["location"]
+
+    result["hibp_phone"] = _check_hibp_phone(result["e164"])
+
     try:
         resp = req.get(f"{CALLTRACER_BASE}/{digits}", timeout=8)
         if resp.status_code == 200:
@@ -196,12 +288,19 @@ def parse_and_enrich(raw_number):
     if result["line_type"] == "Toll-Free":
         result["indicators"].append("Toll-free number — legitimate businesses often use these")
 
+    if result["numlookup"].get("is_prepaid"):
+        result["indicators"].append("Prepaid number — harder to trace owner")
+
     spam_db = result.get("spam_databases", {})
     db_flagged = sum(1 for v in spam_db.values() if v in ("flagged", "negative"))
     if db_flagged >= 2:
         result["indicators"].append(f"Flagged on {db_flagged} spam databases")
     elif db_flagged == 1:
         result["indicators"].append("Flagged on at least one spam database")
+
+    hibp = result.get("hibp_phone", {})
+    if hibp.get("breached"):
+        result["indicators"].append(f"Found in {hibp['breach_count']} data breach{'es' if hibp['breach_count'] != 1 else ''}")
 
     if result["spam_score"] is not None:
         if result["spam_score"] >= 70:
@@ -236,12 +335,163 @@ def parse_and_enrich(raw_number):
         elif db_flagged == 1:
             result["risk_level"] = "Caution"
             result["risk_color"] = "#f97316"
+        elif hibp.get("breached"):
+            result["risk_level"] = "Caution"
+            result["risk_color"] = "#f97316"
         else:
             result["risk_level"] = "No Data"
             result["risk_color"] = "#6b7280"
             result["indicators"].append("No spam reports available — cannot confirm safety")
 
     return result
+
+
+def _build_phone_pdf(result):
+    """Generate a PDF intelligence report for a phone scan."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter, rightMargin=36, leftMargin=36,
+        topMargin=36, bottomMargin=36,
+    )
+
+    styles = getSampleStyleSheet()
+    primary_color = colors.HexColor("#0f172a")
+    text_color = colors.HexColor("#334155")
+
+    title_style = ParagraphStyle('ReportTitle', parent=styles['Heading1'], fontSize=20, textColor=primary_color, spaceAfter=10)
+    subtitle_style = ParagraphStyle('ReportSubtitle', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor("#64748b"), spaceAfter=15)
+    section_style = ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=13, textColor=primary_color, spaceBefore=10, spaceAfter=5)
+    body_style = ParagraphStyle('ReportBody', parent=styles['Normal'], fontSize=9, textColor=text_color, leading=13)
+    verdict_style = ParagraphStyle('VerdictText', parent=styles['Normal'], fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor(result.get("risk_color", "#6b7280")))
+
+    elements = []
+    elements.append(Paragraph("SECURIX — Phone Intelligence Report", title_style))
+    elements.append(Paragraph("Powered by SECURIX Threat Intelligence Engine | Sword & Shield Protection", ParagraphStyle('Brand', parent=styles['Normal'], fontSize=8, textColor=colors.HexColor("#3b82f6"), spaceAfter=4)))
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    elements.append(Paragraph(f"Generated on {timestamp} | SECURIX Automated Phone Intelligence", subtitle_style))
+    elements.append(Spacer(1, 10))
+
+    summary_data = [
+        [Paragraph("<b>Phone Number:</b>", body_style), Paragraph(result.get("e164", result.get("input", "N/A")), body_style)],
+        [Paragraph("<b>Risk Verdict:</b>", body_style), Paragraph(result.get("risk_level", "Unknown"), verdict_style)],
+        [Paragraph("<b>Country:</b>", body_style), Paragraph(f"{result.get('country_name', 'N/A')} ({result.get('country_iso', '')})", body_style)],
+        [Paragraph("<b>Carrier:</b>", body_style), Paragraph(result.get("carrier", "Unknown"), body_style)],
+        [Paragraph("<b>Line Type:</b>", body_style), Paragraph(result.get("line_type", "Unknown"), body_style)],
+        [Paragraph("<b>Location:</b>", body_style), Paragraph(result.get("location", "N/A"), body_style)],
+        [Paragraph("<b>Timezone(s):</b>", body_style), Paragraph(", ".join(result.get("timezones", [])) or "N/A", body_style)],
+        [Paragraph("<b>Spam Score:</b>", body_style), Paragraph(f"{result['spam_score']}/100" if result.get("spam_score") is not None else "N/A", body_style)],
+    ]
+    summary_table = Table(summary_data, colWidths=[140, 400])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#f8fafc")),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#e2e8f0")),
+        ('PADDING', (0, 0), (-1, -1), 6),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 15))
+
+    elements.append(Paragraph("Security Indicators", section_style))
+    indicators = result.get("indicators", [])
+    if indicators:
+        ind_rows = [[Paragraph("<b>#</b>", body_style), Paragraph("<b>Indicator</b>", body_style)]]
+        for i, ind in enumerate(indicators, 1):
+            ind_rows.append([Paragraph(str(i), body_style), Paragraph(ind, body_style)])
+        ind_table = Table(ind_rows, colWidths=[40, 500])
+        ind_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cbd5e1")),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ('PADDING', (0, 0), (-1, -1), 5),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ]))
+        elements.append(ind_table)
+    else:
+        elements.append(Paragraph("No indicators detected.", body_style))
+    elements.append(Spacer(1, 10))
+
+    spam_db = result.get("spam_databases", {})
+    if spam_db:
+        elements.append(Paragraph("Spam Database Results", section_style))
+        db_rows = [[Paragraph("<b>Database</b>", body_style), Paragraph("<b>Status</b>", body_style)]]
+        db_names = {
+            "spamcalls_status": "SpamCalls.net",
+            "shouldianswer_status": "ShouldIAnswer",
+            "tellows_status": "Tellows",
+        }
+        for key, name in db_names.items():
+            status = spam_db.get(key, "N/A")
+            if status in ("unavailable", None):
+                continue
+            status_color = "#ef4444" if status in ("flagged", "negative") else "#22c55e" if status in ("clean", "positive") else "#eab308"
+            db_rows.append([
+                Paragraph(name, body_style),
+                Paragraph(f"<font color='{status_color}'><b>{status.title()}</b></font>", body_style),
+            ])
+        if len(db_rows) > 1:
+            db_table = Table(db_rows, colWidths=[200, 340])
+            db_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cbd5e1")),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ('PADDING', (0, 0), (-1, -1), 5),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elements.append(db_table)
+        elements.append(Spacer(1, 10))
+
+    hibp = result.get("hibp_phone", {})
+    if hibp.get("available") and hibp.get("breached"):
+        elements.append(Paragraph("Data Breach Exposure (HIBP)", section_style))
+        breaches = hibp.get("breaches", [])
+        if breaches:
+            br_rows = [[Paragraph("<b>Breach</b>", body_style), Paragraph("<b>Date</b>", body_style), Paragraph("<b>Data Exposed</b>", body_style)]]
+            for b in breaches:
+                data_classes = ", ".join(b.get("data_classes", [])[:4])
+                br_rows.append([
+                    Paragraph(b.get("title", b.get("name", "N/A")), body_style),
+                    Paragraph(b.get("date", "N/A"), body_style),
+                    Paragraph(data_classes, body_style),
+                ])
+            br_table = Table(br_rows, colWidths=[160, 100, 280])
+            br_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cbd5e1")),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+                ('PADDING', (0, 0), (-1, -1), 5),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ]))
+            elements.append(br_table)
+        elements.append(Spacer(1, 10))
+
+    numlookup = result.get("numlookup", {})
+    if numlookup:
+        elements.append(Paragraph("Carrier Enrichment (NumLookup)", section_style))
+        nl_rows = [
+            [Paragraph("<b>Field</b>", body_style), Paragraph("<b>Value</b>", body_style)],
+            [Paragraph("Carrier", body_style), Paragraph(numlookup.get("carrier") or "N/A", body_style)],
+            [Paragraph("Line Type", body_style), Paragraph(numlookup.get("line_type") or "N/A", body_style)],
+            [Paragraph("Location", body_style), Paragraph(numlookup.get("location") or "N/A", body_style)],
+            [Paragraph("Prepaid", body_style), Paragraph("Yes" if numlookup.get("is_prepaid") else "No", body_style)],
+        ]
+        nl_table = Table(nl_rows, colWidths=[140, 400])
+        nl_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cbd5e1")),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
+            ('PADDING', (0, 0), (-1, -1), 5),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(nl_table)
+        elements.append(Spacer(1, 10))
+
+    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("<b>Security Notice:</b> This report is generated automatically by SECURIX. All findings represent potential risk indicators detected by the SECURIX engine. Cross-reference with your security team and follow industry-standard remediation practices.", ParagraphStyle('Notice', parent=styles['Normal'], fontSize=7.5, textColor=colors.HexColor("#64748b"))))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
 
 
 @phone_bp.route("/phone-intelligence")
@@ -261,3 +511,21 @@ def api_scan_phone():
 
     result = parse_and_enrich(phone)
     return jsonify(result)
+
+
+@phone_bp.route("/api/phone-report/pdf", methods=["POST"])
+@login_required
+@limiter.limit("5 per minute")
+def generate_phone_pdf():
+    try:
+        data = request.get_json(silent=True) or {}
+        result = data.get("data") or data
+        if not result.get("e164"):
+            return jsonify({"error": "No scan data provided."}), 400
+
+        buffer = _build_phone_pdf(result)
+        filename = f"securix_phone_{result['e164'].lstrip('+')}.pdf"
+        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name=filename)
+    except Exception as e:
+        logging.error("Phone PDF generation failed: %s", e)
+        return jsonify({"error": f"Failed to generate PDF: {str(e)}"}), 500

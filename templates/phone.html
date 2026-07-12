@@ -133,6 +133,30 @@
             <div id="messagingLinks" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
         </div>
 
+        <!-- HIBP Breach Status -->
+        <div id="hibpSection" style="display:none;margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">security</span> Data Breach Exposure
+            </h3>
+            <div id="hibpContent" style="padding:1rem;border-radius:12px;"></div>
+        </div>
+
+        <!-- NumLookup Enrichment -->
+        <div id="numlookupSection" style="display:none;margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">cell_tower</span> Carrier Intelligence
+            </h3>
+            <div id="numlookupContent" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;"></div>
+        </div>
+
+        <!-- Download PDF -->
+        <div style="margin-bottom:1rem;">
+            <button onclick="downloadPDF()" id="pdfBtn"
+                style="display:none;width:100%;padding:0.75rem;border-radius:10px;border:1px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.1);color:#3b82f6;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;">download</span> Download PDF Report
+            </button>
+        </div>
+
     </div>
 </div>
 
@@ -281,7 +305,97 @@ function renderResults(d) {
             + '<span class="material-symbols-outlined" style="font-size:1rem;">' + app.icon + '</span>' + app.name + '</a>';
     });
 
+    // HIBP Breach Status
+    const hibp = d.hibp_phone || {};
+    const hibpSection = document.getElementById('hibpSection');
+    const hibpContent = document.getElementById('hibpContent');
+    if (hibp.available) {
+        hibpSection.style.display = 'block';
+        if (hibp.breached) {
+            let html = '<div style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);border-radius:10px;padding:1rem;">';
+            html += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;font-weight:600;color:#ef4444;"><span class="material-symbols-outlined" style="font-size:1.2rem;">warning</span> Found in ' + hibp.breach_count + ' data breach' + (hibp.breach_count !== 1 ? 'es' : '') + '</div>';
+            if (hibp.breaches && hibp.breaches.length) {
+                html += '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+                hibp.breaches.forEach(b => {
+                    const classes = (b.data_classes || []).slice(0, 4).join(', ');
+                    html += '<div style="display:flex;justify-content:space-between;align-items:start;padding:0.5rem 0.75rem;border-radius:6px;background:rgba(239,68,68,0.05);font-size:0.85rem;">';
+                    html += '<div><b>' + escapeHTML(b.title || b.name) + '</b>';
+                    if (b.date) html += '<div style="font-size:0.78rem;color:var(--text-secondary);">' + b.date + '</div>';
+                    if (classes) html += '<div style="font-size:0.78rem;color:var(--text-secondary);">' + escapeHTML(classes) + '</div>';
+                    html += '</div></div>';
+                });
+                html += '</div></div>';
+            }
+            hibpContent.innerHTML = html;
+        } else {
+            hibpContent.innerHTML = '<div style="border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08);border-radius:10px;padding:1rem;display:flex;align-items:center;gap:0.5rem;color:#22c55e;font-weight:600;"><span class="material-symbols-outlined" style="font-size:1.2rem;">verified</span> Not found in any known data breaches</div>';
+        }
+    } else {
+        hibpSection.style.display = hibp.reason ? 'block' : 'none';
+        if (hibp.reason) {
+            hibpContent.innerHTML = '<div style="border:1px solid rgba(255,255,255,0.06);background:var(--bg-tertiary);border-radius:10px;padding:1rem;font-size:0.85rem;color:var(--text-secondary);">' + escapeHTML(hibp.reason) + '</div>';
+        }
+    }
+
+    // NumLookup Enrichment
+    const nl = d.numlookup || {};
+    const nlSection = document.getElementById('numlookupSection');
+    const nlContent = document.getElementById('numlookupContent');
+    if (Object.keys(nl).length > 0) {
+        nlSection.style.display = 'block';
+        const fields = [
+            {label: 'Carrier', value: nl.carrier, icon: 'sim_card'},
+            {label: 'Line Type', value: nl.line_type, icon: 'phone'},
+            {label: 'Location', value: nl.location, icon: 'location_on'},
+            {label: 'Prepaid', value: nl.is_prepaid ? 'Yes' : 'No', icon: 'payment'},
+            {label: 'International Format', value: nl.international_format, icon: 'language'},
+        ];
+        nlContent.innerHTML = '';
+        fields.forEach(f => {
+            if (!f.value || f.value === 'N/A' || f.value === 'false' || f.value === 'true') return;
+            nlContent.innerHTML += '<div style="padding:0.75rem;border-radius:8px;background:var(--bg-tertiary);border:1px solid rgba(255,255,255,0.06);">'
+                + '<div style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.3rem;">'
+                + '<span class="material-symbols-outlined" style="font-size:0.85rem;color:var(--accent);">' + f.icon + '</span>' + f.label + '</div>'
+                + '<div style="font-size:0.92rem;font-weight:600;">' + escapeHTML(String(f.value)) + '</div></div>';
+        });
+    }
+
+    // Show PDF download button
+    document.getElementById('pdfBtn').style.display = 'flex';
+    window._lastPhoneScan = d;
+
     document.getElementById('results').style.display = 'block';
+}
+
+let _lastScanData = null;
+
+async function downloadPDF() {
+    const btn = document.getElementById('pdfBtn');
+    if (!window._lastPhoneScan) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem;animation:spin 1s linear infinite;">sync</span> Generating...';
+    try {
+        const resp = await fetch('/api/phone-report/pdf', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(window._lastPhoneScan)
+        });
+        if (!resp.ok) { const e = await resp.json(); alert(e.error || 'PDF generation failed'); return; }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'securix_phone_report.pdf';
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    } catch(e) {
+        alert('PDF generation failed: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.1rem;">download</span> Download PDF Report';
+    }
 }
 
 function timeAgo(dateStr) {
