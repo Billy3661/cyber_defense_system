@@ -73,8 +73,6 @@ if not app.debug:
 #  CONTEXT PROCESSORS & ERROR HANDLERS
 # ─────────────────────────────────────────────
 
-app.config["ADMIN_USERNAME"] = os.environ.get("ADMIN_USERNAME", "").strip().lower()
-
 @app.context_processor
 def inject_globals():
     import os as _os
@@ -82,10 +80,11 @@ def inject_globals():
     js_path = _os.path.join(app.root_path, "static", "js", "main.js")
     css_mtime = int(_os.path.getmtime(css_path)) if _os.path.exists(css_path) else 0
     js_mtime = int(_os.path.getmtime(js_path)) if _os.path.exists(js_path) else 0
+    _admin = _os.environ.get("ADMIN_USERNAME", "").strip().lower()
     return dict(
         cache_bust=str(css_mtime + js_mtime),
         google_oauth_enabled=google is not None,
-        admin_username=app.config["ADMIN_USERNAME"],
+        admin_username=_admin,
     )
 
 

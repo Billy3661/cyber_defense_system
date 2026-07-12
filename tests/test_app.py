@@ -689,7 +689,8 @@ class TestAdminPanel:
     def test_admin_dashboard_loads_for_admin(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        app.config["ADMIN_USERNAME"] = "testadmin"
+        import os
+        os.environ["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -697,11 +698,13 @@ class TestAdminPanel:
         resp = client.get("/admin/")
         assert resp.status_code == 200
         assert b"Dashboard" in resp.data
+        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_users_page(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        app.config["ADMIN_USERNAME"] = "testadmin"
+        import os
+        os.environ["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -709,11 +712,13 @@ class TestAdminPanel:
         resp = client.get("/admin/users")
         assert resp.status_code == 200
         assert b"Users" in resp.data
+        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_signatures_page(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        app.config["ADMIN_USERNAME"] = "testadmin"
+        import os
+        os.environ["ADMIN_USERNAME"] = "testadmin"
         database.create_user("testadmin", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
@@ -721,17 +726,20 @@ class TestAdminPanel:
         resp = client.get("/admin/signatures")
         assert resp.status_code == 200
         assert b"Malware Signatures" in resp.data
+        os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_no_admin_configured(self, app, client):
         from werkzeug.security import generate_password_hash
         import database
-        app.config["ADMIN_USERNAME"] = ""
+        import os
+        os.environ["ADMIN_USERNAME"] = ""
         database.create_user("someuser", generate_password_hash("pass1234"))
         with client.session_transaction() as sess:
             sess["user_id"] = 1
             sess["username"] = "someuser"
         resp = client.get("/admin/")
         assert resp.status_code == 302
+        os.environ.pop("ADMIN_USERNAME", None)
 
 
 # ============================================================

@@ -9,7 +9,8 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 
 def _admin_username():
-    return current_app.config.get("ADMIN_USERNAME", "")
+    import os
+    return os.environ.get("ADMIN_USERNAME", "").strip().lower()
 
 
 def admin_required(f):
