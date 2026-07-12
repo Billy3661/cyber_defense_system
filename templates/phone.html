@@ -105,7 +105,7 @@
         </div>
 
         <!-- Validity -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
             <div class="stat-card" style="padding:1rem;">
                 <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;">Valid Number</div>
                 <div id="rValid" style="font-size:1rem;font-weight:600;"></div>
@@ -114,6 +114,32 @@
                 <div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;">Possible Number</div>
                 <div id="rPossible" style="font-size:1rem;font-weight:600;"></div>
             </div>
+        </div>
+
+        <!-- Spam Database Cross-Check -->
+        <div id="spamDbSection" style="display:none;margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">gpp_maybe</span> Spam Database Cross-Check
+            </h3>
+            <div id="spamDbList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.75rem;"></div>
+        </div>
+
+        <!-- Messaging Apps -->
+        <div id="messagingSection" style="margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">chat</span> Messaging App Links
+            </h3>
+            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">Click to check if this number is registered on messaging platforms.</p>
+            <div id="messagingLinks" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
+        </div>
+
+        <!-- OSINT URLs -->
+        <div id="osintSection" style="margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">open_in_new</span> OSINT Lookup Links
+            </h3>
+            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">One-click lookups across public databases and search engines.</p>
+            <div id="osintLinks" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.5rem;"></div>
         </div>
     </div>
 </div>
@@ -169,7 +195,7 @@ function renderResults(d) {
     banner.style.borderColor = d.risk_color + '40';
     banner.style.background = d.risk_color + '12';
     document.getElementById('riskIcon').textContent = d.risk_level.includes('High') ? 'warning'
-        : d.risk_level.includes('Medium') ? 'info'
+        : d.risk_level.includes('Medium') || d.risk_level.includes('Caution') ? 'info'
         : d.risk_level.includes('Clean') ? 'verified'
         : d.risk_level.includes('Invalid') ? 'error'
         : 'help';
@@ -203,15 +229,97 @@ function renderResults(d) {
     list.innerHTML = '';
     if (d.indicators.length) {
         d.indicators.forEach(ind => {
-            const color = ind.includes('High') || ind.includes('scammer') || ind.includes('Invalid') || ind.includes('overcharge')
+            const color = ind.includes('High') || ind.includes('scammer') || ind.includes('Invalid') || ind.includes('overcharge') || ind.includes('Flagged')
                 ? '#ef4444' : ind.includes('Moderate') || ind.includes('Caution') ? '#f97316'
                 : ind.includes('No') || ind.includes('cannot') ? '#6b7280' : '#22c55e';
             list.innerHTML += '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.6rem 1rem;border-radius:8px;background:' + color + '10;border:1px solid ' + color + '30;font-size:0.88rem;">'
                 + '<span class="material-symbols-outlined" style="font-size:1rem;color:' + color + ';">'
-                + (ind.includes('High') || ind.includes('scammer') ? 'warning' : ind.includes('No') || ind.includes('cannot') ? 'help' : 'info')
+                + (ind.includes('High') || ind.includes('scammer') || ind.includes('Flagged') ? 'warning' : ind.includes('No') || ind.includes('cannot') ? 'help' : 'info')
                 + '</span>' + escapeHTML(ind) + '</div>';
         });
     }
+
+    // Spam Databases
+    const spamDb = d.spam_databases || {};
+    const spamDbSection = document.getElementById('spamDbSection');
+    const spamDbList = document.getElementById('spamDbList');
+    const dbEntries = [
+        {key: 'spamcalls_status', name: 'SpamCalls.net', icon: 'report', url: d.osint_urls?.spamcalls},
+        {key: 'shouldianswer_status', name: 'ShouldIAnswer', icon: 'question_answer', url: d.osint_urls?.shouldianswer},
+        {key: 'tellows_status', name: 'Tellows', icon: 'call', url: d.osint_urls?.tellows},
+    ];
+    let hasDbData = false;
+    spamDbList.innerHTML = '';
+    dbEntries.forEach(db => {
+        const status = spamDb[db.key];
+        if (!status || status === 'unavailable') return;
+        hasDbData = true;
+        const color = status === 'flagged' || status === 'negative' ? '#ef4444'
+            : status === 'clean' || status === 'positive' ? '#22c55e'
+            : status === 'neutral' || status === 'no_rating' ? '#eab308' : '#6b7280';
+        const label = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+        spamDbList.innerHTML += '<a href="' + db.url + '" target="_blank" rel="noopener" '
+            + 'style="display:flex;align-items:center;gap:0.5rem;padding:0.75rem 1rem;border-radius:8px;background:'
+            + color + '10;border:1px solid ' + color + '30;text-decoration:none;color:var(--text-primary);font-size:0.88rem;transition:all 0.2s;"'
+            + ' onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
+            + '<span class="material-symbols-outlined" style="font-size:1rem;color:' + color + ';">' + db.icon + '</span>'
+            + '<div><div style="font-weight:600;">' + db.name + '</div>'
+            + '<div style="font-size:0.78rem;color:' + color + ';">' + label + '</div></div>'
+            + '<span class="material-symbols-outlined" style="margin-left:auto;font-size:0.9rem;color:var(--text-secondary);">open_in_new</span>'
+            + '</a>';
+    });
+    spamDbSection.style.display = hasDbData ? 'block' : 'none';
+
+    // Messaging Links
+    const msgLinks = d.messaging_links || {};
+    const msgContainer = document.getElementById('messagingLinks');
+    const msgApps = [
+        {key: 'whatsapp_link', name: 'WhatsApp', color: '#25d366', icon: 'chat'},
+        {key: 'telegram_link', name: 'Telegram', color: '#0088cc', icon: 'send'},
+        {key: 'viber_link', name: 'Viber', color: '#7360f2', icon: 'phone_in_talk'},
+        {key: 'signal_link', name: 'Signal', color: '#3a76f0', icon: 'shield'},
+    ];
+    msgContainer.innerHTML = '';
+    msgApps.forEach(app => {
+        const url = msgLinks[app.key];
+        if (!url) return;
+        msgContainer.innerHTML += '<a href="' + url + '" target="_blank" rel="noopener" '
+            + 'style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 0.9rem;border-radius:8px;'
+            + 'background:' + app.color + '15;border:1px solid ' + app.color + '30;color:' + app.color
+            + ';text-decoration:none;font-size:0.85rem;font-weight:500;transition:all 0.2s;"'
+            + ' onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
+            + '<span class="material-symbols-outlined" style="font-size:1rem;">' + app.icon + '</span>' + app.name + '</a>';
+    });
+
+    // OSINT URLs
+    const osint = d.osint_urls || {};
+    const osintContainer = document.getElementById('osintLinks');
+    const osintEntries = [
+        {key: 'google', name: 'Google', icon: 'search'},
+        {key: 'truecaller', name: 'Truecaller', icon: 'contact_phone'},
+        {key: 'whitepages', name: 'Whitepages', icon: 'person_search'},
+        {key: 'spokeo', name: 'Spokeo', icon: 'visibility'},
+        {key: 'beenverified', name: 'BeenVerified', icon: 'badge'},
+        {key: 'sync_me', name: 'Sync.Me', icon: 'sync'},
+        {key: 'facebook', name: 'Facebook', icon: 'group'},
+        {key: 'linkedin', name: 'LinkedIn', icon: 'work'},
+        {key: 'calleridtest', name: 'CallerID Test', icon: 'dialer_sip'},
+        {key: 'whocalledme', name: 'WhoCalledMe', icon: 'phone_callback'},
+        {key: 'usphonebook', name: 'US Phone Book', icon: 'menu_book'},
+    ];
+    osintContainer.innerHTML = '';
+    osintEntries.forEach(entry => {
+        const url = osint[entry.key];
+        if (!url) return;
+        osintContainer.innerHTML += '<a href="' + url + '" target="_blank" rel="noopener" '
+            + 'style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;border-radius:8px;'
+            + 'background:var(--bg-tertiary);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);'
+            + 'text-decoration:none;font-size:0.82rem;transition:all 0.2s;"'
+            + ' onmouseover="this.style.borderColor=\'rgba(59,130,246,0.3)\';this.style.transform=\'translateY(-2px)\'"'
+            + ' onmouseout="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'none\'">'
+            + '<span class="material-symbols-outlined" style="font-size:0.95rem;color:var(--accent);">' + entry.icon + '</span>'
+            + entry.name + '</a>';
+    });
 
     document.getElementById('results').style.display = 'block';
 }

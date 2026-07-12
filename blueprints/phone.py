@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 import logging
 import phonenumbers
 from phonenumbers import carrier, timezone as tz_module, geocoder, phonenumberutil
@@ -11,8 +12,114 @@ phone_bp = Blueprint("phone", __name__)
 CALLTRACER_BASE = "https://calltracer.io/api/lookup"
 
 
+def _generate_osint_urls(e164, national, country_iso, digits):
+    """Generate OSINT and lookup URLs for a phone number."""
+    encoded = urllib.parse.quote(e164)
+    digits_only = re.sub(r"[^\d]", "", e164)
+    google_query = urllib.parse.quote(f'"{e164}" OR "{national}"')
+
+    return {
+        "google": f"https://www.google.com/search?q={google_query}",
+        "truecaller": f"https://www.truecaller.com/search/{country_iso.lower()}/{digits_only}",
+        "whitepages": f"https://www.whitepages.com/phone/{digits_only}",
+        "spokeo": f"https://www.spokeo.com/phone-lookup/{digits_only}",
+        "beenverified": f"https://www.beenverified.com/phone/{digits_only}",
+        "sync_me": f"https://sync.me/search/?number={encoded}",
+        "calleridtest": f"https://www.calleridtest.com/results.php?phone={digits_only}",
+        "shouldianswer": f"https://www.shouldianswer.com/phone-number/{digits_only}",
+        "spamcalls": f"https://spamcalls.net/en/num/{digits_only}",
+        "tellows": f"https://www.tellows.com/num/{digits_only}",
+        "whocalledme": f"https://www.whocalledme.com/search/{digits_only}",
+        "usphonebook": f"https://www.usphonebook.com/{digits_only}",
+        "facebook": f"https://www.facebook.com/search/people/?q={encoded}",
+        "linkedin": f"https://www.linkedin.com/search/results/all/?keywords={encoded}",
+    }
+
+
+def _check_messaging_apps(e164):
+    """Generate WhatsApp and Telegram check links + detect patterns."""
+    digits_only = re.sub(r"[^\d]", "", e164)
+    return {
+        "whatsapp_link": f"https://wa.me/{digits_only}",
+        "telegram_link": f"https://t.me/+{digits_only}",
+        "viber_link": f"viber://chat?number={e164}",
+        "signal_link": f"https://signal.me/#p/{digits_only}",
+    }
+
+
+def _check_spam_databases(e164, digits):
+    """Cross-reference against spam databases via page scraping."""
+    results = {}
+
+    try:
+        resp = req.get(
+            f"https://spamcalls.net/en/num/{digits}",
+            timeout=6,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        if resp.status_code == 200:
+            text = resp.text
+            if "Probably Spam" in text or "spam" in text.lower():
+                results["spamcalls_status"] = "flagged"
+            elif "No user reports" in text or "no reports" in text.lower():
+                results["spamcalls_status"] = "clean"
+            else:
+                results["spamcalls_status"] = "unknown"
+            import re as _re
+            report_match = _re.search(r"(\d+)\s*(?:user\s*)?report", text, _re.IGNORECASE)
+            if report_match:
+                results["spamcalls_reports"] = int(report_match.group(1))
+    except Exception as e:
+        logging.debug("SpamCalls lookup failed: %s", e)
+        results["spamcalls_status"] = "unavailable"
+
+    try:
+        resp = req.get(
+            f"https://www.shouldianswer.com/phone-number/{digits}",
+            timeout=6,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        if resp.status_code == 200:
+            text = resp.text
+            if "NEGATIVE" in text.upper() or "scam" in text.lower():
+                results["shouldianswer_status"] = "negative"
+            elif "POSITIVE" in text.upper():
+                results["shouldianswer_status"] = "positive"
+            elif "no rating" in text.lower() or "no reviews" in text.lower():
+                results["shouldianswer_status"] = "no_rating"
+            else:
+                results["shouldianswer_status"] = "neutral"
+    except Exception as e:
+        logging.debug("ShouldIAnswer lookup failed: %s", e)
+        results["shouldianswer_status"] = "unavailable"
+
+    try:
+        resp = req.get(
+            f"https://www.tellows.com/num/{digits}",
+            timeout=6,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        if resp.status_code == 200:
+            text = resp.text
+            import re as _re
+            score_match = _re.search(r'score["\s:]*(\d+)', text, _re.IGNORECASE)
+            if score_match:
+                results["tellows_score"] = int(score_match.group(1))
+            if "scam" in text.lower() or "fraud" in text.lower():
+                results["tellows_status"] = "flagged"
+            elif "safe" in text.lower() or "clean" in text.lower():
+                results["tellows_status"] = "clean"
+            else:
+                results["tellows_status"] = "unknown"
+    except Exception as e:
+        logging.debug("Tellows lookup failed: %s", e)
+        results["tellows_status"] = "unavailable"
+
+    return results
+
+
 def parse_and_enrich(raw_number):
-    """Parse a phone number with phonenumbers lib and enrich with CallTracer spam data."""
+    """Parse a phone number with phonenumbers lib and enrich with all sources."""
     result = {
         "input": raw_number,
         "valid": False,
@@ -33,6 +140,9 @@ def parse_and_enrich(raw_number):
         "risk_level": "Unknown",
         "risk_color": "#6b7280",
         "indicators": [],
+        "osint_urls": {},
+        "messaging_links": {},
+        "spam_databases": {},
     }
 
     cleaned = re.sub(r"[^\d+]", "", raw_number.strip())
@@ -80,8 +190,16 @@ def parse_and_enrich(raw_number):
     tzs = list(tz_module.time_zones_for_number(parsed))
     result["timezones"] = tzs
 
+    digits = re.sub(r"[^\d]", "", result["e164"])
+
+    result["osint_urls"] = _generate_osint_urls(
+        result["e164"], result["national"], result["country_iso"], digits
+    )
+    result["messaging_links"] = _check_messaging_apps(result["e164"])
+    result["spam_databases"] = _check_spam_databases(result["e164"], digits)
+
     try:
-        resp = req.get(f"{CALLTRACER_BASE}/{result['e164'].lstrip('+')}", timeout=8)
+        resp = req.get(f"{CALLTRACER_BASE}/{digits}", timeout=8)
         if resp.status_code == 200:
             data = resp.json()
             reports = data.get("reports", {})
@@ -109,6 +227,13 @@ def parse_and_enrich(raw_number):
     if result["line_type"] == "Toll-Free":
         result["indicators"].append("Toll-free number — legitimate businesses often use these")
 
+    spam_db = result.get("spam_databases", {})
+    db_flagged = sum(1 for v in spam_db.values() if v in ("flagged", "negative"))
+    if db_flagged >= 2:
+        result["indicators"].append(f"Flagged on {db_flagged} spam databases")
+    elif db_flagged == 1:
+        result["indicators"].append("Flagged on at least one spam database")
+
     if result["spam_score"] is not None:
         if result["spam_score"] >= 70:
             result["risk_level"] = "High Risk"
@@ -134,6 +259,12 @@ def parse_and_enrich(raw_number):
             result["risk_level"] = "Caution"
             result["risk_color"] = "#f97316"
         elif any(ind.startswith("Premium") for ind in result["indicators"]):
+            result["risk_level"] = "Caution"
+            result["risk_color"] = "#f97316"
+        elif db_flagged >= 2:
+            result["risk_level"] = "High Risk"
+            result["risk_color"] = "#ef4444"
+        elif db_flagged == 1:
             result["risk_level"] = "Caution"
             result["risk_color"] = "#f97316"
         else:

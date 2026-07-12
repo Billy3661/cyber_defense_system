@@ -786,3 +786,85 @@ class TestPhoneIntelligence:
         result = parse_and_enrich("not-a-number")
         assert result["valid"] is False
         assert result["e164"] == "" or result["possible"] is False
+
+    def test_osint_urls_generated(self):
+        from blueprints.phone import parse_and_enrich
+        result = parse_and_enrich("+14155552671")
+        osint = result["osint_urls"]
+        assert isinstance(osint, dict)
+        assert "google" in osint
+        assert "truecaller" in osint
+        assert "whitepages" in osint
+        assert "spokeo" in osint
+        assert "facebook" in osint
+        assert "linkedin" in osint
+        assert len(osint) >= 10
+        assert osint["google"].startswith("https://www.google.com/search?q=")
+        assert osint["truecaller"].startswith("https://www.truecaller.com/search/")
+
+    def test_messaging_links_generated(self):
+        from blueprints.phone import parse_and_enrich
+        result = parse_and_enrich("+14155552671")
+        msgs = result["messaging_links"]
+        assert isinstance(msgs, dict)
+        assert "whatsapp_link" in msgs
+        assert "telegram_link" in msgs
+        assert "viber_link" in msgs
+        assert "signal_link" in msgs
+        assert msgs["whatsapp_link"].startswith("https://wa.me/")
+        assert msgs["telegram_link"].startswith("https://t.me/")
+
+    def test_spam_databases_returns_dict(self):
+        from blueprints.phone import parse_and_enrich
+        with patch("blueprints.phone.req.get") as mock_get:
+            def side_effect(url, **kwargs):
+                resp = MagicMock()
+                resp.status_code = 200
+                if "calltracer" in str(url):
+                    resp.json.return_value = {"reports": {"spam_score": None, "total": 0, "last_reported_at": None}}
+                else:
+                    resp.text = "No user reports for this number"
+                return resp
+            mock_get.side_effect = side_effect
+            result = parse_and_enrich("+14155552671")
+        spam_db = result["spam_databases"]
+        assert isinstance(spam_db, dict)
+
+    def test_risk_level_fields_present(self):
+        from blueprints.phone import parse_and_enrich
+        result = parse_and_enrich("+14155552671")
+        assert "risk_level" in result
+        assert "risk_color" in result
+        assert "indicators" in result
+        assert isinstance(result["indicators"], list)
+
+    def test_osint_urls_empty_for_invalid_number(self):
+        from blueprints.phone import parse_and_enrich
+        result = parse_and_enrich("not-a-number")
+        assert result["osint_urls"] == {}
+        assert result["messaging_links"] == {}
+
+    def test_spam_db_flagged_increases_risk(self):
+        from blueprints.phone import parse_and_enrich
+        with patch("blueprints.phone.req.get") as mock_get:
+            def side_effect(url, **kwargs):
+                resp = MagicMock()
+                resp.status_code = 200
+                url_str = str(url)
+                if "calltracer" in url_str:
+                    resp.json.return_value = {"reports": {"spam_score": None, "total": 0, "last_reported_at": None}}
+                elif "spamcalls" in url_str:
+                    resp.text = "Probably Spam - reported by users"
+                elif "shouldianswer" in url_str:
+                    resp.text = "NEGATIVE - scammer"
+                elif "tellows" in url_str:
+                    resp.text = 'score: 8 scam fraud'
+                else:
+                    resp.text = ""
+                return resp
+            mock_get.side_effect = side_effect
+            result = parse_and_enrich("+14155552671")
+        spam = result["spam_databases"]
+        flagged_count = sum(1 for v in spam.values() if v in ("flagged", "negative"))
+        assert flagged_count >= 1
+        assert result["risk_level"] in ("High Risk", "Caution")
