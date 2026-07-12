@@ -42,8 +42,6 @@ def _check_messaging_apps(e164):
     return {
         "whatsapp_link": f"https://wa.me/{digits_only}",
         "telegram_link": f"https://t.me/+{digits_only}",
-        "viber_link": f"viber://chat?number={e164}",
-        "signal_link": f"https://signal.me/#p/{digits_only}",
     }
 
 

@@ -809,8 +809,6 @@ class TestPhoneIntelligence:
         assert isinstance(msgs, dict)
         assert "whatsapp_link" in msgs
         assert "telegram_link" in msgs
-        assert "viber_link" in msgs
-        assert "signal_link" in msgs
         assert msgs["whatsapp_link"].startswith("https://wa.me/")
         assert msgs["telegram_link"].startswith("https://t.me/")
 
