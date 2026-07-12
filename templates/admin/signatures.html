@@ -1,0 +1,111 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Manage Signatures — Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Malware Signatures</h1>
+    <p>{{ total }} signature{{ 's' if total != 1 else '' }} in database.</p>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-search" method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search by name or hash..." />
+        <button type="submit" class="btn btn-outline" style="white-space:nowrap;">Search</button>
+    </form>
+    {% if search %}
+    <a href="{{ url_for('admin.signatures') }}" class="btn btn-outline" style="font-size:0.82rem;">Clear</a>
+    {% endif %}
+    <button class="btn btn-primary" onclick="document.getElementById('addSigModal').classList.add('open')" style="margin-left:auto;">+ Add Signature</button>
+</div>
+
+<div class="admin-table-wrap">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Hash</th>
+                <th>Threat Name</th>
+                <th>Severity</th>
+                <th>Details</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in signatures %}
+        <tr>
+            <td class="cell-id">{{ s.id }}</td>
+            <td class="cell-hash" title="{{ s.hash_value }}">{{ s.hash_value }}</td>
+            <td><strong>{{ s.threat_name }}</strong></td>
+            <td><span class="severity-badge severity-{{ s.severity|lower }}">{{ s.severity }}</span></td>
+            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.details }}</td>
+            <td>
+                <form method="post" action="{{ url_for('admin.delete_signature', sig_id=s.id) }}" style="display:inline;"
+                      onsubmit="return confirm('Delete this signature?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn-danger-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="admin-empty">
+            <span class="material-symbols-outlined">search_off</span><br>No signatures found.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="admin-pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}&q={{ search }}">&laquo;</a>
+    {% endif %}
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <span class="active">{{ p }}</span>
+        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+        <a href="?page={{ p }}&q={{ search }}">{{ p }}</a>
+        {% elif p == 4 or p == total_pages - 3 %}
+        <span>…</span>
+        {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}&q={{ search }}">&raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="modal-overlay" id="addSigModal">
+    <div class="modal-box">
+        <h3>Add Malware Signature</h3>
+        <form method="post" action="{{ url_for('admin.add_signature') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-group" style="margin-bottom:0.75rem;">
+                <label>Hash Value</label>
+                <input type="text" name="hash_value" required placeholder="SHA-256 hash..." style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:0.82rem;" />
+            </div>
+            <div class="form-group" style="margin-bottom:0.75rem;">
+                <label>Threat Name</label>
+                <input type="text" name="threat_name" required placeholder="e.g. Emotet Downloader" style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);" />
+            </div>
+            <div class="form-group" style="margin-bottom:0.75rem;">
+                <label>Severity</label>
+                <select name="severity" style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);">
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0.75rem;">
+                <label>Details</label>
+                <textarea name="details" rows="3" placeholder="Description..." style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);resize:vertical;"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('addSigModal').classList.remove('open')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Signature</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -17,9 +17,9 @@
 <div class="container">
     <!-- Filter Bar -->
     <div class="filter-bar" id="filterBar">
-        <a href="{{ url_for('threats') }}" class="filter-btn {% if active_category == 'All' %}active{% endif %}">All</a>
+        <a href="{{ url_for('main.threats') }}" class="filter-btn {% if active_category == 'All' %}active{% endif %}">All</a>
         {% for cat in categories %}
-        <a href="{{ url_for('threats', category=cat) }}" class="filter-btn {% if active_category == cat %}active{% endif %}">
+        <a href="{{ url_for('main.threats', category=cat) }}" class="filter-btn {% if active_category == cat %}active{% endif %}">
             {{ cat }}
         </a>
         {% endfor %}
@@ -28,7 +28,7 @@
     <!-- Threats Grid -->
     <div class="threats-grid" id="threatsGrid">
         {% for threat in threats %}
-        <a href="{{ url_for('threat_detail', threat_id=threat.id) }}" class="threat-card" id="threatCard{{ threat.id }}" style="--card-color: {{ threat.color }};">
+        <a href="{{ url_for('main.threat_detail', threat_id=threat.id) }}" class="threat-card" id="threatCard{{ threat.id }}" style="--card-color: {{ threat.color }};">
             <div class="threat-card-header">
                 <div class="threat-card-icon material-symbols-outlined">{{ threat.icon }}</div>
                 <div class="threat-card-meta">

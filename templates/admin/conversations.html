@@ -1,0 +1,48 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Conversations — Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Chat Conversations</h1>
+    <p>{{ total }} conversation{{ 's' if total != 1 else '' }}.</p>
+</div>
+
+<div class="admin-table-wrap">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Title</th>
+                <th>Messages</th>
+                <th>Created</th>
+                <th>Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in conversations %}
+        <tr>
+            <td class="cell-id">{{ c.id }}</td>
+            <td><strong>{{ c.username }}</strong></td>
+            <td>{{ c.title or '(untitled)' }}</td>
+            <td class="cell-id">{{ c.msg_count }}</td>
+            <td class="cell-time">{{ c.created_at }}</td>
+            <td class="cell-time">{{ c.updated_at }}</td>
+            <td>
+                <form method="post" action="{{ url_for('admin.delete_conversation', conv_id=c.id) }}" style="display:inline;"
+                      onsubmit="return confirm('Delete this conversation and all its messages?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn-danger-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="admin-empty">
+            <span class="material-symbols-outlined">forum</span><br>No conversations yet.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

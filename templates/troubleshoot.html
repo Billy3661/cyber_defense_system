@@ -35,7 +35,7 @@
     <!-- Guides Grid -->
     <div class="guides-grid" id="guidesGrid">
         {% for guide in guides %}
-        <a href="{{ url_for('troubleshoot_detail', guide_id=guide.id) }}" class="guide-card" id="guideCard{{ guide.id }}"
+        <a href="{{ url_for('main.troubleshoot_detail', guide_id=guide.id) }}" class="guide-card" id="guideCard{{ guide.id }}"
            data-search="{{ guide.title.lower() }} {{ guide.category.lower() }} {{ guide.severity.lower() }}">
             <div class="guide-card-header">
                 <span class="guide-icon material-symbols-outlined">{{ guide.icon }}</span>
@@ -109,20 +109,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-const searchInput = document.getElementById("tsSearch");
-const cards = document.querySelectorAll(".guide-card");
-const noResults = document.getElementById("noResults");
-
-searchInput.addEventListener("input", () => {
-    const q = searchInput.value.toLowerCase().trim();
-    let visible = 0;
-    cards.forEach(card => {
-        const match = !q || card.dataset.search.includes(q) || card.querySelector(".guide-title").textContent.toLowerCase().includes(q);
-        card.style.display = match ? "" : "none";
-        if (match) visible++;
-    });
-    noResults.classList.toggle("hidden", visible > 0);
-});
-</script>
+<script src="/static/js/troubleshoot.js?v={{ cache_bust }}"></script>
 {% endblock %}

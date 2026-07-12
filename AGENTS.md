@@ -9,26 +9,35 @@
 - SQLite (dev) / PostgreSQL (prod)
 
 ## Current State
-- Round 6 complete (IP Intelligence OSINT Enhancement — WHOIS, DNS, SSL)
-- Removed campaign management and phishing kit features
-- Enhanced phishing simulator with gamification
+- Round 8 complete — Admin Panel added
+- 8 blueprints: main, auth, scanner, simulator, breach, chat, admin
+- 53 routes total, 69 automated tests passing
+- Admin panel at `/admin/` with user/signature/badge/stats/conversation management
 
 ## Key Files
-- `app.py` (~2885 lines) — main application
-- `database.py` — DB layer (SQLite + PostgreSQL)
-- `templates/simulator.html` — Phishing Lab with gamification
-- `static/` — CSS, JS assets
+- `app.py` (140 lines) — Flask init, config, OAuth, CSRF, blueprint registration
+- `helpers.py` (1954 lines) — All shared logic, constants, middleware, API helpers
+- `database.py` (318 lines) — DB layer (SQLite + PostgreSQL)
+- `blueprints/admin.py` — Admin panel (dashboard, CRUD for all tables)
+- `templates/admin/` — Admin templates (base_admin, dashboard, users, signatures, badges, stats, conversations)
+- `static/js/*.js` — 10 extracted JS files
+- `tests/test_app.py` — 69 automated tests
 
-## Last Session (Round 7)
-1. **Removed Campaign Management** — deleted routes, templates, DB tables, nav links
-2. **Removed Phishing Kit** — deleted routes, templates, DB tables, nav links
-3. **Enhanced Phishing Simulator**:
-   - Streak counter with combo multiplier (up to x5 points)
-   - Timed mode (20s countdown per email)
-   - Visual celebrations (confetti on correct, shake on wrong)
-   - End-of-session summary modal (score, accuracy, best streak, avg time)
-   - Live rank display in stats bar
-   - Streak fire indicator in sidebar
+## Previous Rounds
+- **Round 7**: Removed campaign management + phishing kit, enhanced simulator (streaks, timed mode, confetti, summary modal)
+- **Round 6**: IP Intelligence OSINT Enhancement (WHOIS, DNS, SSL)
+
+## Round 8 — Admin Panel
+1. Installed Flask-Admin 2.2.0 (used for layout, not ModelView since no SQLAlchemy)
+2. Created `blueprints/admin.py` with `admin_required` decorator (checks `ADMIN_USERNAME` env var)
+3. Created 6 admin views: dashboard, users, signatures, badges, phishing_stats, conversations
+4. Created 7 admin templates with sidebar navigation, search, pagination, modals
+5. Added CRUD: delete users (cascading), add/delete signatures, remove badges, delete conversations
+6. Registered admin blueprint in `app.py`, added to context processor
+7. Added "Admin Panel" link to user dropdown in `base.html` (visible only to admin)
+8. Updated `.env.example` with `ADMIN_USERNAME`
+9. Added 6 admin tests, updated 2 existing tests for new route/blueprint counts
+10. All 69 tests pass
 
 ## Where to Pick Up
 Possible next areas:

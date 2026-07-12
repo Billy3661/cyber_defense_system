@@ -1,0 +1,76 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Phishing Stats — Admin{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Phishing Stats</h1>
+    <p>{{ total }} record{{ 's' if total != 1 else '' }}.</p>
+</div>
+
+<div class="admin-toolbar">
+    <form class="admin-search" method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search by username..." />
+        <button type="submit" class="btn btn-outline" style="white-space:nowrap;">Search</button>
+    </form>
+    {% if search %}
+    <a href="{{ url_for('admin.phishing_stats') }}" class="btn btn-outline" style="font-size:0.82rem;">Clear</a>
+    {% endif %}
+</div>
+
+<div class="admin-table-wrap">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email ID</th>
+                <th>Phishing?</th>
+                <th>Correct?</th>
+                <th>Time (ms)</th>
+                <th>Red Flags</th>
+                <th>Session</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in stats %}
+        <tr>
+            <td class="cell-id">{{ s.id }}</td>
+            <td><strong>{{ s.username }}</strong></td>
+            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.email_id or '—' }}</td>
+            <td>{% if s.is_phishing %}<span style="color:#ef4444;">Yes</span>{% else %}<span style="color:#22c55e;">No</span>{% endif %}</td>
+            <td>{% if s.identified_correctly %}<span style="color:#22c55e;">✓</span>{% else %}<span style="color:#ef4444;">✗</span>{% endif %}</td>
+            <td class="cell-id">{{ s.response_time_ms }}</td>
+            <td>{{ s.red_flags_identified }}/{{ s.total_red_flags }}</td>
+            <td class="cell-hash" title="{{ s.session_id }}">{{ s.session_id[:8] if s.session_id else '—' }}</td>
+            <td class="cell-time">{{ s.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="admin-empty">
+            <span class="material-symbols-outlined">analytics</span><br>No records found.
+        </td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="admin-pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}&q={{ search }}">&laquo;</a>
+    {% endif %}
+    {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+        <span class="active">{{ p }}</span>
+        {% elif p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+        <a href="?page={{ p }}&q={{ search }}">{{ p }}</a>
+        {% elif p == 4 or p == total_pages - 3 %}
+        <span>…</span>
+        {% endif %}
+    {% endfor %}
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}&q={{ search }}">&raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admin Dashboard — Securix{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Dashboard</h1>
+    <p>Overview of all system data.</p>
+</div>
+
+<div class="stats-grid" style="margin-bottom:2rem;">
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:var(--accent);">people</span>
+        <span class="stat-number">{{ stats.users }}</span>
+        <span class="stat-label">Users</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:#ef4444;">signature</span>
+        <span class="stat-number">{{ stats.signatures }}</span>
+        <span class="stat-label">Malware Signatures</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:#f97316;">shield</span>
+        <span class="stat-number">{{ stats.phishing_stats }}</span>
+        <span class="stat-label">Phishing Attempts</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:#22c55e;">military_tech</span>
+        <span class="stat-number">{{ stats.badges }}</span>
+        <span class="stat-label">Badges Awarded</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:#a855f7;">forum</span>
+        <span class="stat-number">{{ stats.conversations }}</span>
+        <span class="stat-label">Conversations</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-icon material-symbols-outlined" style="color:#06b6d4;">chat</span>
+        <span class="stat-number">{{ stats.messages }}</span>
+        <span class="stat-label">Chat Messages</span>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <div>
+        <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">Top Players</h2>
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr><th>Username</th><th>Attempts</th><th>Correct</th></tr></thead>
+                <tbody>
+                {% for p in top_players %}
+                <tr>
+                    <td>{{ p.username }}</td>
+                    <td>{{ p.attempts }}</td>
+                    <td>{{ p.correct or 0 }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="admin-empty">No data yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div>
+        <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">Recent Users</h2>
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr><th>Username</th><th>Joined</th></tr></thead>
+                <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td class="cell-time">{{ u.created_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="2" class="admin-empty">No users.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
