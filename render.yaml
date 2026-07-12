@@ -11,9 +11,15 @@ services:
         generateValue: true
       - key: GROQ_API_KEY
         sync: false
-      - key: WIGLE_API_KEY
-        sync: false
       - key: VIRUSTOTAL_API_KEY
+        sync: false
+      - key: CLOUDFLARE_RADAR_TOKEN
+        sync: false
+      - key: GOOGLE_SAFEBROWSING_KEY
+        sync: false
+      - key: ABUSEIPDB_KEY
+        sync: false
+      - key: HIBP_API_KEY
         sync: false
       - key: DATABASE_URL
         sync: false
@@ -21,5 +27,7 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
+      - key: ADMIN_USERNAME
+        value: "billy"
       - key: PYTHON_VERSION
         value: "3.11.0"
