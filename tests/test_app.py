@@ -795,21 +795,6 @@ class TestPhoneIntelligence:
         assert result["valid"] is False
         assert result["e164"] == "" or result["possible"] is False
 
-    def test_osint_urls_generated(self):
-        from blueprints.phone import parse_and_enrich
-        result = parse_and_enrich("+14155552671")
-        osint = result["osint_urls"]
-        assert isinstance(osint, dict)
-        assert "google" in osint
-        assert "truecaller" in osint
-        assert "whitepages" in osint
-        assert "spokeo" in osint
-        assert "facebook" in osint
-        assert "linkedin" in osint
-        assert len(osint) >= 10
-        assert osint["google"].startswith("https://www.google.com/search?q=")
-        assert osint["truecaller"].startswith("https://www.truecaller.com/search/")
-
     def test_messaging_links_generated(self):
         from blueprints.phone import parse_and_enrich
         result = parse_and_enrich("+14155552671")
@@ -847,7 +832,6 @@ class TestPhoneIntelligence:
     def test_osint_urls_empty_for_invalid_number(self):
         from blueprints.phone import parse_and_enrich
         result = parse_and_enrich("not-a-number")
-        assert result["osint_urls"] == {}
         assert result["messaging_links"] == {}
 
     def test_spam_db_flagged_increases_risk(self):

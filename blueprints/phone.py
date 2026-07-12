@@ -1,5 +1,4 @@
 import re
-import urllib.parse
 import logging
 import phonenumbers
 from phonenumbers import carrier, timezone as tz_module, geocoder, phonenumberutil
@@ -10,30 +9,6 @@ from helpers import login_required, limiter
 phone_bp = Blueprint("phone", __name__)
 
 CALLTRACER_BASE = "https://calltracer.io/api/lookup"
-
-
-def _generate_osint_urls(e164, national, country_iso, digits):
-    """Generate OSINT and lookup URLs for a phone number."""
-    encoded = urllib.parse.quote(e164)
-    digits_only = re.sub(r"[^\d]", "", e164)
-    google_query = urllib.parse.quote(f'"{e164}" OR "{national}"')
-
-    return {
-        "google": f"https://www.google.com/search?q={google_query}",
-        "truecaller": f"https://www.truecaller.com/search/{country_iso.lower()}/{digits_only}",
-        "whitepages": f"https://www.whitepages.com/phone/{digits_only}",
-        "spokeo": f"https://www.spokeo.com/phone-lookup/{digits_only}",
-        "beenverified": f"https://www.beenverified.com/phone/{digits_only}",
-        "sync_me": f"https://sync.me/search/?number={encoded}",
-        "calleridtest": f"https://www.calleridtest.com/results.php?phone={digits_only}",
-        "shouldianswer": f"https://www.shouldianswer.com/phone-number/{digits_only}",
-        "spamcalls": f"https://spamcalls.net/en/num/{digits_only}",
-        "tellows": f"https://www.tellows.com/num/{digits_only}",
-        "whocalledme": f"https://www.whocalledme.com/search/{digits_only}",
-        "usphonebook": f"https://www.usphonebook.com/{digits_only}",
-        "facebook": f"https://www.facebook.com/search/people/?q={encoded}",
-        "linkedin": f"https://www.linkedin.com/search/results/all/?keywords={encoded}",
-    }
 
 
 def _check_messaging_apps(e164):
@@ -138,7 +113,6 @@ def parse_and_enrich(raw_number):
         "risk_level": "Unknown",
         "risk_color": "#6b7280",
         "indicators": [],
-        "osint_urls": {},
         "messaging_links": {},
         "spam_databases": {},
     }
@@ -190,9 +164,6 @@ def parse_and_enrich(raw_number):
 
     digits = re.sub(r"[^\d]", "", result["e164"])
 
-    result["osint_urls"] = _generate_osint_urls(
-        result["e164"], result["national"], result["country_iso"], digits
-    )
     result["messaging_links"] = _check_messaging_apps(result["e164"])
     result["spam_databases"] = _check_spam_databases(result["e164"], digits)
 

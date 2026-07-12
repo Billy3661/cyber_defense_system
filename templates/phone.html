@@ -133,14 +133,6 @@
             <div id="messagingLinks" style="display:flex;flex-wrap:wrap;gap:0.5rem;"></div>
         </div>
 
-        <!-- OSINT URLs -->
-        <div id="osintSection" style="margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
-                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">open_in_new</span> OSINT Lookup Links
-            </h3>
-            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">One-click lookups across public databases and search engines.</p>
-            <div id="osintLinks" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.5rem;"></div>
-        </div>
     </div>
 </div>
 
@@ -287,36 +279,6 @@ function renderResults(d) {
             + ';text-decoration:none;font-size:0.85rem;font-weight:500;transition:all 0.2s;"'
             + ' onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'none\'">'
             + '<span class="material-symbols-outlined" style="font-size:1rem;">' + app.icon + '</span>' + app.name + '</a>';
-    });
-
-    // OSINT URLs
-    const osint = d.osint_urls || {};
-    const osintContainer = document.getElementById('osintLinks');
-    const osintEntries = [
-        {key: 'google', name: 'Google', icon: 'search'},
-        {key: 'truecaller', name: 'Truecaller', icon: 'contact_phone'},
-        {key: 'whitepages', name: 'Whitepages', icon: 'person_search'},
-        {key: 'spokeo', name: 'Spokeo', icon: 'visibility'},
-        {key: 'beenverified', name: 'BeenVerified', icon: 'badge'},
-        {key: 'sync_me', name: 'Sync.Me', icon: 'sync'},
-        {key: 'facebook', name: 'Facebook', icon: 'group'},
-        {key: 'linkedin', name: 'LinkedIn', icon: 'work'},
-        {key: 'calleridtest', name: 'CallerID Test', icon: 'dialer_sip'},
-        {key: 'whocalledme', name: 'WhoCalledMe', icon: 'phone_callback'},
-        {key: 'usphonebook', name: 'US Phone Book', icon: 'menu_book'},
-    ];
-    osintContainer.innerHTML = '';
-    osintEntries.forEach(entry => {
-        const url = osint[entry.key];
-        if (!url) return;
-        osintContainer.innerHTML += '<a href="' + url + '" target="_blank" rel="noopener" '
-            + 'style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.75rem;border-radius:8px;'
-            + 'background:var(--bg-tertiary);border:1px solid rgba(255,255,255,0.06);color:var(--text-primary);'
-            + 'text-decoration:none;font-size:0.82rem;transition:all 0.2s;"'
-            + ' onmouseover="this.style.borderColor=\'rgba(59,130,246,0.3)\';this.style.transform=\'translateY(-2px)\'"'
-            + ' onmouseout="this.style.borderColor=\'rgba(255,255,255,0.06)\';this.style.transform=\'none\'">'
-            + '<span class="material-symbols-outlined" style="font-size:0.95rem;color:var(--accent);">' + entry.icon + '</span>'
-            + entry.name + '</a>';
     });
 
     document.getElementById('results').style.display = 'block';
