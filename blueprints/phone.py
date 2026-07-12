@@ -7,7 +7,7 @@ import phonenumbers
 from phonenumbers import carrier, timezone as tz_module, geocoder, phonenumberutil
 from flask import Blueprint, render_template, request, jsonify, send_file
 import requests as req
-from helpers import login_required, limiter, HIBP_API_KEY
+from helpers import login_required, limiter
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
@@ -105,68 +105,32 @@ def _numlookup_enrich(digits, country_iso):
     if not NUMLOOKUP_KEY:
         return {}
     try:
+        # Phone number goes in the URL path, apikey as header
+        e164_number = f"+{digits}" if not digits.startswith("+") else digits
         resp = req.get(
-            NUMLOOKUP_BASE,
-            params={"apikey": NUMLOOKUP_KEY, "number": digits},
+            f"{NUMLOOKUP_BASE}/{e164_number}",
+            headers={"apikey": NUMLOOKUP_KEY},
             timeout=8,
         )
+        logging.debug("NumLookup status %s for %s", resp.status_code, e164_number)
         if resp.status_code == 200:
             data = resp.json()
             return {
                 "carrier": data.get("carrier", ""),
-                "line_type": data.get("line_type", ""),
+                "line_type": data.get("line_type", "").title(),
                 "location": data.get("location", ""),
                 "valid": data.get("valid"),
                 "is_prepaid": data.get("is_prepaid", False),
-                "international_format": data.get("international_format", ""),
+                "international_format": data.get("intl_format", ""),
                 "country_name": data.get("country_name", ""),
             }
+        else:
+            logging.debug("NumLookup error response: %s", resp.text[:200])
     except Exception as e:
         logging.debug("NumLookup failed for %s: %s", digits, e)
     return {}
 
 
-def _check_hibp_phone(e164):
-    """Check if a phone number appears in known data breaches via HIBP."""
-    if not HIBP_API_KEY:
-        return {"available": False, "reason": "HIBP API key not configured"}
-    try:
-        resp = req.get(
-            f"https://haveibeenpwned.com/api/v3/breachedaccount/{e164}",
-            headers={
-                "hibp-api-key": HIBP_API_KEY,
-                "User-Agent": "Securix-CyberDefense",
-            },
-            timeout=10,
-        )
-        if resp.status_code == 200:
-            breaches = resp.json()
-            return {
-                "available": True,
-                "breached": True,
-                "breach_count": len(breaches),
-                "breaches": [
-                    {
-                        "name": b.get("Name", ""),
-                        "title": b.get("Title", ""),
-                        "domain": b.get("Domain", ""),
-                        "date": b.get("BreachDate", ""),
-                        "data_classes": b.get("DataClasses", []),
-                    }
-                    for b in breaches[:10]
-                ],
-            }
-        elif resp.status_code == 404:
-            return {"available": True, "breached": False, "breach_count": 0, "breaches": []}
-        elif resp.status_code == 401:
-            return {"available": False, "reason": "Invalid HIBP API key"}
-        elif resp.status_code == 429:
-            return {"available": False, "reason": "HIBP rate limit exceeded"}
-        else:
-            return {"available": False, "reason": f"HIBP returned status {resp.status_code}"}
-    except Exception as e:
-        logging.debug("HIBP phone lookup failed for %s: %s", e164, e)
-        return {"available": False, "reason": "HIBP request failed"}
 
 
 def parse_and_enrich(raw_number):
@@ -194,7 +158,6 @@ def parse_and_enrich(raw_number):
         "messaging_links": {},
         "spam_databases": {},
         "numlookup": {},
-        "hibp_phone": {},
     }
 
     cleaned = re.sub(r"[^\d+]", "", raw_number.strip())
@@ -257,8 +220,6 @@ def parse_and_enrich(raw_number):
         if numlookup_data.get("location") and not result["location"]:
             result["location"] = numlookup_data["location"]
 
-    result["hibp_phone"] = _check_hibp_phone(result["e164"])
-
     try:
         resp = req.get(f"{CALLTRACER_BASE}/{digits}", timeout=8)
         if resp.status_code == 200:
@@ -298,10 +259,6 @@ def parse_and_enrich(raw_number):
     elif db_flagged == 1:
         result["indicators"].append("Flagged on at least one spam database")
 
-    hibp = result.get("hibp_phone", {})
-    if hibp.get("breached"):
-        result["indicators"].append(f"Found in {hibp['breach_count']} data breach{'es' if hibp['breach_count'] != 1 else ''}")
-
     if result["spam_score"] is not None:
         if result["spam_score"] >= 70:
             result["risk_level"] = "High Risk"
@@ -333,9 +290,6 @@ def parse_and_enrich(raw_number):
             result["risk_level"] = "High Risk"
             result["risk_color"] = "#ef4444"
         elif db_flagged == 1:
-            result["risk_level"] = "Caution"
-            result["risk_color"] = "#f97316"
-        elif hibp.get("breached"):
             result["risk_level"] = "Caution"
             result["risk_color"] = "#f97316"
         else:
@@ -439,30 +393,6 @@ def _build_phone_pdf(result):
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             elements.append(db_table)
-        elements.append(Spacer(1, 10))
-
-    hibp = result.get("hibp_phone", {})
-    if hibp.get("available") and hibp.get("breached"):
-        elements.append(Paragraph("Data Breach Exposure (HIBP)", section_style))
-        breaches = hibp.get("breaches", [])
-        if breaches:
-            br_rows = [[Paragraph("<b>Breach</b>", body_style), Paragraph("<b>Date</b>", body_style), Paragraph("<b>Data Exposed</b>", body_style)]]
-            for b in breaches:
-                data_classes = ", ".join(b.get("data_classes", [])[:4])
-                br_rows.append([
-                    Paragraph(b.get("title", b.get("name", "N/A")), body_style),
-                    Paragraph(b.get("date", "N/A"), body_style),
-                    Paragraph(data_classes, body_style),
-                ])
-            br_table = Table(br_rows, colWidths=[160, 100, 280])
-            br_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#cbd5e1")),
-                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor("#cbd5e1")),
-                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                ('PADDING', (0, 0), (-1, -1), 5),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            ]))
-            elements.append(br_table)
         elements.append(Spacer(1, 10))
 
     numlookup = result.get("numlookup", {})
