@@ -135,13 +135,7 @@
 
 
 
-        <!-- NumLookup Enrichment -->
-        <div id="numlookupSection" style="display:none;margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem;margin-bottom:0.75rem;">
-                <span class="material-symbols-outlined" style="font-size:1.1rem;vertical-align:middle;">cell_tower</span> Carrier Intelligence
-            </h3>
-            <div id="numlookupContent" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;"></div>
-        </div>
+
 
         <!-- Download PDF -->
         <div style="margin-bottom:1rem;">
@@ -299,28 +293,7 @@ function renderResults(d) {
             + '<span class="material-symbols-outlined" style="font-size:1rem;">' + app.icon + '</span>' + app.name + '</a>';
     });
 
-    // NumLookup Enrichment
-    const nl = d.numlookup || {};
-    const nlSection = document.getElementById('numlookupSection');
-    const nlContent = document.getElementById('numlookupContent');
-    if (Object.keys(nl).length > 0) {
-        nlSection.style.display = 'block';
-        const fields = [
-            {label: 'Carrier', value: nl.carrier, icon: 'sim_card'},
-            {label: 'Line Type', value: nl.line_type, icon: 'phone'},
-            {label: 'Location', value: nl.location, icon: 'location_on'},
-            {label: 'Prepaid', value: nl.is_prepaid ? 'Yes' : 'No', icon: 'payment'},
-            {label: 'International Format', value: nl.international_format, icon: 'language'},
-        ];
-        nlContent.innerHTML = '';
-        fields.forEach(f => {
-            if (!f.value || f.value === 'N/A' || f.value === 'false' || f.value === 'true') return;
-            nlContent.innerHTML += '<div style="padding:0.75rem;border-radius:8px;background:var(--bg-tertiary);border:1px solid rgba(255,255,255,0.06);">'
-                + '<div style="font-size:0.72rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.3rem;">'
-                + '<span class="material-symbols-outlined" style="font-size:0.85rem;color:var(--accent);">' + f.icon + '</span>' + f.label + '</div>'
-                + '<div style="font-size:0.92rem;font-weight:600;">' + escapeHTML(String(f.value)) + '</div></div>';
-        });
-    }
+
 
     // Show PDF download button
     document.getElementById('pdfBtn').style.display = 'flex';
