@@ -10,13 +10,14 @@
 
 ## Current State
 - Round 8 complete — Admin Panel added
+- Round 9 complete — Kenyan localization of campaigns 3, 4, 5
 - 8 blueprints: main, auth, scanner, simulator, breach, chat, admin
 - 53 routes total, 69 automated tests passing
 - Admin panel at `/admin/` with user/signature/badge/stats/conversation management
 
 ## Key Files
 - `app.py` (140 lines) — Flask init, config, OAuth, CSRF, blueprint registration
-- `helpers.py` (1954 lines) — All shared logic, constants, middleware, API helpers
+- `helpers.py` (2754 lines) — All shared logic, constants, middleware, API helpers
 - `database.py` (318 lines) — DB layer (SQLite + PostgreSQL)
 - `blueprints/admin.py` — Admin panel (dashboard, CRUD for all tables)
 - `templates/admin/` — Admin templates (base_admin, dashboard, users, signatures, badges, stats, conversations)
@@ -24,6 +25,7 @@
 - `tests/test_app.py` — 69 automated tests
 
 ## Previous Rounds
+- **Round 9**: Kenyan localization of campaigns 3, 4, 5 (Founders Day→Madaraka Day, Henderson→Safaricom, Washington D.C.→Nairobi, NCDC→KE-CIRT, USD→KES)
 - **Round 7**: Removed campaign management + phishing kit, enhanced simulator (streaks, timed mode, confetti, summary modal)
 - **Round 6**: IP Intelligence OSINT Enhancement (WHOIS, DNS, SSL)
 
@@ -38,6 +40,16 @@
 8. Updated `.env.example` with `ADMIN_USERNAME`
 9. Added 6 admin tests, updated 2 existing tests for new route/blueprint counts
 10. All 69 tests pass
+
+## Round 9 — Kenyan Localization
+1. Campaign 3 (clone_wars): Changed "Founders Day" → "Madaraka Day" (Kenyan national holiday, June 1)
+2. Campaign 4 (insider_threat): Changed "Henderson account" → "Safaricom account" in body_html and red_flags
+3. Campaign 5 (shadow_network):
+   - apt_phish_1: Changed "Washington, D.C." → "Nairobi"
+   - apt_phish_2: Changed NCDC → KE-CIRT, updated all references (sender, body, red_flags, explanation)
+   - apt_phish_3: Changed "$200K" → "KSH 25M", "CrowdStrike" → "SecureWorks"
+   - apt_phish_4: Changed "$47,500.00" → "KSH 6,200,000", "San Francisco, CA" → "Nairobi, Kenya"
+4. Boss battle email left unchanged (unicode injection red flag preserved)
 
 ## Where to Pick Up
 Possible next areas:

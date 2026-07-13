@@ -698,7 +698,7 @@ MOCK_INBOX_EMAILS = [
         "date": "Yesterday, 3:15 PM",
         "body_html": """
             <p>Team,</p>
-            <p>Please be advised that the corporate network will undergo routine maintenance this Saturday, June 27, from 12:00 AM to 4:00 AM EST.</p>
+            <p>Please be advised that the corporate network will undergo routine maintenance this Saturday, June 27, from 12:00 AM to 4:00 AM EAT.</p>
             <p>During this window, access to the VPN, internal wikis, and local file shares may be temporarily offline. No action is required from your side. If you experience persistent issues after 4:00 AM, please contact IT support at extension 404.</p>
             <p>Best regards,<br>IT Operations Department</p>
         """,
@@ -785,12 +785,12 @@ CAMPAIGN_DATA = [
                 "body_html": """
                     <p>Hi,</p>
                     <p>I'm in a board meeting and can't take calls. We need to process an urgent wire transfer for a time-sensitive acquisition. The usual approval process won't work — the counterparty's window closes at noon today.</p>
-                    <p>Please initiate a transfer of <strong>$147,500.00</strong> to the following account immediately:</p>
+                    <p>Please initiate a transfer of <strong>KSH 18,500,000</strong> to the following account immediately:</p>
                     <div style="background:#f4f6f9;border-left:4px solid #2563eb;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-family:monospace;font-size:0.9rem;">
-                        <p style="margin:0;"><strong>Bank:</strong> First National Trust</p>
-                        <p style="margin:0;"><strong>Account Name:</strong> Apex Capital Holdings LLC</p>
+                        <p style="margin:0;"><strong>Bank:</strong> Equity Bank Kenya</p>
+                        <p style="margin:0;"><strong>Account Name:</strong> Rift Valley Ventures Ltd</p>
                         <p style="margin:0;"><strong>Account #:</strong> 8847201935</p>
-                        <p style="margin:0;"><strong>Routing #:</strong> 021000089</p>
+                        <p style="margin:0;"><strong>Bank Code:</strong> 074</p>
                     </div>
                     <p>I've already looped in Legal — they're expecting this. Reference the payment as "Strategic Initiative — Phase 1" in the memo line.</p>
                     <p>This is confidential. Don't discuss it on Slack or email anyone else about it. Reply to me directly if you have questions.</p>
@@ -801,7 +801,7 @@ CAMPAIGN_DATA = [
                     {"target": "meridian-corp.works", "reason": "Lookalike domain: The real Meridian Corp uses 'meridian-corp.com'. The '.works' TLD is a common attacker trick to impersonate corporate domains."},
                     {"target": "URGENT: Confidential Wire Transfer", "reason": "Urgency + secrecy combination: Attackers create artificial time pressure and isolate you from colleagues so you won't verify the request."},
                     {"target": "I'm in a board meeting and can't take calls", "reason": "Pretext for unreachability: The attacker gives a reason why they can't be contacted by phone, preventing you from verifying the request with the real CEO."},
-                    {"target": "Apex Capital Holdings LLC", "reason": "Unfamiliar beneficiary: Legitimate wire transfers at established companies go to known, pre-vetted vendor accounts — not new entities you've never heard of."},
+                    {"target": "Rift Valley Ventures Ltd", "reason": "Unfamiliar beneficiary: Legitimate wire transfers at established companies go to known, pre-vetted vendor accounts — not new entities you've never heard of."},
                     {"target": "Don't discuss it on Slack or email anyone else", "reason": "Isolation tactic: Explicitly forbidding you from consulting colleagues is designed to prevent the fraud from being caught before the money leaves."}
                 ],
                 "explanation": "This is a classic CEO Fraud / Business Email Compromise (BEC) attack. The attacker impersonates the CEO, creates urgency, provides wire instructions to a controlled account, and isolates the target from colleagues. Always verify wire transfer requests via a separate communication channel — never reply to the email."
@@ -816,10 +816,10 @@ CAMPAIGN_DATA = [
                     <p>Good morning,</p>
                     <p>As part of our quarterly compliance review, we've updated our banking details for vendor payments. Please use the following account information for all outgoing wire transfers effective immediately:</p>
                     <div style="background:#f4f6f9;border-left:4px solid #2563eb;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-family:monospace;font-size:0.9rem;">
-                        <p style="margin:0;"><strong>Bank:</strong> Pinnacle Federal Savings</p>
+                        <p style="margin:0;"><strong>Bank:</strong> KCB Group</p>
                         <p style="margin:0;"><strong>Account Name:</strong> Meridian Corp Operating</p>
                         <p style="margin:0;"><strong>Account #:</strong> 4491027365</p>
-                        <p style="margin:0;"><strong>Routing #:</strong> 026009593</p>
+                        <p style="margin:0;"><strong>Bank Code:</strong> 011</p>
                     </div>
                     <p>Please update your payment templates in the ERP system by end of day. Payments sent to old accounts after today may not be recovered.</p>
                     <p>If you have any questions, reply to this email or visit our portal at <a href="https://meridian-corp-finance.com/updates" style="color:#2563eb;" onclick="event.preventDefault();">meridian-corp-finance.com/updates</a>.</p>
@@ -838,16 +838,16 @@ CAMPAIGN_DATA = [
                 "id": "wt_legit_1",
                 "sender_name": "IT Operations",
                 "sender_email": "it-ops@meridian-corp.com",
-                "subject": "Scheduled Server Maintenance — Saturday 2 AM–6 AM EST",
+                "subject": "Scheduled Server Maintenance — Saturday 2 AM–6 AM EAT",
                 "date": "Yesterday, 4:30 PM",
                 "body_html": """
                     <p>Hi everyone,</p>
-                    <p>This is a reminder that we have scheduled maintenance on our internal servers this Saturday from 2:00 AM to 6:00 AM EST. During this window, the following services will be unavailable:</p>
+                    <p>This is a reminder that we have scheduled maintenance on our internal servers this Saturday from 2:00 AM to 6:00 AM EAT. During this window, the following services will be unavailable:</p>
                     <ul>
                         <li>Internal email (Outlook/OWA)</li>
                         <li>SharePoint and OneDrive</li>
                         <li>VPN access</li>
-                        <li>ERP system (SAP)</li>
+                        <li>ERP system (Sage ERP)</li>
                     </ul>
                     <p>Please save all work and log out of VPN before 2:00 AM. If you have critical operations that require system access during this window, please contact the IT Service Desk by Friday EOD to arrange an exemption.</p>
                     <p>We apologize for the inconvenience. This maintenance is necessary to apply critical security patches to our infrastructure.</p>
@@ -868,9 +868,9 @@ CAMPAIGN_DATA = [
                     <p>Dear Meridian Corp Account Holder,</p>
                     <p>Our fraud detection system has flagged <strong>3 suspicious transactions</strong> on your corporate checking account ending in ****4821:</p>
                     <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-size:0.9rem;">
-                        <p style="margin:0;">Transaction 1: $23,400.00 — Wire to unknown recipient — <em>PENDING</em></p>
-                        <p style="margin:0;">Transaction 2: $15,200.00 — ACH debit — <em>PENDING</em></p>
-                        <p style="margin:0;">Transaction 3: $8,900.00 — International wire — <em>PENDING</em></p>
+                        <p style="margin:0;">Transaction 1: KSH 3,510,000 — Wire to unknown recipient — <em>PENDING</em></p>
+                        <p style="margin:0;">Transaction 2: KSH 2,280,000 — ACH debit — <em>PENDING</em></p>
+                        <p style="margin:0;">Transaction 3: KSH 1,335,000 — International wire — <em>PENDING</em></p>
                     </div>
                     <p>If you did not authorize these transactions, you must verify your identity within <strong>60 minutes</strong> to prevent the transfers from completing.</p>
                     <p style="margin:1rem 0;"><a href="https://meridian-secure-banking.com/verify?acct=4821" class="sim-btn" onclick="event.preventDefault();">Verify Identity &amp; Block Transactions</a></p>
@@ -879,7 +879,7 @@ CAMPAIGN_DATA = [
                 """,
                 "is_phishing": True,
                 "red_flags": [
-                    {"target": "meridian-secure-banking.com", "reason": "Fake banking domain: Meridian Corp banks with First National Trust (as shown in company records), not 'meridian-secure-banking.com'. This is a credential harvesting site."},
+                    {"target": "meridian-secure-banking.com", "reason": "Fake banking domain: Meridian Corp banks with Equity Bank Kenya (as shown in company records), not 'meridian-secure-banking.com'. This is a credential harvesting site."},
                     {"target": "60 minutes", "reason": "Artificial deadline: The 60-minute window is designed to panic you into clicking without verifying the alert's legitimacy."},
                     {"target": "FRAUD ALERT", "reason": "Fear-based manipulation: Showing large pending fraudulent charges triggers a panic response. Real fraud alerts don't typically appear via unsolicited email as the primary notification."},
                     {"target": "Verify Identity & Block Transactions", "reason": "Credential harvesting: This button leads to a fake login page designed to capture your corporate banking credentials."},
@@ -895,16 +895,16 @@ CAMPAIGN_DATA = [
                 "date": "Today, 10:15 AM",
                 "body_html": """
                     <p>Hey,</p>
-                    <p>Following up on our conversation at the offsite — I need your help getting 15 Google Play gift cards ($200 each) for our top clients as part of the Q3 appreciation initiative. The board signed off on this yesterday.</p>
+                    <p>Following up on our conversation at the offsite — I need your help getting 15 Safaricom top-up cards (KSH 25,000 each) for our top clients as part of the Q3 appreciation initiative. The board signed off on this yesterday.</p>
                     <p>I know this is unconventional, but we need to get these out before the end of the quarter. Can you purchase them and email me the redemption codes? I'll reimburse you through expense reporting.</p>
-                    <p>Total cost: $3,000. Use the corporate purchasing card if possible — otherwise, I'll make sure finance expedites your reimbursement.</p>
+                    <p>Total cost: KSH 375,000. Use the corporate purchasing card if possible — otherwise, I'll make sure finance expedites your reimbursement.</p>
                     <p>I'm heads-down in client meetings all day so email is the best way to reach me. Thanks!</p>
                     <p>Best,<br>Robert Chen<br>CFO, Meridian Corp</p>
                 """,
                 "is_phishing": True,
                 "red_flags": [
                     {"target": "meridian-corp.works", "reason": "Lookalike domain: Same '.works' TLD impersonation used in the fake CEO email — a strong indicator this is part of the same attack campaign."},
-                    {"target": "Google Play gift cards", "reason": "Gift card scam: Gift cards are untraceable and irreversible. Legitimate companies never use gift cards as client gifts through individual employees."},
+                    {"target": "Safaricom top-up cards", "reason": "Gift card scam: Safaricom top-up cards are untraceable and irreversible. Legitimate companies never use gift cards as client gifts through individual employees."},
                     {"target": "email me the redemption codes", "reason": "Credential/code theft: Once the attacker has the gift card codes, they are instantly redeemed and untraceable."},
                     {"target": "I'm heads-down in client meetings all day so email is the best way to reach me", "reason": "Pretext for isolation: Again preventing you from picking up the phone to verify the request with the real CFO."},
                     {"target": "reimburse you through expense reporting", "reason": "Trust building: Offering reimbursement makes the request seem like standard business practice rather than theft."}
@@ -957,12 +957,12 @@ CAMPAIGN_DATA = [
                 "date": "Yesterday, 11:00 AM",
                 "body_html": """
                     <p>Hi team,</p>
-                    <p>This is a reminder that the annual benefits open enrollment period closes this <strong>Friday, July 17 at 5:00 PM EST</strong>.</p>
+                    <p>This is a reminder that the annual benefits open enrollment period closes this <strong>Friday, July 17 at 5:00 PM EAT</strong>.</p>
                     <p>If you haven't yet made your elections, please log in to the benefits portal at <a href="https://benefits.meridian-corp.com" style="color:#2563eb;" onclick="event.preventDefault();">benefits.meridian-corp.com</a> to review your options and submit your selections.</p>
                     <p>Key changes this year include:</p>
                     <ul>
                         <li>New dental plan option with orthodontic coverage</li>
-                        <li>Increased employer HSA contribution ($500 individual / $1,000 family)</li>
+                        <li>Increased employer NHIF contribution (KSH 5,000 individual / KSH 10,000 family)</li>
                         <li>Updated telehealth provider network</li>
                     </ul>
                     <p>If you need assistance, the HR Benefits team is hosting drop-in Q&A sessions in Conference Room B today and tomorrow from 12–1 PM.</p>
@@ -991,7 +991,7 @@ CAMPAIGN_DATA = [
                     </ul>
                     <p>To avoid service interruption, please update your payment method:</p>
                     <p style="margin:1rem 0;"><a href="https://aws-service-notice.com/billing/update?ref=meridian" class="sim-btn" onclick="event.preventDefault();">Update Payment Method</a></p>
-                    <p style="font-size:0.85rem;color:#6b7280;">Amazon Web Services, Inc. | 410 Terry Avenue North, Seattle, WA 98109</p>
+                    <p style="font-size:0.85rem;color:#6b7280;">Amazon Web Services, Inc. | Amazon Data Services, Nairobi, Kenya</p>
                 """,
                 "is_phishing": True,
                 "red_flags": [
@@ -1164,13 +1164,13 @@ CAMPAIGN_DATA = [
                 "id": "cw_legit_2",
                 "sender_name": "Facilities Department",
                 "sender_email": "facilities@meridian-corp.com",
-                "subject": "Office Closure — Monday, July 20 (Founders Day Holiday)",
+                "subject": "Office Closure — Monday, June 1 (Madaraka Day Holiday)",
                 "date": "2 days ago, 9:00 AM",
                 "body_html": """
                     <p>Hi everyone,</p>
-                    <p>Please note that the Meridian Corp offices will be <strong>closed on Monday, July 20</strong> in observance of Founders Day. This applies to all office locations.</p>
+                    <p>Please note that the Meridian Corp offices will be <strong>closed on Monday, June 1</strong> in observance of Madaraka Day. This applies to all office locations.</p>
                     <p>Building access badges will not work on that day. If you need emergency building access, please contact the Facilities emergency line at ext. 5555.</p>
-                    <p>Regular office hours resume on Tuesday, July 21. The parking garage will remain accessible 24/7 for those who need to retrieve personal items.</p>
+                    <p>Regular office hours resume on Tuesday, June 2. The parking garage will remain accessible 24/7 for those who need to retrieve personal items.</p>
                     <p>Enjoy the long weekend!</p>
                     <p>Facilities Department<br>facilities@meridian-corp.com</p>
                 """,
@@ -1196,7 +1196,7 @@ CAMPAIGN_DATA = [
                 "date": "Today, 9:30 AM",
                 "body_html": """
                     <p>Hey,</p>
-                    <p>I'm working on the proposal for the Henderson account and I need a second pair of eyes on the financial projections. I put everything in this doc:</p>
+                    <p>I'm working on the proposal for the Safaricom account and I need a second pair of eyes on the financial projections. I put everything in this doc:</p>
                     <p style="margin:1rem 0;"><a href="https://docs.google.com/document/d/1xK9mRvLpQ7zF2n8Y3wJ6tK0dV5bH4gS/edit" class="sim-btn" onclick="event.preventDefault();">Open Financial Projections Doc</a></p>
                     <p>It's pretty straightforward — just need you to check the numbers in the Q3 section. Should take 10 minutes tops.</p>
                     <p>Also, I'm messaging from my personal email because my work account got locked again. IT is being super slow about unlocking it.</p>
@@ -1207,7 +1207,7 @@ CAMPAIGN_DATA = [
                     {"target": "protonmail.com", "reason": "External email impersonating a colleague: Alex Torres's real work email is 'a.torres@meridian-corp.com'. A message from a personal Protonmail account claiming to be a colleague is suspicious."},
                     {"target": "my work account got locked", "reason": "Pretext for external email: The attacker explains away the unusual email address to prevent suspicion."},
                     {"target": "docs.google.com/document/d/1xK9mRvLpQ7zF2n8Y3wJ6tK0dV5bH4gS", "reason": "Malicious Google Doc: Shared Google Docs can contain phishing links, malware payloads, or OAuth permission abuse that gives the attacker access to your Google account."},
-                    {"target": "Henderson account", "reason": "Social engineering via real context: The attacker researched internal project names to make the request appear legitimate."},
+                    {"target": "Safaricom account", "reason": "Social engineering via real context: The attacker researched internal project names to make the request appear legitimate."},
                     {"target": "should take 10 minutes", "reason": "Minimization: Downplaying the effort required makes you more likely to click without questioning."}
                 ],
                 "explanation": "This is an insider threat / social engineering attack. The attacker impersonates a known colleague using a personal email account and requests review of a document that likely contains phishing links or malware. Real colleagues would message from their corporate email. Always verify external emails claiming to be from coworkers — a quick Slack or in-person check takes seconds."
@@ -1328,7 +1328,7 @@ CAMPAIGN_DATA = [
                 "date": "Today, 6:00 AM",
                 "body_html": """
                     <p>Dear Dr. Mitchell,</p>
-                    <p>Thank you for your excellent presentation at CyberSec Summit 2026 in Washington, D.C. last week. Your session on "Zero Trust Architecture in Enterprise Environments" received outstanding feedback from attendees.</p>
+                    <p>Thank you for your excellent presentation at CyberSec Summit 2026 in Nairobi last week. Your session on "Zero Trust Architecture in Enterprise Environments" received outstanding feedback from attendees.</p>
                     <p>We've compiled the speaker feedback reports and attendee survey results for your review. Additionally, several attendees have requested copies of your slide deck, which we'd love to distribute on your behalf (with your permission).</p>
                     <p style="margin:1rem 0;"><a href="https://cybersec-summit-2026.com/speakers/feedback/dr-mitchell" class="sim-btn" onclick="event.preventDefault();">Download Your Feedback Report</a></p>
                     <p>Please also find attached the speaker agreement for next year's conference. We'd love to have you back — perhaps as a keynote?</p>
@@ -1347,13 +1347,13 @@ CAMPAIGN_DATA = [
             },
             {
                 "id": "apt_phish_2",
-                "sender_name": "National Cyber Defense Center",
-                "sender_email": "compliance@ncdc-gov.org",
-                "subject": "MANDATORY: Critical Security Compliance Directive — NCDC-2026-0742",
+                "sender_name": "Kenya Computer Incident Response Team",
+                "sender_email": "compliance@ke-cirt.go.ke",
+                "subject": "MANDATORY: Critical Security Compliance Directive — KE-CIRT-2026-0742",
                 "date": "Today, 7:15 AM",
                 "body_html": """
                     <p>Dear Organization Security Officer,</p>
-                    <p>The National Cyber Defense Center (NCDC) has issued mandatory compliance directive <strong>NCDC-2026-0742</strong> in response to recent advanced persistent threat activity targeting critical infrastructure sectors.</p>
+                    <p>The Kenya Computer Incident Response Team (KE-CIRT) has issued mandatory compliance directive <strong>KE-CIRT-2026-0742</strong> in response to recent advanced persistent threat activity targeting critical infrastructure sectors.</p>
                     <p>All organizations in the Technology sector are required to:</p>
                     <ol>
                         <li>Submit a current network architecture diagram</li>
@@ -1361,20 +1361,20 @@ CAMPAIGN_DATA = [
                         <li>Report any indicators of compromise (IOCs) from the past 72 hours</li>
                         <li>Complete the mandatory self-assessment questionnaire</li>
                     </ol>
-                    <p style="margin:1rem 0;"><a href="https://ncdc-gov.org/compliance/submit?org=meridian-corp" class="sim-btn" onclick="event.preventDefault();">Submit Compliance Documentation</a></p>
-                    <p>Non-compliance will result in the organization being added to the Federal Non-Compliance Registry and may affect federal contracting eligibility.</p>
-                    <p>This directive has the force of law under the Critical Infrastructure Security Act of 2025.</p>
-                    <p>Dr. Richard Hayes<br>Deputy Director, National Cyber Defense Center</p>
+                    <p style="margin:1rem 0;"><a href="https://ke-cirt.go.ke/compliance/submit?org=meridian-corp" class="sim-btn" onclick="event.preventDefault();">Submit Compliance Documentation</a></p>
+                    <p>Non-compliance will result in the organization being added to the National Computer and Cybercrimes Coordination Committee (NC4) watchlist and may affect NTSA and CCCRA compliance status.</p>
+                    <p>This directive has the force of law under the Computer Misuse and Cybercrimes Act (2018).</p>
+                    <p>Dr. James Mwangi<br>Director, KE-CIRT</p>
                 """,
                 "is_phishing": True,
                 "red_flags": [
-                    {"target": "ncdc-gov.org", "reason": "Fake government domain: Real US government cybersecurity agencies use '.gov' domains (e.g., 'cisa.gov'). '.gov.org' is not a valid government TLD — it's a commercial domain anyone can register."},
+                    {"target": "ke-cirt.go.ke", "reason": "Fake government domain: Real Kenyan government agencies use '.go.ke' domains. '.org' is not a valid Kenyan government TLD — it's a commercial domain anyone can register."},
                     {"target": "Submit Compliance Documentation", "reason": "Credential and data harvesting: This link leads to a fake compliance portal that captures organizational details, employee credentials, and potentially network architecture information."},
                     {"target": "non-compliance will result in", "reason": "Legal intimidation: APT actors use regulatory penalties and legal consequences to pressure organizations into immediate compliance without verification."},
                     {"target": "network architecture diagram", "reason": "Intelligence gathering: Requesting network diagrams is a classic APT objective — this information enables follow-on network exploitation."},
-                    {"target": "Critical Infrastructure Security Act of 2025", "reason": "Fabricated legislation: The attacker invented a plausible-sounding law to add legal weight. Always verify government directives through official channels, not email links."}
+                    {"target": "Computer Misuse and Cybercrimes Act (2018)", "reason": "Fabricated legislation: The attacker invented a plausible-sounding law to add legal weight. Always verify government directives through official channels, not email links."}
                 ],
-                "explanation": "This is an APT attack impersonating a government agency to collect intelligence and credentials. The '.gov.org' domain is the critical flaw — real US government domains use '.gov' exclusively. APT actors use regulatory compliance as a lure because organizations are conditioned to respond quickly to government mandates. Always verify government communications through official websites and phone numbers."
+                "explanation": "This is an APT attack impersonating a government agency to collect intelligence and credentials. The '.org' domain is the critical flaw — real Kenyan government domains use '.go.ke' exclusively. APT actors use regulatory compliance as a lure because organizations are conditioned to respond quickly to government mandates. Always verify government communications through official websites and phone numbers."
             },
             {
                 "id": "apt_legit_1",
@@ -1410,9 +1410,9 @@ CAMPAIGN_DATA = [
                     <p>Attached are the notes from yesterday's strategy session with the leadership team. There were some important decisions made that affect our team directly, so please review before our standup this morning.</p>
                     <p>Key takeaways:</p>
                     <ul>
-                        <li>Q4 budget has been reallocated — our team gets an additional $200K for tooling</li>
+                        <li>Q4 budget has been reallocated — our team gets an additional KSH 25M for tooling</li>
                         <li>New hire for the security team approved — start date moved up to August 1</li>
-                        <li>Incident response retainer with CrowdStrike renewed</li>
+                        <li>Incident response retainer with SecureWorks renewed</li>
                         <li>Board wants quarterly threat briefings starting Q3</li>
                     </ul>
                     <p style="margin:1rem 0;"><a href="https://meridian-corp.box.com/s/strategy-session-notes-july" class="sim-btn" onclick="event.preventDefault();">Open Meeting Notes (Box)</a></p>
@@ -1423,7 +1423,7 @@ CAMPAIGN_DATA = [
                 "red_flags": [
                     {"target": "meridian-corp.box.com/s/strategy-session-notes-july", "reason": "Spoofed Box URL: Real Box links use 'app.box.com'. This link uses 'meridian-corp.box.com' which could be a Box Shared Link to attacker-controlled content, or a completely spoofed URL."},
                     {"target": "yesterday's strategy session", "reason": "Fabricated event: There was no strategy session yesterday. The attacker fabricated a plausible meeting to create urgency and curiosity — a hallmark of APT social engineering."},
-                    {"target": "Q4 budget has been reallocated — our team gets an additional $200K", "reason": "Bait with personal relevance: Sharing positive financial news about the target's team creates excitement that overrides suspicion."},
+                    {"target": "Q4 budget has been reallocated — our team gets an additional KSH 25M", "reason": "Bait with personal relevance: Sharing positive financial news about the target's team creates excitement that overrides suspicion."},
                     {"target": "I may have missed a few details so let me know if anything looks off", "reason": "Authenticity building: The casual disclaimer mimics natural colleague behavior, making the email appear more genuine."},
                     {"target": "d.park@meridian-corp.com", "reason": "Internal spoofing: APT actors can spoof internal sender addresses. The legitimate-looking sender doesn't guarantee authenticity — verify unusual requests through a separate channel."}
                 ],
@@ -1448,13 +1448,13 @@ CAMPAIGN_DATA = [
                                 <p style="margin:0;"><strong>License:</strong> TG-ENT-4827-MC</p>
                                 <p style="margin:0;"><strong>Seats:</strong> 500 endpoints</p>
                                 <p style="margin:0;"><strong>Expiration:</strong> July 25, 2026</p>
-                                <p style="margin:0;"><strong>Annual Cost:</strong> $47,500.00</p>
+                                <p style="margin:0;"><strong>Annual Cost:</strong> KSH 6,200,000</p>
                             </div>
                             <p style="margin:1rem 0;"><a href="https://threatguard.io/renew?license=TG-ENT-4827-MC" class="sim-btn" style="display:block;text-align:center;padding:0.75rem;background:#1e293b;color:white;border-radius:6px;text-decoration:none;font-weight:600;" onclick="event.preventDefault();">Renew License Now</a></p>
                             <p style="font-size:0.85rem;color:#6b7280;">If you do not renew by July 25, threat detection services will be paused and your endpoint telemetry will no longer be collected.</p>
                         </div>
                         <div style="text-align:center;padding:1rem;font-size:0.8rem;color:#9ca3af;">
-                            <p style="margin:0;">ThreatGuard Inc. | San Francisco, CA</p>
+                            <p style="margin:0;">ThreatGuard Inc. | Nairobi, Kenya</p>
                             <p style="margin:0;"><a href="https://threatguard.io" style="color:#9ca3af;" onclick="event.preventDefault();">threatguard.io</a></p>
                         </div>
                     </div>
@@ -1463,11 +1463,11 @@ CAMPAIGN_DATA = [
                 "red_flags": [
                     {"target": "threatguard.io", "reason": "Fake vendor domain: While ThreatGuard may be a real vendor, the attacker registered 'threatguard.io' (the real vendor may use '.com' or a different domain). APT actors clone vendor branding perfectly."},
                     {"target": "TG-ENT-4827-MC", "reason": "Fabricated license key: The attacker generated a realistic-looking license key. No real license key was verified — the format is plausible but entirely fictional."},
-                    {"target": "Renew License Now", "reason": "Payment redirection: This link leads to a fake payment portal where the attacker captures corporate payment information (credit card, ACH details) or organizational intelligence."},
+                    {"target": "Renew License Now", "reason": "Payment redirection: This link leads to a fake payment portal where the attacker captures corporate payment information (credit card, M-Pesa, ACH details) or organizational intelligence."},
                     {"target": "threat detection services will be paused", "reason": "Operational fear: Threatening to disable security tools creates urgency because security teams know the risk of running without threat detection."},
                     {"target": "professional branding", "reason": "APT-level polish: The email uses professional HTML/CSS styling that perfectly mimics real vendor communications. Nation-state actors invest heavily in visual authenticity."}
                 ],
-                "explanation": "This is an APT attack impersonating a security vendor. The attacker cloned ThreatGuard's branding and created a convincing license renewal notice. The goal is to redirect a $47,500 payment to attacker-controlled accounts and harvest payment information. Always verify vendor renewal notices by logging into the vendor's portal directly or contacting your account manager through known contact information — never through email links."
+                "explanation": "This is an APT attack impersonating a security vendor. The attacker cloned ThreatGuard's branding and created a convincing license renewal notice. The goal is to redirect a KSH 6,200,000 payment to attacker-controlled accounts and harvest payment information. Always verify vendor renewal notices by logging into the vendor's portal directly or contacting your account manager through known contact information — never through email links."
             }
         ]
     }
@@ -1482,7 +1482,7 @@ BOSS_BATTLE_EMAIL = {
     "body_html": """
         <p>Hi team,</p>
         <p>Following our board meeting yesterday, I've attached the finalized Q3 security audit findings. Several critical vulnerabilities were identified in our payment processing pipeline that require immediate remediation.</p>
-        <p>The board has approved an emergency patch deployment window this Thursday at 2 AM EST. All engineering leads need to review the attached findings and sign off on the rollback plan before Wednesday EOD.</p>
+        <p>The board has approved an emergency patch deployment window this Thursday at 2 AM EAT. All engineering leads need to review the attached findings and sign off on the rollback plan before Wednesday EOD.</p>
         <p>I've also set up a secure document sharing portal for the audit artifacts since the files contain sensitive infrastructure details:</p>
         <p style="margin: 1rem 0;"><a href="https://meridian-corp-secure.works/audit/Q3-2026" class="sim-btn" onclick="event.preventDefault();">Access Audit Portal</a></p>
         <p>Credentials were sent separately via Slack. If you haven't received them, reply to this email and I'll resend.</p>

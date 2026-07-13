@@ -3209,10 +3209,11 @@ a:hover {
     }
     .inbox-sidebar {
         padding: 0.75rem;
-        max-height: 35vh;
+        max-height: 30vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
+    .score-card { display: none; }
     .email-item { padding: 0.6rem; }
     .email-item-sender { font-size: 0.78rem; }
     .email-item-subject { font-size: 0.75rem; }
