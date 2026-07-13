@@ -3,6 +3,7 @@ import json
 import socket
 import ssl
 import secrets
+import ipaddress
 import urllib.parse
 import functools
 import os
@@ -25,6 +26,51 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 )
+
+# ─────────────────────────────────────────────
+#  SSRF PROTECTION — OWASP A10
+# ─────────────────────────────────────────────
+
+BLOCKED_NETWORKS = [
+    ipaddress.ip_network("127.0.0.0/8"),      # Loopback
+    ipaddress.ip_network("10.0.0.0/8"),        # Private Class A
+    ipaddress.ip_network("172.16.0.0/12"),     # Private Class B
+    ipaddress.ip_network("192.168.0.0/16"),    # Private Class C
+    ipaddress.ip_network("169.254.0.0/16"),    # Link-local
+    ipaddress.ip_network("::1/128"),            # IPv6 loopback
+    ipaddress.ip_network("fc00::/7"),           # IPv6 private
+    ipaddress.ip_network("fe80::/10"),          # IPv6 link-local
+    ipaddress.ip_network("0.0.0.0/8"),          # Current network
+    ipaddress.ip_network("192.0.2.0/24"),       # Documentation (TEST-NET-1)
+    ipaddress.ip_network("198.51.100.0/24"),    # Documentation (TEST-NET-2)
+    ipaddress.ip_network("203.0.113.0/24"),     # Documentation (TEST-NET-3)
+    ipaddress.ip_network("224.0.0.0/4"),        # Multicast
+]
+
+
+def is_private_ip(ip_str):
+    """Check if an IP address is private, loopback, or reserved."""
+    try:
+        addr = ipaddress.ip_address(ip_str)
+        for net in BLOCKED_NETWORKS:
+            if addr in net:
+                return True
+        return False
+    except ValueError:
+        return False
+
+
+def is_safe_host(hostname):
+    """Resolve hostname and verify it doesn't point to a private/reserved IP."""
+    try:
+        ips = socket.getaddrinfo(hostname, None)
+        for family, _, _, _, sockaddr in ips:
+            ip = sockaddr[0]
+            if is_private_ip(ip):
+                return False
+        return True
+    except (socket.gaierror, OSError):
+        return True  # Can't resolve — let the scan proceed and report the error
 
 # ─────────────────────────────────────────────
 #  ENV / API KEY CONSTANTS
@@ -793,6 +839,10 @@ def generate_csrf_token():
 
 def validate_csrf():
     token = request.form.get("csrf_token")
+    if not token and request.is_json:
+        token = (request.get_json(silent=True) or {}).get("csrf_token")
+    if not token:
+        token = request.headers.get("X-CSRF-Token")
     if not token or token != session.get("csrf_token"):
         return False
     return True
@@ -1359,6 +1409,19 @@ def analyze_url(url: str) -> dict:
         if domain.startswith("www."):
             domain = domain[4:]
         full_url_lower = url.lower()
+
+        # SSRF protection — block private/internal IPs
+        if not is_safe_host(domain):
+            result["score"] = 100
+            result["verdict"] = "Blocked"
+            result["verdict_color"] = "#ff4757"
+            result["checks"].append({
+                "label": "SSRF Protection",
+                "status": "fail",
+                "detail": "URL resolves to a private/internal IP address. Scanning internal resources is not allowed."
+            })
+            result["risk_percent"] = 100
+            return result
 
         if parsed.scheme == "https":
             result["checks"].append({"label": "HTTPS Secure Connection", "status": "pass", "detail": "URL uses HTTPS encryption"})

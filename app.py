@@ -1,6 +1,7 @@
 import os
 import secrets
 import logging
+from datetime import timedelta
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.middleware.proxy_fix import ProxyFix
 from authlib.integrations.flask_client import OAuth
@@ -60,11 +61,12 @@ app.config["google_client"] = google
 app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
-# Session configuration for production
+# Session configuration — OWASP A07: Identification & Authentication Failures
 app.config["SESSION_PERMANENT"] = True
-app.config["PERMANENT_SESSION_LIFETIME"] = 86400 * 7  # 7 days
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)  # Absolute session timeout: 12 hours
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_NAME"] = "__Host-session" if not app.debug else "session"
 app.config["PREFERRED_URL_SCHEME"] = "https"
 if not app.debug:
     app.config["SESSION_COOKIE_SECURE"] = True
@@ -84,8 +86,33 @@ def inject_globals():
     return dict(
         cache_bust=str(css_mtime + js_mtime),
         google_oauth_enabled=google is not None,
-        admin_username=_admin,
+        is_admin=session.get("username", "").lower() == _admin if _admin else False,
     )
+
+
+# ─────────────────────────────────────────────
+#  SECURITY HEADERS — OWASP A05
+# ─────────────────────────────────────────────
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if not app.debug:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'"
+        )
+    return response
 
 
 @app.errorhandler(429)
@@ -140,5 +167,5 @@ app.register_blueprint(phone_bp)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5050))
-    debug = os.environ.get("FLASK_ENV", "development") == "development"
+    debug = os.environ.get("FLASK_DEBUG", "0") == "1"
     app.run(debug=debug, host="0.0.0.0", port=port)

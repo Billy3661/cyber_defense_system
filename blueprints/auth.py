@@ -1,13 +1,17 @@
 import os
+import re
 import secrets
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import database
 from helpers import login_required, validate_csrf, generate_csrf_token, limiter
 
 auth_bp = Blueprint("auth", __name__)
+
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_MINUTES = 15
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
@@ -32,6 +36,16 @@ def register():
             
         if len(password) < 8:
             flash("Password must be at least 8 characters long.", "error")
+            return redirect(url_for("auth.register"))
+
+        if not re.search(r"[A-Z]", password):
+            flash("Password must contain at least one uppercase letter.", "error")
+            return redirect(url_for("auth.register"))
+        if not re.search(r"[a-z]", password):
+            flash("Password must contain at least one lowercase letter.", "error")
+            return redirect(url_for("auth.register"))
+        if not re.search(r"\d", password):
+            flash("Password must contain at least one digit.", "error")
             return redirect(url_for("auth.register"))
 
         password_hash = generate_password_hash(password)
@@ -60,11 +74,31 @@ def login():
             flash("Username and password are required.", "error")
             return redirect(url_for("auth.login"))
 
+        # Account lockout — OWASP A07
+        lockout_until = session.get("lockout_until")
+        if lockout_until:
+            try:
+                lockout_dt = datetime.fromisoformat(lockout_until)
+                if datetime.utcnow() < lockout_dt:
+                    remaining = (lockout_dt - datetime.utcnow()).seconds // 60 + 1
+                    flash(f"Account locked. Try again in {remaining} minute(s).", "error")
+                    return redirect(url_for("auth.login"))
+                else:
+                    session.pop("lockout_until", None)
+                    session.pop("failed_attempts", None)
+            except (ValueError, TypeError):
+                session.pop("lockout_until", None)
+                session.pop("failed_attempts", None)
+
         user = database.get_user_by_username(username)
         if user and check_password_hash(user["password_hash"], password):
+            # Session fixation prevention — regenerate session
+            session.clear()
+            session.regenerate() if hasattr(session, 'regenerate') else None
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["profile_image"] = user["profile_image"] if user["profile_image"] else ""
+            session["logged_in_at"] = datetime.utcnow().isoformat()
             saved_key = database.get_user_vt_key(user["username"])
             if saved_key:
                 session["vt_api_key"] = saved_key
@@ -72,7 +106,17 @@ def login():
             flash(f"Welcome back, {username}! You are now securely logged in.", "success")
             return redirect(url_for("main.index"))
         else:
-            flash("Invalid username or password.", "error")
+            # Track failed attempts
+            failed = session.get("failed_attempts", 0) + 1
+            session["failed_attempts"] = failed
+            if failed >= MAX_LOGIN_ATTEMPTS:
+                session["lockout_until"] = (datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)).isoformat()
+                session["failed_attempts"] = 0
+                logging.warning("Account locked after %d failed attempts: %s", MAX_LOGIN_ATTEMPTS, username)
+                flash(f"Too many failed attempts. Account locked for {LOCKOUT_MINUTES} minutes.", "error")
+            else:
+                remaining = MAX_LOGIN_ATTEMPTS - failed
+                flash(f"Invalid username or password. {remaining} attempt(s) remaining.", "error")
             return redirect(url_for("auth.login"))
 
     return render_template("login.html", login_failed=False)
@@ -101,33 +145,39 @@ def authorize_google():
         resp = google.get('userinfo')
         user_info = resp.json()
     except Exception as e:
-        logging.exception("Google OAuth callback failed: %s", e)
-        return f"<h2>OAuth Error</h2><pre>%s</pre><a href='/login'>Back to login</a>" % str(e), 400
+        logging.exception("Google OAuth callback failed")
+        flash("Google sign-in failed. Please try again.", "error")
+        return redirect(url_for("auth.login"))
 
     email = user_info.get('email', '').strip().lower()
     if not email:
-        return "<h2>Error</h2><p>Could not retrieve email from Google.</p><a href='/login'>Back to login</a>", 400
+        flash("Could not retrieve email from Google.", "error")
+        return redirect(url_for("auth.login"))
     
     try:
         user = database.get_user_by_username(email)
         
         is_new_user = False
         if not user:
-            created = database.create_user(email, generate_password_hash("*GOOGLE_OAUTH*"))
+            oauth_marker = generate_password_hash(secrets.token_hex(32))
+            created = database.create_user(email, oauth_marker)
             if not created:
                 logging.error("Failed to create user via Google OAuth: %s", email)
-                return "<h2>Error</h2><p>Account creation failed.</p><a href='/login'>Back to login</a>", 500
+                flash("Account creation failed.", "error")
+                return redirect(url_for("auth.login"))
             user = database.get_user_by_username(email)
             if not user:
                 logging.error("User not found after create: %s", email)
-                return "<h2>Error</h2><p>User not found after creation.</p><a href='/login'>Back to login</a>", 500
+                flash("Account creation failed.", "error")
+                return redirect(url_for("auth.login"))
             is_new_user = True
             flash("Your Google account has been registered successfully!", "success")
         else:
             flash(f"Welcome back, {email}! You are now securely logged in.", "success")
     except Exception as e:
-        logging.exception("Database error during Google OAuth: %s", e)
-        return f"<h2>Database Error</h2><pre>%s</pre><a href='/login'>Back to login</a>" % str(e), 500
+        logging.exception("Database error during Google OAuth")
+        flash("An error occurred during sign-in.", "error")
+        return redirect(url_for("auth.login"))
     
     session["user_id"] = user["id"]
     session["username"] = user["username"]

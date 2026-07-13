@@ -87,9 +87,9 @@ Rules:
         return jsonify(parsed)
 
     except json.JSONDecodeError:
-        return jsonify({"error": "AI returned invalid JSON. Try again.", "raw": reply[:500]}), 500
-    except Exception as e:
-        return jsonify({"error": f"Generation failed: {str(e)}"}), 500
+        return jsonify({"error": "AI returned invalid data. Please try again."}), 500
+    except Exception:
+        return jsonify({"error": "Email generation failed. Please try again."}), 500
 
 
 @simulator_bp.route("/api/simulator/debrief", methods=["POST"])
@@ -142,6 +142,7 @@ No emojis. No greetings. Just the feedback."""
 
 @simulator_bp.route("/api/phishing/stats", methods=["POST"])
 @login_required
+@limiter.limit("20 per minute")
 def api_phishing_stats():
     data = request.get_json() or {}
     database.record_phishing_stat(

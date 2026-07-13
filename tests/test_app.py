@@ -308,16 +308,24 @@ class TestAnalyzeUrl:
     def test_ip_address_as_host_warning(self):
         from helpers import analyze_url
         patches = self._mock_api_checks()
-        with patch("helpers.socket.gethostbyname"):
+        with patch("helpers.socket.gethostbyname"), patch("helpers.is_safe_host", return_value=True):
             for p in patches:
                 p.start()
             try:
-                result = analyze_url("http://10.0.0.1/login")
+                result = analyze_url("http://8.8.8.8/login")
                 ip_check = next(c for c in result["checks"] if c["label"] == "IP Address as Host")
                 assert ip_check["status"] == "warn"
             finally:
                 for p in patches:
                     p.stop()
+
+    def test_ssrf_blocks_private_ip(self):
+        from helpers import analyze_url
+        result = analyze_url("http://192.168.1.1/admin")
+        assert result["verdict"] == "Blocked"
+        assert result["score"] == 100
+        ssrf_check = next(c for c in result["checks"] if c["label"] == "SSRF Protection")
+        assert ssrf_check["status"] == "fail"
 
     def test_url_obfuscation_detection(self):
         from helpers import analyze_url
@@ -943,3 +951,116 @@ class TestPhoneIntelligence:
         resp = client.post("/api/phone-report/pdf", json={"data": scan_data})
         assert resp.status_code == 200
         assert resp.content_type == "application/pdf"
+
+
+# ============================================================
+# 11. OWASP SECURITY HARDENING
+# ============================================================
+
+class TestSecurityHeaders:
+    def test_security_headers_present(self, client):
+        resp = client.get("/")
+        assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+        assert resp.headers.get("X-Frame-Options") == "DENY"
+        assert resp.headers.get("X-XSS-Protection") == "1; mode=block"
+        assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+        assert "camera=()" in resp.headers.get("Permissions-Policy", "")
+
+
+class TestSessionSecurity:
+    def test_session_timeout_configured(self, app):
+        from datetime import timedelta
+        assert app.config["PERMANENT_SESSION_LIFETIME"] == timedelta(hours=12)
+
+    def test_session_cookie_httponly(self, app):
+        assert app.config["SESSION_COOKIE_HTTPONLY"] is True
+
+    def test_session_cookie_samesite(self, app):
+        assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax"
+
+
+class TestPasswordPolicy:
+    def test_register_rejects_weak_password(self, app, client):
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = "valid-csrf"
+        resp = client.post("/register", data={
+            "username": "newuser",
+            "password": "weak",
+            "confirm_password": "weak",
+            "csrf_token": "valid-csrf"
+        }, follow_redirects=True)
+        assert b"at least 8 characters" in resp.data or b"uppercase" in resp.data
+
+    def test_register_rejects_no_uppercase(self, app, client):
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = "valid-csrf"
+        resp = client.post("/register", data={
+            "username": "newuser2",
+            "password": "alllowercase1",
+            "confirm_password": "alllowercase1",
+            "csrf_token": "valid-csrf"
+        }, follow_redirects=True)
+        assert b"uppercase" in resp.data
+
+
+class TestAccountLockout:
+    def test_lockout_after_failed_attempts(self, app, client):
+        from werkzeug.security import generate_password_hash
+        import database
+        database.create_user("locktest", generate_password_hash("correct1Pass"))
+        with client.session_transaction() as sess:
+            sess["csrf_token"] = "test-token"
+        for i in range(6):
+            client.post("/login", data={
+                "username": "locktest",
+                "password": "wrong",
+                "csrf_token": "test-token"
+            })
+        with client.session_transaction() as sess:
+            assert "lockout_until" in sess or sess.get("failed_attempts", 0) >= 5
+
+
+class TestSSRFProtection:
+    def test_blocks_loopback(self):
+        from helpers import is_private_ip
+        assert is_private_ip("127.0.0.1") is True
+        assert is_private_ip("::1") is True
+
+    def test_blocks_private_ranges(self):
+        from helpers import is_private_ip
+        assert is_private_ip("10.0.0.1") is True
+        assert is_private_ip("172.16.0.1") is True
+        assert is_private_ip("192.168.1.1") is True
+        assert is_private_ip("169.254.1.1") is True
+
+    def test_allows_public_ips(self):
+        from helpers import is_private_ip
+        assert is_private_ip("8.8.8.8") is False
+        assert is_private_ip("1.1.1.1") is False
+        assert is_private_ip("93.184.216.34") is False
+
+
+class TestCSRFProtection:
+    def test_validate_csrf_checks_json_body(self, app):
+        with app.test_request_context("/api/chat/history/1", method="DELETE",
+                                       json={"csrf_token": "valid-token"}):
+            from flask import session as ctx_session
+            ctx_session["csrf_token"] = "valid-token"
+            from helpers import validate_csrf
+            assert validate_csrf() is True
+
+    def test_validate_csrf_rejects_missing(self, app):
+        with app.test_request_context("/api/chat/history/1", method="DELETE",
+                                       json={}):
+            from flask import session as ctx_session
+            ctx_session["csrf_token"] = "valid-token"
+            from helpers import validate_csrf
+            assert validate_csrf() is False
+
+    def test_validate_csrf_rejects_wrong_token(self, app):
+        with app.test_request_context("/api/chat/history/1", method="DELETE",
+                                       json={"csrf_token": "wrong-token"}):
+            from flask import session as ctx_session
+            ctx_session["csrf_token"] = "valid-token"
+            from helpers import validate_csrf
+            assert validate_csrf() is False

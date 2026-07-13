@@ -1,8 +1,9 @@
 import os
+import logging
 import requests as req
 from flask import Blueprint, request, jsonify, session
 import database
-from helpers import login_required, limiter
+from helpers import login_required, validate_csrf, limiter
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -80,8 +81,8 @@ def api_chat():
     except req.exceptions.Timeout:
         return jsonify({"error": "AI took too long to respond. Please try again."}), 504
     except Exception as e:
-        print(f"Chatbot error: {e}")
-        return jsonify({"error": f"Failed to reach AI service: {str(e)}"}), 500
+        logging.exception("Chatbot error")
+        return jsonify({"error": "Failed to reach AI service."}), 500
 
 
 @chat_bp.route("/api/chat/history", methods=["GET"])
@@ -116,6 +117,9 @@ def chat_history_messages(conv_id):
 @chat_bp.route("/api/chat/history/<int:conv_id>", methods=["DELETE"])
 @login_required
 def chat_delete_conversation(conv_id):
+    if not validate_csrf():
+        return jsonify({"error": "Session expired"}), 403
+
     username = session["username"]
     convs = database.get_conversations(username)
     if not any(c["id"] == conv_id for c in convs):
@@ -127,5 +131,8 @@ def chat_delete_conversation(conv_id):
 @chat_bp.route("/api/chat/message/<int:msg_id>", methods=["DELETE"])
 @login_required
 def chat_delete_message(msg_id):
+    if not validate_csrf():
+        return jsonify({"error": "Session expired"}), 403
+
     database.delete_message(msg_id)
     return jsonify({"ok": True})

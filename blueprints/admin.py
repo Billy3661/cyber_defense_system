@@ -1,9 +1,10 @@
 import os
 import json
+import logging
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 import database
-from helpers import login_required
+from helpers import login_required, validate_csrf, limiter
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -107,7 +108,12 @@ def users():
 
 @admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
 @admin_required
+@limiter.limit("5 per minute")
 def delete_user(user_id):
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.users"))
+
     user = database.execute_query("SELECT username FROM users WHERE id = ?", (user_id,), fetch_one=True)
     if user and user["username"].lower() == _admin_username():
         flash("Cannot delete the admin user.", "error")
@@ -160,7 +166,12 @@ def signatures():
 
 @admin_bp.route("/signatures/add", methods=["POST"])
 @admin_required
+@limiter.limit("10 per minute")
 def add_signature():
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.signatures"))
+
     hash_val = request.form.get("hash_value", "").strip()
     threat_name = request.form.get("threat_name", "").strip()
     severity = request.form.get("severity", "Medium").strip()
@@ -180,6 +191,10 @@ def add_signature():
 @admin_bp.route("/signatures/<int:sig_id>/delete", methods=["POST"])
 @admin_required
 def delete_signature(sig_id):
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.signatures"))
+
     database.execute_query("DELETE FROM malware_signatures WHERE id = ?", (sig_id,))
     flash("Signature deleted.", "success")
     return redirect(url_for("admin.signatures"))
@@ -213,6 +228,10 @@ def badges():
 @admin_bp.route("/badges/<int:badge_id>/delete", methods=["POST"])
 @admin_required
 def delete_badge(badge_id):
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.badges"))
+
     database.execute_query("DELETE FROM user_badges WHERE id = ?", (badge_id,))
     flash("Badge removed.", "success")
     return redirect(url_for("admin.badges"))
@@ -281,6 +300,10 @@ def conversations():
 @admin_bp.route("/conversations/<int:conv_id>/delete", methods=["POST"])
 @admin_required
 def delete_conversation(conv_id):
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.conversations"))
+
     database.delete_conversation(conv_id)
     flash("Conversation deleted.", "success")
     return redirect(url_for("admin.conversations"))
@@ -289,6 +312,10 @@ def delete_conversation(conv_id):
 @admin_bp.route("/users/<int:user_id>/toggle-admin", methods=["POST"])
 @admin_required
 def toggle_admin(user_id):
+    if not validate_csrf():
+        flash("Session expired. Please try again.", "error")
+        return redirect(url_for("admin.users"))
+
     user = database.execute_query("SELECT username FROM users WHERE id = ?", (user_id,), fetch_one=True)
     if not user:
         flash("User not found.", "error")

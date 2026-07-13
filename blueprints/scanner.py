@@ -62,6 +62,7 @@ def api_scan():
 
 @scanner_bp.route("/api/config/vt-key", methods=["POST"])
 @login_required
+@limiter.limit("5 per minute")
 def config_vt_key():
     data = request.get_json() or {}
     key = data.get("key", "").strip()
@@ -189,6 +190,8 @@ def api_scan_network():
 @login_required
 @limiter.limit("10 per minute")
 def api_scan_target_ip():
+    from helpers import is_private_ip
+
     data       = request.get_json() or {}
     target_ip  = data.get("target_ip", "").strip()
     port_range = data.get("ports", "").strip()
@@ -199,6 +202,9 @@ def api_scan_target_ip():
         socket.inet_aton(target_ip)
     except socket.error:
         return jsonify({"error": "Invalid IP address format"}), 400
+
+    if is_private_ip(target_ip):
+        return jsonify({"error": "Scanning private/internal IPs is not allowed"}), 403
 
     if NMAP_ENGINE:
         ports_arg = "F"
