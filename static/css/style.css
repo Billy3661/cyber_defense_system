@@ -3258,7 +3258,6 @@ a:hover {
 
     /* ── Simulator scroll containment ── */
     .inbox-sidebar { overscroll-behavior: contain; }
-    .email-body { overscroll-behavior: contain; }
 
     /* ── Prevent scroll jumps ── */
     .page-header { position: relative; z-index: 1; }
