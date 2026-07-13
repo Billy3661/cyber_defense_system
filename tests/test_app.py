@@ -84,7 +84,7 @@ class TestAppFactoryAndConfiguration:
 
     def test_route_count(self, app):
         rules = [r for r in app.url_map.iter_rules() if r.endpoint != "static"]
-        assert len(rules) == 56
+        assert len(rules) == 64
 
 
 # ============================================================

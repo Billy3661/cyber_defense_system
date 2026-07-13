@@ -92,6 +92,17 @@ def init_db():
             content TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""",
+        """CREATE TABLE IF NOT EXISTS user_xp (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            xp INTEGER DEFAULT 0,
+            rank_level INTEGER DEFAULT 0,
+            campaigns_completed TEXT DEFAULT '[]',
+            boss_defeated INTEGER DEFAULT 0,
+            certified INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""",
     ]:
         cur.execute(_p(ddl))
     conn.commit()
@@ -316,3 +327,31 @@ def get_badge_leaderboard(limit=20):
         ORDER BY badge_count DESC, accuracy DESC
         LIMIT ?
     """, (limit,), fetch_all=True)
+
+def get_or_create_user_xp(username):
+    row = execute_query("SELECT * FROM user_xp WHERE username = ?", (username,), fetch_one=True)
+    if not row:
+        execute_query("INSERT INTO user_xp (username) VALUES (?)", (username,))
+        row = execute_query("SELECT * FROM user_xp WHERE username = ?", (username,), fetch_one=True)
+    return row
+
+def add_xp(username, amount):
+    execute_query("UPDATE user_xp SET xp = xp + ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?", (amount, username))
+
+def set_rank(username, rank_level):
+    execute_query("UPDATE user_xp SET rank_level = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?", (rank_level, username))
+
+def complete_campaign(username, campaign_id):
+    import json
+    row = get_or_create_user_xp(username)
+    completed = json.loads(row["campaigns_completed"]) if row["campaigns_completed"] else []
+    if campaign_id not in completed:
+        completed.append(campaign_id)
+        execute_query("UPDATE user_xp SET campaigns_completed = ?, updated_at = CURRENT_TIMESTAMP WHERE username = ?",
+                      (json.dumps(completed), username))
+
+def defeat_boss(username):
+    execute_query("UPDATE user_xp SET boss_defeated = 1, updated_at = CURRENT_TIMESTAMP WHERE username = ?", (username,))
+
+def set_certified(username):
+    execute_query("UPDATE user_xp SET certified = 1, updated_at = CURRENT_TIMESTAMP WHERE username = ?", (username,))

@@ -767,6 +767,743 @@ MOCK_INBOX_EMAILS = [
     }
 ]
 
+CAMPAIGN_DATA = [
+    {
+        "id": "wire_transfer",
+        "title": "The Wire Transfer",
+        "difficulty": "Easy",
+        "narrative": "You're a newly hired financial analyst at Meridian Corp. Strange emails have been circulating about urgent wire transfers. Your job: separate fact from fraud.",
+        "threat_type": "CEO Fraud / Business Email Compromise",
+        "xp_reward": 50,
+        "emails": [
+            {
+                "id": "wt_phish_1",
+                "sender_name": "James Whitfield",
+                "sender_email": "j.whitfield@meridian-corp.works",
+                "subject": "URGENT: Confidential Wire Transfer — Action Required Today",
+                "date": "Today, 8:12 AM",
+                "body_html": """
+                    <p>Hi,</p>
+                    <p>I'm in a board meeting and can't take calls. We need to process an urgent wire transfer for a time-sensitive acquisition. The usual approval process won't work — the counterparty's window closes at noon today.</p>
+                    <p>Please initiate a transfer of <strong>$147,500.00</strong> to the following account immediately:</p>
+                    <div style="background:#f4f6f9;border-left:4px solid #2563eb;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-family:monospace;font-size:0.9rem;">
+                        <p style="margin:0;"><strong>Bank:</strong> First National Trust</p>
+                        <p style="margin:0;"><strong>Account Name:</strong> Apex Capital Holdings LLC</p>
+                        <p style="margin:0;"><strong>Account #:</strong> 8847201935</p>
+                        <p style="margin:0;"><strong>Routing #:</strong> 021000089</p>
+                    </div>
+                    <p>I've already looped in Legal — they're expecting this. Reference the payment as "Strategic Initiative — Phase 1" in the memo line.</p>
+                    <p>This is confidential. Don't discuss it on Slack or email anyone else about it. Reply to me directly if you have questions.</p>
+                    <p>Thanks,<br>James Whitfield<br>CEO, Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-corp.works", "reason": "Lookalike domain: The real Meridian Corp uses 'meridian-corp.com'. The '.works' TLD is a common attacker trick to impersonate corporate domains."},
+                    {"target": "URGENT: Confidential Wire Transfer", "reason": "Urgency + secrecy combination: Attackers create artificial time pressure and isolate you from colleagues so you won't verify the request."},
+                    {"target": "I'm in a board meeting and can't take calls", "reason": "Pretext for unreachability: The attacker gives a reason why they can't be contacted by phone, preventing you from verifying the request with the real CEO."},
+                    {"target": "Apex Capital Holdings LLC", "reason": "Unfamiliar beneficiary: Legitimate wire transfers at established companies go to known, pre-vetted vendor accounts — not new entities you've never heard of."},
+                    {"target": "Don't discuss it on Slack or email anyone else", "reason": "Isolation tactic: Explicitly forbidding you from consulting colleagues is designed to prevent the fraud from being caught before the money leaves."}
+                ],
+                "explanation": "This is a classic CEO Fraud / Business Email Compromise (BEC) attack. The attacker impersonates the CEO, creates urgency, provides wire instructions to a controlled account, and isolates the target from colleagues. Always verify wire transfer requests via a separate communication channel — never reply to the email."
+            },
+            {
+                "id": "wt_phish_2",
+                "sender_name": "Accounts Payable",
+                "sender_email": "ap@meridiancorp-finance.com",
+                "subject": "Updated Payment Instructions — Action Required",
+                "date": "Today, 9:03 AM",
+                "body_html": """
+                    <p>Good morning,</p>
+                    <p>As part of our quarterly compliance review, we've updated our banking details for vendor payments. Please use the following account information for all outgoing wire transfers effective immediately:</p>
+                    <div style="background:#f4f6f9;border-left:4px solid #2563eb;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-family:monospace;font-size:0.9rem;">
+                        <p style="margin:0;"><strong>Bank:</strong> Pinnacle Federal Savings</p>
+                        <p style="margin:0;"><strong>Account Name:</strong> Meridian Corp Operating</p>
+                        <p style="margin:0;"><strong>Account #:</strong> 4491027365</p>
+                        <p style="margin:0;"><strong>Routing #:</strong> 026009593</p>
+                    </div>
+                    <p>Please update your payment templates in the ERP system by end of day. Payments sent to old accounts after today may not be recovered.</p>
+                    <p>If you have any questions, reply to this email or visit our portal at <a href="https://meridian-corp-finance.com/updates" style="color:#2563eb;" onclick="event.preventDefault();">meridian-corp-finance.com/updates</a>.</p>
+                    <p>Thank you,<br>Accounts Payable Department<br>Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridiancorp-finance.com", "reason": "Spoofed domain: The legitimate company domain is 'meridian-corp.com' with a hyphen. This domain 'meridiancorp-finance.com' drops the hyphen and adds a suffix — a subtle impersonation trick."},
+                    {"target": "Updated Payment Instructions", "reason": "Payment instruction changes are a top BEC tactic: Attackers intercept the right timing (after CEO fraud) to redirect funds to their accounts."},
+                    {"target": "Payments sent to old accounts after today may not be recovered", "reason": "Fear-based pressure: The threat of lost funds pressures you to act quickly rather than verifying the change through normal channels."},
+                    {"target": "meridian-corp-finance.com/updates", "reason": "Malicious link: The portal URL uses the same spoofed domain. Any credentials entered here go to the attacker."}
+                ],
+                "explanation": "This is a Business Email Compromise follow-up attack. After the fake CEO email, a second attacker sends 'updated payment instructions' to make the wire transfer seem routine. Notice the domain is slightly different from the real 'meridian-corp.com'. Always verify banking changes through your established finance team contact — not via email."
+            },
+            {
+                "id": "wt_legit_1",
+                "sender_name": "IT Operations",
+                "sender_email": "it-ops@meridian-corp.com",
+                "subject": "Scheduled Server Maintenance — Saturday 2 AM–6 AM EST",
+                "date": "Yesterday, 4:30 PM",
+                "body_html": """
+                    <p>Hi everyone,</p>
+                    <p>This is a reminder that we have scheduled maintenance on our internal servers this Saturday from 2:00 AM to 6:00 AM EST. During this window, the following services will be unavailable:</p>
+                    <ul>
+                        <li>Internal email (Outlook/OWA)</li>
+                        <li>SharePoint and OneDrive</li>
+                        <li>VPN access</li>
+                        <li>ERP system (SAP)</li>
+                    </ul>
+                    <p>Please save all work and log out of VPN before 2:00 AM. If you have critical operations that require system access during this window, please contact the IT Service Desk by Friday EOD to arrange an exemption.</p>
+                    <p>We apologize for the inconvenience. This maintenance is necessary to apply critical security patches to our infrastructure.</p>
+                    <p>Best,<br>IT Operations Team<br>it-ops@meridian-corp.com</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified internal domain 'meridian-corp.com', provides a reasonable and routine maintenance notice, lists specific services affected, and asks employees to plan ahead — typical corporate IT communication with no urgency, threats, or suspicious links."
+            },
+            {
+                "id": "wt_phish_3",
+                "sender_name": "Security Alert Team",
+                "sender_email": "alerts@meridian-secure-banking.com",
+                "subject": "FRAUD ALERT: Suspicious Transaction Detected on Corporate Account",
+                "date": "Today, 7:45 AM",
+                "body_html": """
+                    <p style="color:#dc2626;font-weight:bold;">⚠ FRAUD ALERT — Immediate Verification Required</p>
+                    <p>Dear Meridian Corp Account Holder,</p>
+                    <p>Our fraud detection system has flagged <strong>3 suspicious transactions</strong> on your corporate checking account ending in ****4821:</p>
+                    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-size:0.9rem;">
+                        <p style="margin:0;">Transaction 1: $23,400.00 — Wire to unknown recipient — <em>PENDING</em></p>
+                        <p style="margin:0;">Transaction 2: $15,200.00 — ACH debit — <em>PENDING</em></p>
+                        <p style="margin:0;">Transaction 3: $8,900.00 — International wire — <em>PENDING</em></p>
+                    </div>
+                    <p>If you did not authorize these transactions, you must verify your identity within <strong>60 minutes</strong> to prevent the transfers from completing.</p>
+                    <p style="margin:1rem 0;"><a href="https://meridian-secure-banking.com/verify?acct=4821" class="sim-btn" onclick="event.preventDefault();">Verify Identity &amp; Block Transactions</a></p>
+                    <p>If you do not verify, the transactions will be processed and recovery cannot be guaranteed.</p>
+                    <p>Meridian Corporate Banking Security Division</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-secure-banking.com", "reason": "Fake banking domain: Meridian Corp banks with First National Trust (as shown in company records), not 'meridian-secure-banking.com'. This is a credential harvesting site."},
+                    {"target": "60 minutes", "reason": "Artificial deadline: The 60-minute window is designed to panic you into clicking without verifying the alert's legitimacy."},
+                    {"target": "FRAUD ALERT", "reason": "Fear-based manipulation: Showing large pending fraudulent charges triggers a panic response. Real fraud alerts don't typically appear via unsolicited email as the primary notification."},
+                    {"target": "Verify Identity & Block Transactions", "reason": "Credential harvesting: This button leads to a fake login page designed to capture your corporate banking credentials."},
+                    {"target": "recovery cannot be guaranteed", "reason": "Consequence pressure: Threatening permanent loss if you don't act immediately is a classic social engineering tactic."}
+                ],
+                "explanation": "This phishing email impersonates a banking fraud alert to harvest credentials. The sender domain 'meridian-secure-banking.com' is fabricated. Real fraud alerts come from your actual bank's verified domain, and banks typically call for urgent fraud matters — not just email. Never click links in unsolicited fraud alerts; always call your bank directly using the number on your card."
+            },
+            {
+                "id": "wt_phish_4",
+                "sender_name": "Robert Chen",
+                "sender_email": "r.chen@meridian-corp.works",
+                "subject": "Quick Favor — Client Appreciation Gifts",
+                "date": "Today, 10:15 AM",
+                "body_html": """
+                    <p>Hey,</p>
+                    <p>Following up on our conversation at the offsite — I need your help getting 15 Google Play gift cards ($200 each) for our top clients as part of the Q3 appreciation initiative. The board signed off on this yesterday.</p>
+                    <p>I know this is unconventional, but we need to get these out before the end of the quarter. Can you purchase them and email me the redemption codes? I'll reimburse you through expense reporting.</p>
+                    <p>Total cost: $3,000. Use the corporate purchasing card if possible — otherwise, I'll make sure finance expedites your reimbursement.</p>
+                    <p>I'm heads-down in client meetings all day so email is the best way to reach me. Thanks!</p>
+                    <p>Best,<br>Robert Chen<br>CFO, Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-corp.works", "reason": "Lookalike domain: Same '.works' TLD impersonation used in the fake CEO email — a strong indicator this is part of the same attack campaign."},
+                    {"target": "Google Play gift cards", "reason": "Gift card scam: Gift cards are untraceable and irreversible. Legitimate companies never use gift cards as client gifts through individual employees."},
+                    {"target": "email me the redemption codes", "reason": "Credential/code theft: Once the attacker has the gift card codes, they are instantly redeemed and untraceable."},
+                    {"target": "I'm heads-down in client meetings all day so email is the best way to reach me", "reason": "Pretext for isolation: Again preventing you from picking up the phone to verify the request with the real CFO."},
+                    {"target": "reimburse you through expense reporting", "reason": "Trust building: Offering reimbursement makes the request seem like standard business practice rather than theft."}
+                ],
+                "explanation": "This is a gift card fraud attack impersonating the CFO. The attacker requests untraceable gift cards and asks for redemption codes via email. Legitimate companies never ask employees to purchase gift cards and share codes over email. Always verify unusual financial requests — especially ones involving gift cards — via a phone call to the supposed requester."
+            }
+        ]
+    },
+    {
+        "id": "supply_chain",
+        "title": "Supply Chain Nightmare",
+        "difficulty": "Easy-Medium",
+        "narrative": "Your company just onboarded a new software vendor. Employees are receiving update notifications from the vendor. But are they real?",
+        "threat_type": "Supply Chain Compromise",
+        "xp_reward": 75,
+        "emails": [
+            {
+                "id": "sc_phish_1",
+                "sender_name": "npm Security Advisory",
+                "sender_email": "security@npm-security-alert.com",
+                "subject": "CRITICAL: Vulnerability Detected in @meridian/core-ui — Immediate Update Required",
+                "date": "Today, 6:45 AM",
+                "body_html": """
+                    <p>Dear Development Team,</p>
+                    <p>Our automated dependency scanner has detected a <strong>critical remote code execution vulnerability</strong> (CVE-2026-41823) in <code>@meridian/core-ui@3.14.2</code>, a package currently used in production at your organization.</p>
+                    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-size:0.9rem;">
+                        <p style="margin:0;"><strong>CVSS Score:</strong> 9.8 (Critical)</p>
+                        <p style="margin:0;"><strong>Affected Versions:</strong> 3.10.0 – 3.14.2</p>
+                        <p style="margin:0;"><strong>Patched Version:</strong> 3.14.3</p>
+                        <p style="margin:0;"><strong>Exploit Status:</strong> Actively exploited in the wild</p>
+                    </div>
+                    <p>To update your dependencies, run the following command or click the button below to access the advisory with full remediation steps:</p>
+                    <p style="margin:1rem 0;"><a href="https://npm-security-alert.com/advisory/2026-41823" class="sim-btn" onclick="event.preventDefault();">View Full Advisory &amp; Patch Instructions</a></p>
+                    <p style="font-size:0.85rem;color:#6b7280;">This is an automated message from the npm Security Advisory Service. Do not reply to this email.</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "npm-security-alert.com", "reason": "Fake domain: The real npm registry uses 'npmjs.com'. 'npm-security-alert.com' is a typosquatting domain designed to look official."},
+                    {"target": "CVE-2026-41823", "reason": "Fabricated CVE: Attackers invent realistic-sounding CVE numbers with high CVSS scores to create panic. Always verify CVEs on official sources like nvd.nist.gov."},
+                    {"target": "View Full Advisory & Patch Instructions", "reason": "Malicious link: This button leads to a phishing site that may serve typosquatted npm packages containing malware, or harvest developer credentials."},
+                    {"target": "Actively exploited in the wild", "reason": "Urgency escalation: Claiming active exploitation pressures developers to act immediately without verifying the advisory's authenticity."}
+                ],
+                "explanation": "This is a supply chain phishing attack targeting developers. The attacker created a fake npm security domain and fabricated a CVE to trick developers into visiting a malicious site. Real npm advisories come from 'npmjs.com' or 'github.com/advisories'. Always verify security advisories on the official npm website or GitHub Advisory Database before taking action."
+            },
+            {
+                "id": "sc_legit_1",
+                "sender_name": "HR Benefits Team",
+                "sender_email": "benefits@meridian-corp.com",
+                "subject": "Open Enrollment Deadline — Friday, July 17",
+                "date": "Yesterday, 11:00 AM",
+                "body_html": """
+                    <p>Hi team,</p>
+                    <p>This is a reminder that the annual benefits open enrollment period closes this <strong>Friday, July 17 at 5:00 PM EST</strong>.</p>
+                    <p>If you haven't yet made your elections, please log in to the benefits portal at <a href="https://benefits.meridian-corp.com" style="color:#2563eb;" onclick="event.preventDefault();">benefits.meridian-corp.com</a> to review your options and submit your selections.</p>
+                    <p>Key changes this year include:</p>
+                    <ul>
+                        <li>New dental plan option with orthodontic coverage</li>
+                        <li>Increased employer HSA contribution ($500 individual / $1,000 family)</li>
+                        <li>Updated telehealth provider network</li>
+                    </ul>
+                    <p>If you need assistance, the HR Benefits team is hosting drop-in Q&A sessions in Conference Room B today and tomorrow from 12–1 PM.</p>
+                    <p>Best regards,<br>HR Benefits Team<br>benefits@meridian-corp.com</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'meridian-corp.com' domain, references real company processes (open enrollment, specific deadlines), and provides helpful details like Q&A session locations. There are no suspicious links, urgency tactics, or requests for sensitive information."
+            },
+            {
+                "id": "sc_phish_2",
+                "sender_name": "AWS Account Security",
+                "sender_email": "no-reply@aws-service-notice.com",
+                "subject": "URGENT: Your AWS Account Will Be Suspended — Payment Verification Required",
+                "date": "Today, 7:30 AM",
+                "body_html": """
+                    <p style="color:#dc2626;font-weight:bold;">⚠ Action Required: Account Suspension Notice</p>
+                    <p>Dear AWS Customer,</p>
+                    <p>We were unable to process the payment on file for your AWS account (<strong>meridian-prod</strong>). Your services will be <strong>suspended within 24 hours</strong> if payment is not verified.</p>
+                    <p>Affected services include:</p>
+                    <ul>
+                        <li>EC2 instances (Production workloads)</li>
+                        <li>RDS databases</li>
+                        <li>S3 storage buckets</li>
+                        <li>CloudFront distributions</li>
+                    </ul>
+                    <p>To avoid service interruption, please update your payment method:</p>
+                    <p style="margin:1rem 0;"><a href="https://aws-service-notice.com/billing/update?ref=meridian" class="sim-btn" onclick="event.preventDefault();">Update Payment Method</a></p>
+                    <p style="font-size:0.85rem;color:#6b7280;">Amazon Web Services, Inc. | 410 Terry Avenue North, Seattle, WA 98109</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "aws-service-notice.com", "reason": "Fake domain: AWS uses 'amazonaws.com' and 'aws.amazon.com'. 'aws-service-notice.com' is a impersonation domain used to harvest AWS credentials."},
+                    {"target": "suspended within 24 hours", "reason": "Urgency + consequence: Threatening production service suspension creates panic, especially for engineers who know the impact of AWS downtime."},
+                    {"target": "EC2, RDS, S3, CloudFront", "reason": "Specificity as persuasion: Listing real AWS services makes the email appear targeted and legitimate, but any attacker can look up a company's tech stack."},
+                    {"target": "Update Payment Method", "reason": "Credential harvesting: This link leads to a fake AWS login page that captures your credentials, giving the attacker access to your actual AWS infrastructure."},
+                    {"target": "aws-service-notice.com/billing/update", "reason": "URL mismatch: Real AWS billing notifications come from amazon.com domains, not standalone notice domains."}
+                ],
+                "explanation": "This phishing attack targets cloud infrastructure credentials by impersonating AWS billing. The fake domain 'aws-service-notice.com' mimics official AWS communications. Real AWS suspension notices come from '@amazon.com' or appear in the AWS console. Never click billing links in emails — always navigate directly to aws.amazon.com and check your billing dashboard."
+            },
+            {
+                "id": "sc_legit_2",
+                "sender_name": "Marcus Rivera",
+                "sender_email": "m.rivera@meridian-corp.com",
+                "subject": "Sprint Retro — Thursday 3 PM — Please Add Your Notes",
+                "date": "Yesterday, 2:15 PM",
+                "body_html": """
+                    <p>Hey team,</p>
+                    <p>Just a heads-up that our sprint retrospective is scheduled for <strong>Thursday at 3:00 PM</strong> in the Dev Team room (and via Zoom for remote folks).</p>
+                    <p>Before the meeting, please add your notes to the retro board:</p>
+                    <ul>
+                        <li><strong>What went well?</strong></li>
+                        <li><strong>What could improve?</strong></li>
+                        <li><strong>Any kudos for teammates?</strong></li>
+                    </ul>
+                    <p>The board is pinned in our #dev-team Slack channel. Please try to add at least 2 items before the meeting so we can have a productive discussion.</p>
+                    <p>See you there!</p>
+                    <p>— Marcus</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It's from an internal colleague ('meridian-corp.com'), references a routine team meeting, uses casual and natural tone, and doesn't ask for any sensitive information or contain suspicious links."
+            },
+            {
+                "id": "sc_phish_3",
+                "sender_name": "Slack Security Team",
+                "sender_email": "notifications@slack-workspace-migrate.com",
+                "subject": "Your Slack Workspace Is Being Migrated — Re-Authenticate Now",
+                "date": "Today, 9:00 AM",
+                "body_html": """
+                    <p>Hi,</p>
+                    <p>As part of Slack's infrastructure upgrade, your workspace <strong>meridian-corp</strong> is being migrated to our new authentication system. This migration improves security and requires all members to re-authenticate.</p>
+                    <p>⚠ <strong>You must complete re-authentication within 48 hours</strong> or you will be locked out of the workspace.</p>
+                    <p style="margin:1rem 0;"><a href="https://slack-workspace-migrate.com/auth/relogin?ws=meridian-corp" class="sim-btn" onclick="event.preventDefault();">Re-Authenticate Now</a></p>
+                    <p>After clicking the link, you'll be asked to enter your Slack email and password to verify your identity. You may also be prompted for your two-factor authentication code.</p>
+                    <p>If you have questions, visit our help center at <a href="https://slack-workspace-migrate.com/help" style="color:#2563eb;" onclick="event.preventDefault();">slack-workspace-migrate.com/help</a>.</p>
+                    <p>— The Slack Team</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "slack-workspace-migrate.com", "reason": "Fake domain: Slack uses 'slack.com' and 'slackhq.com'. 'slack-workspace-migrate.com' is a credential harvesting domain impersonating Slack."},
+                    {"target": "re-authenticate", "reason": "Credential theft via re-authentication pretext: Asking users to re-enter credentials is one of the most common phishing techniques."},
+                    {"target": "locked out of the workspace", "reason": "Fear of loss: Threatening workspace lockout pressures employees to click quickly rather than verify the email's authenticity."},
+                    {"target": "you'll be asked to enter your Slack email and password", "reason": "Explicit credential collection: The email openly states it will collect your password — real Slack re-authentication happens within the Slack app, not via email links."},
+                    {"target": "two-factor authentication code", "reason": "MFA bypass attempt: By asking for your 2FA code, the attacker can complete real-time MFA interception, logging into your actual Slack account."}
+                ],
+                "explanation": "This is a sophisticated credential harvesting attack impersonating Slack. The attacker knows that requesting re-authentication is highly effective because employees are accustomed to occasional re-authentication prompts. Real Slack authentication changes appear as in-app notifications, never via email. Always verify workspace changes by checking Slack's official status page or your admin console."
+            }
+        ]
+    },
+    {
+        "id": "clone_wars",
+        "title": "The Clone Wars",
+        "difficulty": "Medium",
+        "narrative": "A sophisticated attacker has been cloning your company's internal portals. Employees report seeing 'identical' login pages. Investigate the incoming emails.",
+        "threat_type": "Website Cloning & Credential Harvesting",
+        "xp_reward": 100,
+        "emails": [
+            {
+                "id": "cw_phish_1",
+                "sender_name": "IT Security Team",
+                "sender_email": "security@merid1an-corp.com",
+                "subject": "Mandatory Account Verification — Security Audit Compliance",
+                "date": "Today, 7:00 AM",
+                "body_html": """
+                    <p>Dear Employee,</p>
+                    <p>As part of our annual security audit, all employees are required to verify their account credentials in our new Identity Management Portal. This is mandatory and must be completed by <strong>end of day today</strong>.</p>
+                    <p>Failure to verify will result in temporary account suspension per our IT Security Policy (Section 4.2).</p>
+                    <p style="margin:1rem 0;"><a href="https://merid1an-corp.com/identity/verify" class="sim-btn" onclick="event.preventDefault();">Verify Your Account</a></p>
+                    <p>You will need to enter your corporate email and current password. You may also be asked to set a new password if our system detects it hasn't been changed in 90+ days.</p>
+                    <p>Thank you for your cooperation.</p>
+                    <p>IT Security Team<br>Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "merid1an-corp.com", "reason": "Homograph domain: The letter 'i' in 'meridian' is replaced with the number '1' (merid1an-corp.com). This is visually almost identical but is a completely different domain."},
+                    {"target": "Verify Your Account", "reason": "Credential harvesting: This link leads to a cloned version of the Meridian Corp login portal that captures your credentials."},
+                    {"target": "set a new password if our system detects it hasn't been changed in 90+ days", "reason": "Legitimacy building: Adding realistic-sounding policy details makes the request seem like standard IT procedure."},
+                    {"target": "temporary account suspension", "reason": "Negative consequence: Threatening account suspension pressures employees to comply without questioning the email's source."},
+                    {"target": "end of day today", "reason": "Urgency: Tight deadline prevents employees from independently verifying the request with IT."}
+                ],
+                "explanation": "This is a website cloning attack using a homograph domain. The attacker replaced 'i' with '1' in 'meridian' — virtually invisible in most fonts. The link leads to a pixel-perfect clone of the Meridian login page that captures credentials. Always check domains character-by-character, especially when email requests involve logging in."
+            },
+            {
+                "id": "cw_legit_1",
+                "sender_name": "Diana Kowalski",
+                "sender_email": "d.kowalski@meridian-corp.com",
+                "subject": "Project Atlas — Deadline Extended to August 1",
+                "date": "Yesterday, 3:45 PM",
+                "body_html": """
+                    <p>Hi team,</p>
+                    <p>Good news — I spoke with the VP of Product this afternoon and she's approved a one-week extension for Project Atlas. The new deadline is <strong>Saturday, August 1</strong>.</p>
+                    <p>This gives us extra time to complete the integration testing phase that was delayed by the vendor API issues last week. I've updated the project timeline in Jira accordingly.</p>
+                    <p>Please review the updated milestones and let me know if you foresee any conflicts with the new dates. I'll send a revised status report by end of day Monday.</p>
+                    <p>Thanks for the hard work, everyone. We're in good shape for the new deadline.</p>
+                    <p>Best,<br>Diana Kowalski<br>Engineering Manager, Meridian Corp</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It's from an internal manager on the 'meridian-corp.com' domain, references real project details, communicates a schedule change in a professional manner, and doesn't request any credentials or sensitive information."
+            },
+            {
+                "id": "cw_phish_2",
+                "sender_name": "SharePoint Online",
+                "sender_email": "noreply@meridian-sharepoint.com",
+                "subject": "Sarah Mitchell shared a document with you — 'Q3_Budget_Forecast.xlsx'",
+                "date": "Today, 8:30 AM",
+                "body_html": """
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:1.5rem;max-width:480px;margin:0 auto;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <div style="width:40px;height:40px;background:#0078d4;border-radius:4px;margin-right:12px;display:flex;align-items:center;color:white;font-weight:bold;font-size:1.2rem;">S</div>
+                            <div>
+                                <p style="margin:0;font-weight:600;">SharePoint Online</p>
+                                <p style="margin:0;font-size:0.8rem;color:#6b7280;">meridian-corp.sharepoint.com</p>
+                            </div>
+                        </div>
+                        <p style="font-size:0.95rem;"><strong>Sarah Mitchell</strong> shared a file with you:</p>
+                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:0.75rem 1rem;margin:0.75rem 0;">
+                            <p style="margin:0;font-weight:600;">📊 Q3_Budget_Forecast.xlsx</p>
+                            <p style="margin:0.25rem 0 0 0;font-size:0.8rem;color:#6b7280;">Excel Workbook · 2.4 MB</p>
+                        </div>
+                        <p style="margin:1rem 0;"><a href="https://meridian-sharepoint.com/preview/Q3_Budget_Forecast.xlsx" class="sim-btn" style="display:block;text-align:center;padding:0.75rem;background:#0078d4;color:white;border-radius:6px;text-decoration:none;font-weight:600;" onclick="event.preventDefault();">Open in SharePoint</a></p>
+                        <p style="font-size:0.8rem;color:#9ca3af;">This email was sent from a notification-only address. Do not reply.</p>
+                    </div>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-sharepoint.com", "reason": "Cloned portal domain: Real SharePoint notifications come from 'meridian-corp.sharepoint.com' (Microsoft's infrastructure), not 'meridian-sharepoint.com'."},
+                    {"target": "meridian-sharepoint.com/preview/Q3_Budget_Forecast.xlsx", "reason": "Credential harvesting: Clicking 'Open in SharePoint' leads to a cloned Microsoft login page that captures your corporate credentials."},
+                    {"target": "Q3_Budget_Forecast.xlsx", "reason": "Relevant bait: Using a finance document name makes it seem like a real colleague shared something you'd want to see, increasing the likelihood of clicking."},
+                    {"target": "Sarah Mitchell", "reason": "Impersonated colleague: The attacker used a real employee name to make the notification appear legitimate. Real SharePoint emails do use colleague names, which is why this is effective."},
+                    {"target": "SharePoint Online branding", "reason": "Visual cloning: The email replicates SharePoint's exact visual style (logo, layout, colors) to appear authentic. This is the 'clone' aspect of the attack."}
+                ],
+                "explanation": "This is a website cloning phishing attack that replicates SharePoint's visual identity. The domain 'meridian-sharepoint.com' mimics a Microsoft SharePoint URL but is completely separate. Real SharePoint notifications come from Microsoft's infrastructure (sharepoint.com). Always verify the full URL and domain before entering credentials on any login page."
+            },
+            {
+                "id": "cw_phish_3",
+                "sender_name": "Meridian Benefits Portal",
+                "sender_email": "benefits@meridian-benefits-portal.com",
+                "subject": "Open Your 2026 Benefits Summary — Action Required",
+                "date": "Today, 10:00 AM",
+                "body_html": """
+                    <p>Hi,</p>
+                    <p>Your 2026 benefits summary is now available for review. As part of the annual benefits renewal, you are required to acknowledge your current elections and make any changes before the enrollment window closes.</p>
+                    <p style="margin:1rem 0;"><a href="https://meridian-benefits-portal.com/acknowledge?emp=current" class="sim-btn" onclick="event.preventDefault();">Review &amp; Acknowledge Benefits</a></p>
+                    <p>You will be asked to authenticate using your corporate credentials to access the portal. If your session has expired, you'll be prompted to log in again.</p>
+                    <p>Best regards,<br>Benefits Administration<br>Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-benefits-portal.com", "reason": "Cloned portal domain: The real Meridian benefits portal is at 'benefits.meridian-corp.com'. This domain 'meridian-benefits-portal.com' inverts the subdomain structure to appear legitimate."},
+                    {"target": "authenticate using your corporate credentials", "reason": "Credential harvesting: This link leads to a cloned Meridian login page that captures your corporate credentials."},
+                    {"target": "session has expired", "reason": "Normalization of credential entry: The email pre-explains why you'd need to log in again, making the phishing page's credential prompt seem expected rather than suspicious."},
+                    {"target": "emp=current", "reason": "Generic parameter: A real benefits portal would use your employee ID, not a generic 'current' parameter, indicating this is a mass phishing campaign."}
+                ],
+                "explanation": "This is a cloned benefits portal phishing attack. The attacker created a domain that mirrors the structure of Meridian's real benefits portal but redirects to a credential harvesting page. Real benefits notifications come from 'benefits.meridian-corp.com' (verified corporate domain). Always navigate to benefits portals directly rather than clicking email links."
+            },
+            {
+                "id": "cw_legit_2",
+                "sender_name": "Facilities Department",
+                "sender_email": "facilities@meridian-corp.com",
+                "subject": "Office Closure — Monday, July 20 (Founders Day Holiday)",
+                "date": "2 days ago, 9:00 AM",
+                "body_html": """
+                    <p>Hi everyone,</p>
+                    <p>Please note that the Meridian Corp offices will be <strong>closed on Monday, July 20</strong> in observance of Founders Day. This applies to all office locations.</p>
+                    <p>Building access badges will not work on that day. If you need emergency building access, please contact the Facilities emergency line at ext. 5555.</p>
+                    <p>Regular office hours resume on Tuesday, July 21. The parking garage will remain accessible 24/7 for those who need to retrieve personal items.</p>
+                    <p>Enjoy the long weekend!</p>
+                    <p>Facilities Department<br>facilities@meridian-corp.com</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'meridian-corp.com' domain, provides standard office closure information with appropriate detail (building access, parking, emergency contact), and has a natural, helpful tone typical of facilities communications."
+            }
+        ]
+    },
+    {
+        "id": "insider_threat",
+        "title": "Internal Threat",
+        "difficulty": "Medium-Hard",
+        "narrative": "Whispers of an insider threat have reached the security team. Examine communications carefully — the call may be coming from inside the house.",
+        "threat_type": "Insider Threat & Social Engineering",
+        "xp_reward": 125,
+        "emails": [
+            {
+                "id": "it_phish_1",
+                "sender_name": "Alex Torres",
+                "sender_email": "alex.torres.dev@protonmail.com",
+                "subject": "Hey — can you review this doc for me?",
+                "date": "Today, 9:30 AM",
+                "body_html": """
+                    <p>Hey,</p>
+                    <p>I'm working on the proposal for the Henderson account and I need a second pair of eyes on the financial projections. I put everything in this doc:</p>
+                    <p style="margin:1rem 0;"><a href="https://docs.google.com/document/d/1xK9mRvLpQ7zF2n8Y3wJ6tK0dV5bH4gS/edit" class="sim-btn" onclick="event.preventDefault();">Open Financial Projections Doc</a></p>
+                    <p>It's pretty straightforward — just need you to check the numbers in the Q3 section. Should take 10 minutes tops.</p>
+                    <p>Also, I'm messaging from my personal email because my work account got locked again. IT is being super slow about unlocking it.</p>
+                    <p>Thanks!<br>Alex</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "protonmail.com", "reason": "External email impersonating a colleague: Alex Torres's real work email is 'a.torres@meridian-corp.com'. A message from a personal Protonmail account claiming to be a colleague is suspicious."},
+                    {"target": "my work account got locked", "reason": "Pretext for external email: The attacker explains away the unusual email address to prevent suspicion."},
+                    {"target": "docs.google.com/document/d/1xK9mRvLpQ7zF2n8Y3wJ6tK0dV5bH4gS", "reason": "Malicious Google Doc: Shared Google Docs can contain phishing links, malware payloads, or OAuth permission abuse that gives the attacker access to your Google account."},
+                    {"target": "Henderson account", "reason": "Social engineering via real context: The attacker researched internal project names to make the request appear legitimate."},
+                    {"target": "should take 10 minutes", "reason": "Minimization: Downplaying the effort required makes you more likely to click without questioning."}
+                ],
+                "explanation": "This is an insider threat / social engineering attack. The attacker impersonates a known colleague using a personal email account and requests review of a document that likely contains phishing links or malware. Real colleagues would message from their corporate email. Always verify external emails claiming to be from coworkers — a quick Slack or in-person check takes seconds."
+            },
+            {
+                "id": "it_phish_2",
+                "sender_name": "HR Confidential",
+                "sender_email": "confidential-survey@meridian-hr-portal.com",
+                "subject": "CONFIDENTIAL: Annual Employee Engagement Survey — Your Response Is Required",
+                "date": "Today, 8:00 AM",
+                "body_html": """
+                    <p>Dear Team Member,</p>
+                    <p>Our annual employee engagement survey is now live. This survey is <strong>completely anonymous</strong> and helps leadership understand how we can better support our teams.</p>
+                    <p>⚠ Due to regulatory requirements, <strong>participation is mandatory</strong> for all employees. Non-response will be escalated to your department head.</p>
+                    <p style="margin:1rem 0;"><a href="https://meridian-hr-portal.com/survey/2026?emp=confidential" class="sim-btn" onclick="event.preventDefault();">Take the Confidential Survey</a></p>
+                    <p>You will need to verify your identity with your corporate email and password before accessing the survey. This ensures each employee responds exactly once.</p>
+                    <p>Survey closes: <strong>July 18 at 11:59 PM</strong></p>
+                    <p>Thank you for your honest feedback.</p>
+                    <p>Human Resources<br>Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-hr-portal.com", "reason": "Cloned HR portal: Real Meridian HR communications come from 'hr@meridian-corp.com' and the benefits portal is 'benefits.meridian-corp.com', not 'meridian-hr-portal.com'."},
+                    {"target": "verify your identity with your corporate email and password", "reason": "Credential harvesting: Real anonymous surveys never require your corporate password. The 'verification' step is the actual attack — it captures your credentials."},
+                    {"target": "escalated to your department head", "reason": "Coercion: Threatening to escalate non-compliance pressures employees into completing the survey (and entering credentials) without questioning its source."},
+                    {"target": "completely anonymous", "reason": "Irony as a red flag: The survey claims to be anonymous but requires corporate credentials for 'verification' — these two things are contradictory. Truly anonymous surveys use unique tokens, not login credentials."}
+                ],
+                "explanation": "This phishing email impersonates an HR survey to harvest credentials. The key contradiction: an 'anonymous' survey that requires your corporate password. Real anonymous surveys from HR use unique survey tokens or links, not corporate authentication. Always be suspicious of any email that requests your password, regardless of how legitimate it appears."
+            },
+            {
+                "id": "it_legit_1",
+                "sender_name": "Finance Department",
+                "sender_email": "finance@meridian-corp.com",
+                "subject": "Q3 Budget Review — Department Heads Meeting Friday 2 PM",
+                "date": "Yesterday, 1:00 PM",
+                "body_html": """
+                    <p>Good afternoon,</p>
+                    <p>This is a reminder that the Q3 budget review meeting is scheduled for <strong>Friday at 2:00 PM</strong> in the Executive Conference Room (Floor 12).</p>
+                    <p>Department heads should come prepared with their updated budget forecasts and variance reports. The following items will be on the agenda:</p>
+                    <ul>
+                        <li>Q2 actuals vs. projections review</li>
+                        <li>Q3 headcount and hiring plan approval</li>
+                        <li>Capital expenditure requests for H2</li>
+                        <li>Cloud infrastructure cost optimization update</li>
+                    </ul>
+                    <p>Please submit any additional agenda items to finance@meridian-corp.com by end of day Wednesday.</p>
+                    <p>Finance Department<br>Meridian Corp</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'meridian-corp.com' domain, references a standard business process (budget review), lists realistic agenda items, and provides a professional communication tone without any urgency, threats, or credential requests."
+            },
+            {
+                "id": "it_phish_3",
+                "sender_name": "IT Help Desk",
+                "sender_email": "helpdesk@meridian-itsupport.com",
+                "subject": "Remote Access Setup — New Tool Installation Required for WFH Compliance",
+                "date": "Today, 11:15 AM",
+                "body_html": """
+                    <p>Hi,</p>
+                    <p>In preparation for our updated Work From Home policy (effective August 1), all employees who work remotely must install the new Meridian Secure Access Client (MSAC) on their devices.</p>
+                    <p>This tool provides encrypted VPN connectivity and endpoint verification required by our new compliance framework.</p>
+                    <p style="margin:1rem 0;"><a href="https://meridian-itsupport.com/download/msac-installer.exe" class="sim-btn" onclick="event.preventDefault();">Download MSAC Installer</a></p>
+                    <p>After installation, you'll be asked to authenticate with your corporate credentials to register the device. This is a one-time setup process.</p>
+                    <p>If you have any issues with installation, reply to this email or open a ticket at <a href="https://meridian-itsupport.com/tickets" style="color:#2563eb;" onclick="event.preventDefault();">meridian-itsupport.com/tickets</a>.</p>
+                    <p>Thanks,<br>IT Help Desk<br>Meridian Corp</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-itsupport.com", "reason": "Impersonation domain: Real Meridian IT communications come from 'it-ops@meridian-corp.com'. 'meridian-itsupport.com' is a separate attacker-controlled domain."},
+                    {"target": "msac-installer.exe", "reason": "Malicious executable: Downloading and running an .exe file from an unverified source could install malware, a remote access trojan (RAT), or keylogger on your machine."},
+                    {"target": "authenticate with your corporate credentials", "reason": "Credential harvesting: The installer likely prompts for corporate credentials during 'device registration', which are sent to the attacker."},
+                    {"target": "Work From Home policy", "reason": "Timely pretext: WFH policies are common corporate topics, making this request seem timely and plausible."},
+                    {"target": "endpoint verification", "reason": "Security language as camouflage: Using legitimate cybersecurity terminology ('endpoint verification', 'encrypted VPN') makes the malicious tool appear to be a security product."}
+                ],
+                "explanation": "This is a remote access trojan (RAT) delivery phishing attack. The attacker impersonates IT Help Desk and distributes a malicious .exe file disguised as a VPN compliance tool. Real IT software deployments go through verified channels (company app store, managed device updates) — never via email attachment links. Always check with IT directly before installing software from email requests."
+            },
+            {
+                "id": "it_legit_2",
+                "sender_name": "Security Awareness Team",
+                "sender_email": "security-awareness@meridian-corp.com",
+                "subject": "Phishing Awareness Training — Mandatory by July 31",
+                "date": "Yesterday, 10:30 AM",
+                "body_html": """
+                    <p>Hi team,</p>
+                    <p>Our annual Phishing Awareness Training is now available in the learning management system. This training is <strong>mandatory for all employees</strong> and must be completed by <strong>July 31</strong>.</p>
+                    <p>To complete the training:</p>
+                    <ol>
+                        <li>Log in to the LMS at <a href="https://lms.meridian-corp.com" style="color:#2563eb;" onclick="event.preventDefault();">lms.meridian-corp.com</a></li>
+                        <li>Navigate to "Required Training" → "Phishing Awareness 2026"</li>
+                        <li>Complete the module (approximately 20 minutes)</li>
+                        <li>Pass the quiz with 80% or higher</li>
+                    </ol>
+                    <p>Topics covered include: identifying phishing emails, credential theft prevention, social engineering tactics, and reporting procedures.</p>
+                    <p>After completing the training, you'll receive a digital badge on your profile. Managers will receive completion reports for their teams next week.</p>
+                    <p>Questions? Reply to this email or reach the Security Awareness team on Slack #security-training.</p>
+                    <p>Stay safe,<br>Security Awareness Team<br>security-awareness@meridian-corp.com</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified corporate domain, references a real LMS system, provides clear step-by-step instructions for completing training, and appropriately sets expectations (20 minutes, 80% quiz score). This is standard corporate security training communication."
+            }
+        ]
+    },
+    {
+        "id": "shadow_network",
+        "title": "APT: Shadow Network",
+        "difficulty": "Hard",
+        "narrative": "Intelligence suggests a state-sponsored group has targeted your organization. Their emails are flawless — almost. Find the microscopic flaws before it's too late.",
+        "threat_type": "Advanced Persistent Threat (APT)",
+        "xp_reward": 150,
+        "emails": [
+            {
+                "id": "apt_phish_1",
+                "sender_name": "CyberSec Conference",
+                "sender_email": "speakers@cybersec-summit-2026.com",
+                "subject": "Your Speaker Feedback & Presentation Materials — CyberSec Summit 2026",
+                "date": "Today, 6:00 AM",
+                "body_html": """
+                    <p>Dear Dr. Mitchell,</p>
+                    <p>Thank you for your excellent presentation at CyberSec Summit 2026 in Washington, D.C. last week. Your session on "Zero Trust Architecture in Enterprise Environments" received outstanding feedback from attendees.</p>
+                    <p>We've compiled the speaker feedback reports and attendee survey results for your review. Additionally, several attendees have requested copies of your slide deck, which we'd love to distribute on your behalf (with your permission).</p>
+                    <p style="margin:1rem 0;"><a href="https://cybersec-summit-2026.com/speakers/feedback/dr-mitchell" class="sim-btn" onclick="event.preventDefault();">Download Your Feedback Report</a></p>
+                    <p>Please also find attached the speaker agreement for next year's conference. We'd love to have you back — perhaps as a keynote?</p>
+                    <p>Looking forward to hearing from you.</p>
+                    <p>Best regards,<br>Laura Kensington<br>Program Director, CyberSec Summit 2026</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "cybersec-summit-2026.com", "reason": "Lookalike conference domain: The real CyberSec Summit uses 'cybersec-summit.com'. Adding the year and using the same structure is a hallmark of APT-level reconnaissance."},
+                    {"target": "Dr. Mitchell", "reason": "Personalized targeting: The attacker researched the target's real name, title, and recent conference appearance — characteristic of APT spear-phishing campaigns."},
+                    {"target": "Zero Trust Architecture in Enterprise Environments", "reason": "Reconnaissance-derived detail: The specific presentation topic indicates the attacker monitored the conference or scraped the speaker schedule to personalize the lure."},
+                    {"target": "Download Your Feedback Report", "reason": "Payload delivery: This link likely serves a tailored malware implant disguised as a PDF report, or leads to a credential harvesting page designed to match the conference branding."},
+                    {"target": "speaker agreement for next year's conference", "reason": "Secondary bait: Offering a future speaking opportunity creates additional motivation to open the attachment, increasing infection probability."}
+                ],
+                "explanation": "This is a highly targeted APT spear-phishing attack. The attacker conducted detailed reconnaissance: they know the target's name, title, recent conference attendance, and presentation topic. This level of personalization is characteristic of nation-state threat actors. Always verify conference communications directly through official conference websites, not email links."
+            },
+            {
+                "id": "apt_phish_2",
+                "sender_name": "National Cyber Defense Center",
+                "sender_email": "compliance@ncdc-gov.org",
+                "subject": "MANDATORY: Critical Security Compliance Directive — NCDC-2026-0742",
+                "date": "Today, 7:15 AM",
+                "body_html": """
+                    <p>Dear Organization Security Officer,</p>
+                    <p>The National Cyber Defense Center (NCDC) has issued mandatory compliance directive <strong>NCDC-2026-0742</strong> in response to recent advanced persistent threat activity targeting critical infrastructure sectors.</p>
+                    <p>All organizations in the Technology sector are required to:</p>
+                    <ol>
+                        <li>Submit a current network architecture diagram</li>
+                        <li>Verify all administrative accounts are enrolled in hardware MFA</li>
+                        <li>Report any indicators of compromise (IOCs) from the past 72 hours</li>
+                        <li>Complete the mandatory self-assessment questionnaire</li>
+                    </ol>
+                    <p style="margin:1rem 0;"><a href="https://ncdc-gov.org/compliance/submit?org=meridian-corp" class="sim-btn" onclick="event.preventDefault();">Submit Compliance Documentation</a></p>
+                    <p>Non-compliance will result in the organization being added to the Federal Non-Compliance Registry and may affect federal contracting eligibility.</p>
+                    <p>This directive has the force of law under the Critical Infrastructure Security Act of 2025.</p>
+                    <p>Dr. Richard Hayes<br>Deputy Director, National Cyber Defense Center</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "ncdc-gov.org", "reason": "Fake government domain: Real US government cybersecurity agencies use '.gov' domains (e.g., 'cisa.gov'). '.gov.org' is not a valid government TLD — it's a commercial domain anyone can register."},
+                    {"target": "Submit Compliance Documentation", "reason": "Credential and data harvesting: This link leads to a fake compliance portal that captures organizational details, employee credentials, and potentially network architecture information."},
+                    {"target": "non-compliance will result in", "reason": "Legal intimidation: APT actors use regulatory penalties and legal consequences to pressure organizations into immediate compliance without verification."},
+                    {"target": "network architecture diagram", "reason": "Intelligence gathering: Requesting network diagrams is a classic APT objective — this information enables follow-on network exploitation."},
+                    {"target": "Critical Infrastructure Security Act of 2025", "reason": "Fabricated legislation: The attacker invented a plausible-sounding law to add legal weight. Always verify government directives through official channels, not email links."}
+                ],
+                "explanation": "This is an APT attack impersonating a government agency to collect intelligence and credentials. The '.gov.org' domain is the critical flaw — real US government domains use '.gov' exclusively. APT actors use regulatory compliance as a lure because organizations are conditioned to respond quickly to government mandates. Always verify government communications through official websites and phone numbers."
+            },
+            {
+                "id": "apt_legit_1",
+                "sender_name": "Legal Department",
+                "sender_email": "legal@meridian-corp.com",
+                "subject": "Updated NDA Requirements — All Employees Must Re-Sign by August 15",
+                "date": "Yesterday, 4:00 PM",
+                "body_html": """
+                    <p>Dear Team,</p>
+                    <p>Following our recent acquisition of NovaTech Solutions, the Legal department has updated our Non-Disclosure Agreement (NDA) to include provisions related to NovaTech's intellectual property and client data.</p>
+                    <p>All current employees, contractors, and consultants must re-sign the updated NDA by <strong>August 15, 2026</strong>. You can review and sign the document through the following process:</p>
+                    <ol>
+                        <li>Log in to the HR portal at <a href="https://hr.meridian-corp.com/nda" style="color:#2563eb;" onclick="event.preventDefault();">hr.meridian-corp.com/nda</a></li>
+                        <li>Review the updated NDA document</li>
+                        <li>E-sign using your corporate credentials</li>
+                    </ol>
+                    <p>Legal counsel is available for any questions about the updated terms. Drop-in sessions will be held every Wednesday from 1–2 PM in Conference Room C through August.</p>
+                    <p>Please note that failure to re-sign by the deadline may result in restricted access to NovaTech-related systems and data.</p>
+                    <p>Best regards,<br>Legal Department<br>legal@meridian-corp.com</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'meridian-corp.com' domain, references a real business event (acquisition), provides clear instructions through the verified HR portal, and offers in-person legal sessions for questions. The tone is professional and the request is standard corporate procedure."
+            },
+            {
+                "id": "apt_phish_3",
+                "sender_name": "David Park",
+                "sender_email": "d.park@meridian-corp.com",
+                "subject": "Meeting Notes — Yesterday's Strategy Session",
+                "date": "Today, 8:45 AM",
+                "body_html": """
+                    <p>Hi,</p>
+                    <p>Attached are the notes from yesterday's strategy session with the leadership team. There were some important decisions made that affect our team directly, so please review before our standup this morning.</p>
+                    <p>Key takeaways:</p>
+                    <ul>
+                        <li>Q4 budget has been reallocated — our team gets an additional $200K for tooling</li>
+                        <li>New hire for the security team approved — start date moved up to August 1</li>
+                        <li>Incident response retainer with CrowdStrike renewed</li>
+                        <li>Board wants quarterly threat briefings starting Q3</li>
+                    </ul>
+                    <p style="margin:1rem 0;"><a href="https://meridian-corp.box.com/s/strategy-session-notes-july" class="sim-btn" onclick="event.preventDefault();">Open Meeting Notes (Box)</a></p>
+                    <p>I may have missed a few details so let me know if anything looks off.</p>
+                    <p>— David</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "meridian-corp.box.com/s/strategy-session-notes-july", "reason": "Spoofed Box URL: Real Box links use 'app.box.com'. This link uses 'meridian-corp.box.com' which could be a Box Shared Link to attacker-controlled content, or a completely spoofed URL."},
+                    {"target": "yesterday's strategy session", "reason": "Fabricated event: There was no strategy session yesterday. The attacker fabricated a plausible meeting to create urgency and curiosity — a hallmark of APT social engineering."},
+                    {"target": "Q4 budget has been reallocated — our team gets an additional $200K", "reason": "Bait with personal relevance: Sharing positive financial news about the target's team creates excitement that overrides suspicion."},
+                    {"target": "I may have missed a few details so let me know if anything looks off", "reason": "Authenticity building: The casual disclaimer mimics natural colleague behavior, making the email appear more genuine."},
+                    {"target": "d.park@meridian-corp.com", "reason": "Internal spoofing: APT actors can spoof internal sender addresses. The legitimate-looking sender doesn't guarantee authenticity — verify unusual requests through a separate channel."}
+                ],
+                "explanation": "This is an APT attack using a fabricated internal event. The attacker impersonated a colleague ('David Park') and referenced a meeting that never happened. The email contains enticing details (budget increases, new hires) designed to provoke curiosity and clicks. The Box link leads to either a credential harvesting page or malware-laced document. Always verify meeting references — a quick Slack message to 'David' would expose this fabrication."
+            },
+            {
+                "id": "apt_phish_4",
+                "sender_name": "ThreatGuard Licensing",
+                "sender_email": "licensing@threatguard.io",
+                "subject": "License Renewal Notice — ThreatGuard Enterprise (Exp. July 25)",
+                "date": "Today, 9:00 AM",
+                "body_html": """
+                    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                        <div style="background:#1e293b;color:white;padding:1.5rem;border-radius:8px 8px 0 0;">
+                            <h2 style="margin:0;font-size:1.2rem;">ThreatGuard Enterprise</h2>
+                            <p style="margin:0.5rem 0 0 0;opacity:0.8;">Advanced Threat Detection & Response Platform</p>
+                        </div>
+                        <div style="border:1px solid #e5e7eb;border-top:none;padding:1.5rem;border-radius:0 0 8px 8px;">
+                            <p>Dear Meridian Corp Security Team,</p>
+                            <p>Your ThreatGuard Enterprise license (<strong>TG-ENT-4827-MC</strong>) is set to expire on <strong>July 25, 2026</strong>. To maintain uninterrupted threat detection coverage, please renew your license before the expiration date.</p>
+                            <div style="background:#f1f5f9;border-radius:6px;padding:1rem;margin:1rem 0;">
+                                <p style="margin:0;"><strong>License:</strong> TG-ENT-4827-MC</p>
+                                <p style="margin:0;"><strong>Seats:</strong> 500 endpoints</p>
+                                <p style="margin:0;"><strong>Expiration:</strong> July 25, 2026</p>
+                                <p style="margin:0;"><strong>Annual Cost:</strong> $47,500.00</p>
+                            </div>
+                            <p style="margin:1rem 0;"><a href="https://threatguard.io/renew?license=TG-ENT-4827-MC" class="sim-btn" style="display:block;text-align:center;padding:0.75rem;background:#1e293b;color:white;border-radius:6px;text-decoration:none;font-weight:600;" onclick="event.preventDefault();">Renew License Now</a></p>
+                            <p style="font-size:0.85rem;color:#6b7280;">If you do not renew by July 25, threat detection services will be paused and your endpoint telemetry will no longer be collected.</p>
+                        </div>
+                        <div style="text-align:center;padding:1rem;font-size:0.8rem;color:#9ca3af;">
+                            <p style="margin:0;">ThreatGuard Inc. | San Francisco, CA</p>
+                            <p style="margin:0;"><a href="https://threatguard.io" style="color:#9ca3af;" onclick="event.preventDefault();">threatguard.io</a></p>
+                        </div>
+                    </div>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "threatguard.io", "reason": "Fake vendor domain: While ThreatGuard may be a real vendor, the attacker registered 'threatguard.io' (the real vendor may use '.com' or a different domain). APT actors clone vendor branding perfectly."},
+                    {"target": "TG-ENT-4827-MC", "reason": "Fabricated license key: The attacker generated a realistic-looking license key. No real license key was verified — the format is plausible but entirely fictional."},
+                    {"target": "Renew License Now", "reason": "Payment redirection: This link leads to a fake payment portal where the attacker captures corporate payment information (credit card, ACH details) or organizational intelligence."},
+                    {"target": "threat detection services will be paused", "reason": "Operational fear: Threatening to disable security tools creates urgency because security teams know the risk of running without threat detection."},
+                    {"target": "professional branding", "reason": "APT-level polish: The email uses professional HTML/CSS styling that perfectly mimics real vendor communications. Nation-state actors invest heavily in visual authenticity."}
+                ],
+                "explanation": "This is an APT attack impersonating a security vendor. The attacker cloned ThreatGuard's branding and created a convincing license renewal notice. The goal is to redirect a $47,500 payment to attacker-controlled accounts and harvest payment information. Always verify vendor renewal notices by logging into the vendor's portal directly or contacting your account manager through known contact information — never through email links."
+            }
+        ]
+    }
+]
+
+BOSS_BATTLE_EMAIL = {
+    "id": "boss_apt_ultima",
+    "sender_name": "Dr. Sarah Chen, VP of Engineering",
+    "sender_email": "schen@meridian-corp.works",
+    "subject": "Re: Q3 Security Audit Results — Confidential",
+    "date": "Today, 9:17 AM",
+    "body_html": """
+        <p>Hi team,</p>
+        <p>Following our board meeting yesterday, I've attached the finalized Q3 security audit findings. Several critical vulnerabilities were identified in our payment processing pipeline that require immediate remediation.</p>
+        <p>The board has approved an emergency patch deployment window this Thursday at 2 AM EST. All engineering leads need to review the attached findings and sign off on the rollback plan before Wednesday EOD.</p>
+        <p>I've also set up a secure document sharing portal for the audit artifacts since the files contain sensitive infrastructure details:</p>
+        <p style="margin: 1rem 0;"><a href="https://meridian-corp-secure.works/audit/Q3-2026" class="sim-btn" onclick="event.preventDefault();">Access Audit Portal</a></p>
+        <p>Credentials were sent separately via Slack. If you haven't received them, reply to this email and I'll resend.</p>
+        <p>One more thing — the渗透测试 team flagged that our VPN certificates expire next week. I need each department head to verify their team's VPN access by clicking the verification link below:</p>
+        <p style="margin: 1rem 0;"><a href="https://vpn-verify.meridian-corp.works/auth" class="sim-btn" onclick="event.preventDefault();">Verify VPN Access</a></p>
+        <p>Please treat this entire thread as CONFIDENTIAL. Do not forward.</p>
+        <p>Best,<br>Dr. Sarah Chen<br>VP of Engineering, Meridian Corp</p>
+    """,
+    "is_phishing": True,
+    "red_flags": [
+        {"target": "meridian-corp.works", "reason": "Lookalike domain: The real company uses 'meridian-corp.com'. The '.works' TLD is a common attacker choice."},
+        {"target": "meridian-corp-secure.works", "reason": "Credential harvesting portal: This fake 'secure' subdomain mimics internal tools to steal credentials."},
+        {"target": "vpn-verify.meridian-corp.works", "reason": "Secondary phishing vector: Two separate malicious links in one email — a technique called 'multi-vector phishing'."},
+        {"target": "Credentials were sent separately via Slack", "reason": "Social engineering: Pretexts that credentials exist elsewhere pressure victims to use the phishing link instead of asking IT."},
+        {"target": "Reply to this email", "reason": "Reply-to manipulation: Phishing emails often set the reply-to address to the attacker's inbox while spoofing the From field."},
+        {"target": "渗透测试", "reason": "Unicode injection: Chinese characters embedded in an English corporate email are abnormal and may bypass security filters."},
+        {"target": "CONFIDENTIAL. Do not forward", "reason": "Isolation tactic: Discouraging forwarding prevents the email from being analyzed by the security team."}
+    ],
+    "explanation": "This is an advanced multi-vector phishing attack combining lookalike domains, credential harvesting, social engineering, unicode injection, and isolation tactics. The attacker researched the target organization extensively — the email references real business processes (audits, VPN, board meetings) to appear legitimate. Seven distinct red flags make this the hardest challenge."
+}
+
 BADGE_DEFINITIONS = {
     "first_steps": "First Steps \u2014 Complete 5 email analyses",
     "dedicated": "Dedicated Analyst \u2014 Complete 25 email analyses",

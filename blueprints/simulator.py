@@ -3,7 +3,10 @@ import json
 import requests as req
 from flask import Blueprint, render_template, request, jsonify, session
 import database
-from helpers import login_required, MOCK_INBOX_EMAILS, BADGE_DEFINITIONS, check_and_award_badges, limiter
+from helpers import (
+    login_required, MOCK_INBOX_EMAILS, BADGE_DEFINITIONS, CAMPAIGN_DATA, BOSS_BATTLE_EMAIL,
+    check_and_award_badges, limiter
+)
 
 simulator_bp = Blueprint("simulator", __name__)
 
@@ -201,3 +204,215 @@ def api_phishing_my_stats():
 @login_required
 def api_badges():
     return jsonify(BADGE_DEFINITIONS)
+
+
+# ─────────────────────────────────────────────
+#  CAMPAIGN MODE
+# ─────────────────────────────────────────────
+
+RANKS = [
+    {"min_xp": 0, "name": "Intern", "icon": "school", "color": "#94a3b8"},
+    {"min_xp": 100, "name": "Analyst", "icon": "search", "color": "#3b82f6"},
+    {"min_xp": 300, "name": "Threat Hunter", "icon": "radar", "color": "#8b5cf6"},
+    {"min_xp": 600, "name": "CISO", "icon": "shield", "color": "#f59e0b"},
+    {"min_xp": 1000, "name": "SOC Legend", "icon": "emoji_events", "color": "#ef4444"},
+]
+
+
+def _get_rank(xp):
+    rank = RANKS[0]
+    for r in RANKS:
+        if xp >= r["min_xp"]:
+            rank = r
+    return rank
+
+
+@simulator_bp.route("/api/simulator/campaigns")
+@login_required
+def api_campaigns():
+    username = session["username"]
+    progress = database.get_or_create_user_xp(username)
+    completed = json.loads(progress["campaigns_completed"]) if progress["campaigns_completed"] else []
+    campaigns = []
+    for c in CAMPAIGN_DATA:
+        campaigns.append({
+            "id": c["id"],
+            "title": c["title"],
+            "difficulty": c["difficulty"],
+            "narrative": c["narrative"],
+            "threat_type": c["threat_type"],
+            "xp_reward": c["xp_reward"],
+            "email_count": len(c["emails"]),
+            "completed": c["id"] in completed,
+        })
+    return jsonify({"campaigns": campaigns, "completed_count": len(completed), "total": len(CAMPAIGN_DATA)})
+
+
+@simulator_bp.route("/api/simulator/campaign/<campaign_id>")
+@login_required
+def api_campaign_emails(campaign_id):
+    campaign = next((c for c in CAMPAIGN_DATA if c["id"] == campaign_id), None)
+    if not campaign:
+        return jsonify({"error": "Campaign not found"}), 404
+    safe_emails = []
+    for e in campaign["emails"]:
+        safe_emails.append({
+            "id": e["id"],
+            "sender_name": e["sender_name"],
+            "sender_email": e["sender_email"],
+            "subject": e["subject"],
+            "date": e["date"],
+            "body_html": e["body_html"],
+            "is_phishing": e["is_phishing"],
+            "red_flags": e["red_flags"],
+            "explanation": e["explanation"],
+        })
+    return jsonify({
+        "campaign_id": campaign["id"],
+        "title": campaign["title"],
+        "narrative": campaign["narrative"],
+        "threat_type": campaign["threat_type"],
+        "xp_reward": campaign["xp_reward"],
+        "emails": safe_emails,
+    })
+
+
+@simulator_bp.route("/api/simulator/campaign/complete", methods=["POST"])
+@login_required
+def api_complete_campaign():
+    data = request.get_json() or {}
+    campaign_id = data.get("campaign_id", "")
+    xp_earned = data.get("xp_earned", 0)
+    username = session["username"]
+
+    campaign = next((c for c in CAMPAIGN_DATA if c["id"] == campaign_id), None)
+    if not campaign:
+        return jsonify({"error": "Invalid campaign"}), 400
+
+    database.complete_campaign(username, campaign_id)
+    database.add_xp(username, xp_earned)
+
+    progress = database.get_or_create_user_xp(username)
+    new_xp = progress["xp"]
+    new_rank = _get_rank(new_xp)
+    database.set_rank(username, RANKS.index(new_rank))
+
+    all_completed = len(json.loads(progress["campaigns_completed"])) >= len(CAMPAIGN_DATA)
+    is_boss_defeated = progress["boss_defeated"]
+
+    return jsonify({
+        "xp_earned": xp_earned,
+        "total_xp": new_xp,
+        "rank": new_rank,
+        "all_campaigns_completed": all_completed,
+        "boss_unlocked": all_completed and not is_boss_defeated,
+    })
+
+
+# ─────────────────────────────────────────────
+#  BOSS BATTLE
+# ─────────────────────────────────────────────
+
+@simulator_bp.route("/api/simulator/boss-battle")
+@login_required
+def api_boss_battle():
+    username = session["username"]
+    progress = database.get_or_create_user_xp(username)
+    all_completed = len(json.loads(progress["campaigns_completed"])) >= len(CAMPAIGN_DATA)
+    if not all_completed:
+        return jsonify({"error": "Complete all 5 campaigns to unlock the boss battle."}), 403
+    return jsonify({"email": BOSS_BATTLE_EMAIL})
+
+
+@simulator_bp.route("/api/simulator/boss/defeat", methods=["POST"])
+@login_required
+def api_defeat_boss():
+    username = session["username"]
+    progress = database.get_or_create_user_xp(username)
+    if progress["boss_defeated"]:
+        return jsonify({"message": "Boss already defeated.", "already_defeated": True})
+
+    database.defeat_boss(username)
+    database.add_xp(username, 200)
+
+    progress = database.get_or_create_user_xp(username)
+    new_xp = progress["xp"]
+    new_rank = _get_rank(new_xp)
+    database.set_rank(username, RANKS.index(new_rank))
+
+    all_completed = len(json.loads(progress["campaigns_completed"])) >= len(CAMPAIGN_DATA)
+    if all_completed and progress["boss_defeated"]:
+        database.set_certified(username)
+
+    return jsonify({
+        "xp_earned": 200,
+        "total_xp": new_xp,
+        "rank": new_rank,
+        "certified": all_completed and progress["boss_defeated"],
+    })
+
+
+# ─────────────────────────────────────────────
+#  XP & RANK
+# ─────────────────────────────────────────────
+
+@simulator_bp.route("/api/simulator/xp")
+@login_required
+def api_xp():
+    username = session["username"]
+    progress = database.get_or_create_user_xp(username)
+    xp = progress["xp"]
+    rank = _get_rank(xp)
+    completed = json.loads(progress["campaigns_completed"]) if progress["campaigns_completed"] else []
+
+    next_rank = None
+    for r in RANKS:
+        if r["min_xp"] > xp:
+            next_rank = r
+            break
+
+    return jsonify({
+        "xp": xp,
+        "rank": rank,
+        "next_rank": next_rank,
+        "campaigns_completed": completed,
+        "boss_defeated": bool(progress["boss_defeated"]),
+        "certified": bool(progress["certified"]),
+    })
+
+
+@simulator_bp.route("/api/simulator/xp/add", methods=["POST"])
+@login_required
+def api_add_xp():
+    data = request.get_json() or {}
+    amount = min(int(data.get("amount", 0)), 100)
+    username = session["username"]
+    database.add_xp(username, amount)
+    progress = database.get_or_create_user_xp(username)
+    new_rank = _get_rank(progress["xp"])
+    database.set_rank(username, RANKS.index(new_rank))
+    return jsonify({"xp": progress["xp"], "rank": new_rank})
+
+
+# ─────────────────────────────────────────────
+#  CERTIFICATION
+# ─────────────────────────────────────────────
+
+@simulator_bp.route("/api/simulator/certification")
+@login_required
+def api_certification():
+    username = session["username"]
+    progress = database.get_or_create_user_xp(username)
+    completed = json.loads(progress["campaigns_completed"]) if progress["campaigns_completed"] else []
+    certified = bool(progress["certified"])
+    boss_defeated = bool(progress["boss_defeated"])
+
+    return jsonify({
+        "certified": certified,
+        "campaigns_completed": len(completed),
+        "total_campaigns": len(CAMPAIGN_DATA),
+        "boss_defeated": boss_defeated,
+        "username": username,
+        "xp": progress["xp"],
+        "rank": _get_rank(progress["xp"]),
+    })
