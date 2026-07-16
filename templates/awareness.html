@@ -381,53 +381,270 @@
         </div>
     </div>
 
-    <!-- Quick Reference Card -->
-    <div class="quick-ref-card" id="quickRefCard">
-        <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--warning);">bolt</span>Essential Security Checklist</h2>
+    <!-- Real-World Breaches & Scams -->
+    <div class="breach-section" id="breachSection">
+        <div class="section-header">
+            <div class="section-badge">Threat Intelligence</div>
+            <h2><span class="material-symbols-outlined" style="font-size: 1.8rem; vertical-align: middle; margin-right: 0.5rem; color: var(--error);">incident_report</span>Real-World Breaches & Scams</h2>
+            <p>Learn from real incidents. These attacks affected millions — know what to watch for.</p>
+        </div>
 
-        <!-- Daily Streak + Tip -->
-        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 0.6rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 0.6rem 1rem;">
-                <span class="material-symbols-outlined" style="color: #f59e0b; font-size: 1.6rem;">local_fire_department</span>
-                <div>
-                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Daily Visit Streak</div>
-                    <div id="dailyStreakDisplay" style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;">-- days</div>
+        <div class="breach-filters" id="breachFilters">
+            <button class="breach-filter-btn active" data-filter="all">All</button>
+            <button class="breach-filter-btn" data-filter="breach">Data Breaches</button>
+            <button class="breach-filter-btn" data-filter="phishing">Phishing & Scams</button>
+            <button class="breach-filter-btn" data-filter="ransomware">Ransomware</button>
+            <button class="breach-filter-btn" data-filter="kenya">Kenya / E.Africa</button>
+        </div>
+
+        <div class="breach-grid" id="breachGrid">
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Data Breach</span>
                 </div>
+                <h3 class="breach-card-title">Equifax Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 147M records</span>
+                </div>
+                <p class="breach-summary">Unpatched Apache Str漏洞 allowed attackers to access names, SSNs, birth dates, and addresses of nearly half the US population.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Exploited CVE-2017-5638 in Apache Struts, a web framework. The patch had been available for two months before the breach.</p>
+                    <p><strong>Key lesson:</strong> Apply security patches immediately. A single unpatched server compromised the data of 147 million people.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
             </div>
-            <div style="flex: 1; min-width: 200px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 12px; padding: 0.6rem 1rem;">
-                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.2rem;">Daily Security Tip</div>
-                <div id="dailyTipDisplay" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.4;"></div>
-            </div>
-        </div>
 
-        <!-- Progress bar -->
-        <div id="checklistStats" style="margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">
-                <span id="checklistProgressText">0 of 12 completed</span>
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">Yahoo Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2013–2014</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 3B accounts</span>
+                </div>
+                <p class="breach-summary">The largest breach in history. Names, emails, passwords, and security Q&A stolen from all 3 billion Yahoo accounts.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> State-sponsored actors used credential stuffing and forged cookies to bypass authentication.</p>
+                    <p><strong>Key lesson:</strong> Enable MFA everywhere. Passwords alone are never enough — even for "just an email" account.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
             </div>
-            <div style="background: rgba(255,255,255,0.06); border-radius: 20px; height: 10px; overflow: hidden;">
-                <div id="checklistBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, var(--warning), var(--success)); border-radius: 20px; transition: width 0.5s ease;"></div>
-            </div>
-        </div>
 
-        <div id="confettiContainer" style="position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
-
-        <div class="checklist-grid">
-            <div class="checklist-col">
-                <h4><span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -3px;">wb_sunny</span> Daily Habits</h4>
-                <label class="check-item-label" data-key="click"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">touch_app</span> Think before you click</label>
-                <label class="check-item-label" data-key="verify"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">verified_user</span> Verify unexpected requests</label>
-                <label class="check-item-label" data-key="lock"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">lock</span> Lock devices when away</label>
-                <label class="check-item-label" data-key="network"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">wifi</span> Use secure networks only</label>
-                <label class="check-item-label" data-key="activity"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">manage_search</span> Review account activity</label>
-                <label class="check-item-label" data-key="update"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">system_update</span> Update software and apps</label>
-                <label class="check-item-label" data-key="logins"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">login</span> Check for unusual logins</label>
-                <label class="check-item-label" data-key="backup"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">backup</span> Verify backup status</label>
-                <label class="check-item-label" data-key="permissions"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">security</span> Audit app permissions</label>
-                <label class="check-item-label" data-key="devices"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">devices</span> Review connected devices</label>
-                <label class="check-item-label" data-key="breaches"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">warning</span> Check breach alerts</label>
-                <label class="check-item-label" data-key="firmware"><input type="checkbox" /> <span class="material-symbols-outlined" style="font-size:1.1rem;">router</span> Update router firmware</label>
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">Marriott Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2018</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 500M records</span>
+                </div>
+                <p class="breach-summary">Passport numbers, credit cards, and reservation details stolen from Starwood hotel guests over 4 years.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Attackers installed a web shell on a Starwood reservation database. The breach went undetected for 4 years.</p>
+                    <p><strong>Key lesson:</strong> Monitor networks for unusual activity. Long-dwell attacks cause exponential damage.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
             </div>
+
+            <div class="breach-card" data-type="ransomware" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Ransomware</span>
+                </div>
+                <h3 class="breach-card-title">WannaCry</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">devices</span> 200K+ computers</span>
+                </div>
+                <p class="breach-summary">Global ransomware attack that crippled hospitals, banks, and governments across 150 countries in hours.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Exploited EternalBlue (CVE-2017-0144), a leaked NSA exploit targeting Windows SMB protocol. Spread laterally without user interaction.</p>
+                    <p><strong>Key lesson:</strong> Keep systems updated. Microsoft released a patch months before — organizations that hadn't updated were devastated.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Supply Chain</span>
+                </div>
+                <h3 class="breach-card-title">SolarWinds Attack</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2020</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> 18,000+ orgs</span>
+                </div>
+                <p class="breach-summary">Russian state actors compromised SolarWinds' Orion software update, infiltrating US government agencies and Fortune 500 companies.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Backdoor injected into legitimate software update. Every organization that installed the update was compromised.</p>
+                    <p><strong>Key lesson:</strong> Verify software integrity. Supply chain attacks bypass all perimeter defenses by trusting legitimate tools.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">National Public Data Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 272M records</span>
+                </div>
+                <p class="breach-summary">A massive breach exposed names, SSNs, and addresses from a background check / data broker, with records appearing on hacking forums.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Attackers breached a public records aggregator, obtaining a cached database of personal identity records.</p>
+                    <p><strong>Key lesson:</strong> Freeze your credit. Data brokers hold enormous amounts of personal data — breaches of these services are inevitable.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Phishing / Scam</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">M-Pesa Fraud Scams</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> Ongoing</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">warning</span> Thousands of victims</span>
+                </div>
+                <p class="breach-summary">Fraudsters impersonate Safaricom support via calls and SMS, tricking users into sharing M-Pesa PINs or sending money to "reverse" a fake transaction.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Vishing (voice phishing) and smishing. Attackers spoof Safaricom numbers and create urgency ("Your M-Pesa will be suspended").</p>
+                    <p><strong>Key lesson:</strong> Safaricom will NEVER ask for your M-Pesa PIN. Hang up and call 100 from your Safaricom line to verify any request.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Vishing / Smishing</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">Safaricom Impersonation Scams</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> Ongoing</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> Widespread</span>
+                </div>
+                <p class="breach-summary">Scammers call claiming to be Safaricom "technical support", asking users to install remote access apps or share OTP codes to "fix network issues."</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Social engineering via phone calls. Attackers pressure victims with fake urgency and authority.</p>
+                    <p><strong>Key lesson:</strong> Legitimate companies never ask you to install remote access software or share OTPs. Always call back on the official number.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="ransomware" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Ransomware</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">Nairobi County Ransomware Attack</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2023</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> County Government</span>
+                </div>
+                <p class="breach-summary">Ransomware encrypted critical county government systems, disrupting service delivery and exposing internal data.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Phishing email delivered malware that spread across the network, encrypting file servers and databases.</p>
+                    <p><strong>Key lesson:</strong> Government organizations are prime targets. Regular backups and network segmentation are essential for critical infrastructure.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Phishing</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">KE-CIRT / NCERT Phishing Campaigns</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> Government Targeted</span>
+                </div>
+                <p class="breach-summary">Phishing campaigns impersonating Kenya's national cyber response center, targeting government employees with fake security alerts.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Spear-phishing emails spoofing KE-CIRT domain, containing malicious attachments disguised as security advisories.</p>
+                    <p><strong>Key lesson:</strong> Even security agencies can be impersonated. Verify unexpected alerts through official channels, not the links in the message.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity medium">Medium</div>
+                    <span class="breach-type-tag">Account Takeover</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">SIM Swap Fraud</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> Ongoing</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">smartphone</span> M-Pesa Accounts</span>
+                </div>
+                <p class="breach-summary">Attackers convince mobile carriers to reassign a victim's phone number to a new SIM, hijacking M-Pesa and OTP-based authentication.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Social engineering of carrier staff using stolen personal information (ID copies, utility bills).</p>
+                    <p><strong>Key lesson:</strong> Use app-based authenticators instead of SMS for 2FA. Report lost signal immediately to your carrier.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity medium">Medium</div>
+                    <span class="breach-type-tag">Phishing / Scam</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">WhatsApp Job Scams</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> Ongoing</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> Job Seekers</span>
+                </div>
+                <p class="breach-summary">Fraudsters send WhatsApp messages offering "easy money" remote jobs, requiring victims to pay an upfront "registration fee" via M-Pesa.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Social engineering targeting unemployed individuals. Scammers build trust with fake company profiles and testimonials.</p>
+                    <p><strong>Key lesson:</strong> Legitimate employers never ask for upfront payments. If a job offer requires you to pay first, it's a scam.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
         </div>
     </div>
 
