@@ -1169,6 +1169,21 @@ let qrHtml5 = null;
 let qrDecoded = '';
 let qrResult = null;
 let qrCamRunning = false;
+let qrLibLoaded = false;
+let qrLibLoading = false;
+
+function qrLoadLibrary() {
+    if (qrLibLoaded) return Promise.resolve();
+    if (qrLibLoading) return new Promise(r => { const check = setInterval(() => { if (qrLibLoaded) { clearInterval(check); r(); } }, 50); });
+    qrLibLoading = true;
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        s.onload = () => { qrLibLoaded = true; qrLibLoading = false; resolve(); };
+        s.onerror = () => { qrLibLoading = false; reject(new Error('Failed to load QR library')); };
+        document.head.appendChild(s);
+    });
+}
 
 function qrSwitchMode(mode) {
     if (mode === 'camera') {
@@ -1185,8 +1200,10 @@ function qrSwitchMode(mode) {
     }
 }
 
-function qrStartCamera() {
+async function qrStartCamera() {
     const status = document.getElementById('qrCameraStatus');
+    status.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; animation: spin 1s linear infinite;">sync</span> Loading scanner...';
+    try { await qrLoadLibrary(); } catch { status.innerHTML = '<span style="color: var(--error);">Failed to load scanner library.</span>'; return; }
     status.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle; animation: spin 1s linear infinite;">sync</span> Starting camera...';
     qrHtml5 = new Html5Qrcode("qr-reader");
     qrHtml5.start(
@@ -1225,14 +1242,16 @@ function qrHandleFile(e) {
     if (e.target.files[0]) qrDecodeFile(e.target.files[0]);
 }
 
-function qrDecodeFile(file) {
+async function qrDecodeFile(file) {
     const preview = document.getElementById('qrUploadPreview');
     const img = document.getElementById('qrPreviewImg');
     const status = document.getElementById('qrUploadStatus');
     preview.style.display = '';
     img.src = URL.createObjectURL(file);
-    status.textContent = 'Decoding...';
+    status.textContent = 'Loading scanner...';
     status.style.color = '';
+    try { await qrLoadLibrary(); } catch { status.innerHTML = '<span style="color: var(--error);">Failed to load scanner library.</span>'; return; }
+    status.textContent = 'Decoding...';
 
     const tempId = 'qr-temp-' + Date.now();
     const tempDiv = document.createElement('div');
