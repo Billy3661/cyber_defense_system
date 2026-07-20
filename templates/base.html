@@ -88,7 +88,6 @@
                 {% endif %}
                 <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle theme">
                     <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
-                    <span id="themeLabel">Dark</span>
                 </button>
                 <!-- Hamburger (mobile only) -->
                 <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
@@ -463,15 +462,8 @@
 
         function updateThemeUI(theme) {
             const icon = document.getElementById('themeIcon');
-            const label = document.getElementById('themeLabel');
-            if (!icon || !label) return;
-            if (theme === 'light') {
-                icon.textContent = 'light_mode';
-                label.textContent = 'Light';
-            } else {
-                icon.textContent = 'dark_mode';
-                label.textContent = 'Dark';
-            }
+            icon.textContent = theme === 'light' ? 'light_mode' : 'dark_mode';
+        }
         }
 
         // Initialize theme on load
