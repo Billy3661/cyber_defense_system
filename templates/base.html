@@ -34,7 +34,7 @@
                     <span class="nav-icon material-symbols-outlined">scanner</span> Scanner
                 </a>
                 <a href="{{ url_for('phone.phone_page') }}" class="nav-link {% if request.endpoint == 'phone.phone_page' %}active{% endif %}">
-                    <span class="nav-icon material-symbols-outlined">phone_in_talk</span> Phone
+                    <span class="nav-icon material-symbols-outlined">phone_in_talk</span> Phone Intel
                 </a>
                 <a href="{{ url_for('breach.email_analyzer') }}" class="nav-link {% if request.endpoint == 'breach.email_analyzer' %}active{% endif %}">
                     <span class="nav-icon material-symbols-outlined">alternate_email</span> Email Analyzer
@@ -101,7 +101,7 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="{{ url_for('main.index') }}" class="mobile-nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"><span class="material-symbols-outlined">home</span> Home</a>
             <a href="{{ url_for('scanner.scanner_page') }}" class="mobile-nav-link {% if request.endpoint == 'scanner.scanner_page' %}active{% endif %}"><span class="material-symbols-outlined">scanner</span> Scanner</a>
-            <a href="{{ url_for('phone.phone_page') }}" class="mobile-nav-link {% if request.endpoint == 'phone.phone_page' %}active{% endif %}"><span class="material-symbols-outlined">phone_in_talk</span> Phone</a>
+            <a href="{{ url_for('phone.phone_page') }}" class="mobile-nav-link {% if request.endpoint == 'phone.phone_page' %}active{% endif %}"><span class="material-symbols-outlined">phone_in_talk</span> Phone Intel</a>
             <a href="{{ url_for('breach.email_analyzer') }}" class="mobile-nav-link {% if request.endpoint == 'breach.email_analyzer' %}active{% endif %}"><span class="material-symbols-outlined">alternate_email</span> Email Analyzer</a>
             <a href="{{ url_for('breach.breach_checker') }}" class="mobile-nav-link {% if request.endpoint == 'breach.breach_checker' %}active{% endif %}"><span class="material-symbols-outlined">vpn_key</span> Breach Checker</a>
             <a href="{{ url_for('simulator.simulator_page') }}" class="mobile-nav-link {% if request.endpoint == 'simulator.simulator_page' %}active{% endif %}"><span class="material-symbols-outlined">phishing</span> Phishing Lab</a>
