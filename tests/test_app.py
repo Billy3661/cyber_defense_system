@@ -719,7 +719,7 @@ class TestAdminPanel:
             sess["username"] = "testadmin"
         resp = client.get("/admin/users")
         assert resp.status_code == 200
-        assert b"Users" in resp.data
+        assert b"Endpoint Registry" in resp.data
         os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_signatures_page(self, app, client):
@@ -733,7 +733,7 @@ class TestAdminPanel:
             sess["username"] = "testadmin"
         resp = client.get("/admin/signatures")
         assert resp.status_code == 200
-        assert b"Malware Signatures" in resp.data
+        assert b"Threat Signature" in resp.data
         os.environ.pop("ADMIN_USERNAME", None)
 
     def test_admin_no_admin_configured(self, app, client):
@@ -910,8 +910,8 @@ class TestPhoneIntelligence:
                 return resp
             mock_get.side_effect = side_effect
             result = parse_and_enrich("+14155552671")
-        assert "hibp_phone" in result
-        assert isinstance(result["hibp_phone"], dict)
+        assert "spam_databases" in result
+        assert isinstance(result["spam_databases"], dict)
 
     def test_phone_pdf_endpoint_requires_data(self, app, client):
         from werkzeug.security import generate_password_hash

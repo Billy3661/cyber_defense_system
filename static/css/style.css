@@ -3533,7 +3533,6 @@ a:hover {
     .nav-actions { gap: 0.4rem; flex-shrink: 0; }
     .nav-logo { flex-shrink: 0; }
     .logo-text { font-size: 1.1rem; }
-    .theme-toggle-btn span:last-child { display: none; }
     .theme-toggle-btn { padding: 0.35rem 0.6rem; }
 
     /* ── Dashboard cards ── */
