@@ -42,6 +42,12 @@ const RECOMMENDATIONS = {
         `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">lightbulb</span>Remember: no automated tool is 100% accurate.`,
         `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--success);">shield</span>Stay vigilant even on seemingly safe websites.`,
     ],
+    "Blocked": [
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--error);">block</span>This URL was blocked because it targets an internal/private network resource.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--warning);">warning</span>Scanning internal IPs is a common SSRF attack vector — our system prevents this.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--accent);">info</span>This is a safety measure, not a verdict on the URL's intent.`,
+        `<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: -2px; margin-right: 6px; color: var(--info);">lightbulb</span>If you need to scan a public URL, use its public domain or IP instead.`,
+    ],
 };
 
 function setExample(url) {
