@@ -1,154 +1,333 @@
 {% extends "base.html" %}
-{% block title %}Admin — Securix{% endblock %}
+{% block title %}SOC — Securix{% endblock %}
 
 {% block head %}
 <style>
-    .admin-layout { display: flex; gap: 2rem; padding: 2rem; max-width: 1400px; margin: 0 auto; }
-    .admin-sidebar {
-        width: 220px; flex-shrink: 0;
-        background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05);
-        border-radius: var(--border-radius); padding: 1rem 0;
-        position: sticky; top: 6rem; align-self: flex-start;
+    :root {
+        --siem-bg: #0a0e17;
+        --siem-surface: #0f1520;
+        --siem-border: #1a2540;
+        --siem-accent: #00e676;
+        --siem-warn: #ffab00;
+        --siem-alert: #ff1744;
+        --siem-info: #00b0ff;
+        --siem-text: #b0bec5;
+        --siem-text-bright: #e8eaf6;
+        --siem-dim: #455a64;
     }
-    .admin-sidebar-title {
-        padding: 0 1.25rem 0.75rem; font-size: 0.7rem; text-transform: uppercase;
-        letter-spacing: 0.1em; color: var(--text-secondary); font-weight: 600;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+
+    .siem-layout { display: flex; min-height: calc(100vh - 70px); background: var(--siem-bg); }
+    
+    /* ── Top Status Bar ── */
+    .siem-topbar {
+        background: var(--siem-surface); border-bottom: 1px solid var(--siem-border);
+        padding: 0.5rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+        font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--siem-text);
     }
-    .admin-sidebar a {
+    .siem-topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+    .siem-topbar-left .logo {
+        color: var(--siem-accent); font-weight: 700; font-size: 0.85rem;
+        text-transform: uppercase; letter-spacing: 0.15em;
+    }
+    .siem-topbar-left .logo span { color: var(--siem-dim); }
+    .threat-indicator {
+        display: flex; align-items: center; gap: 0.5rem;
+        padding: 0.2rem 0.6rem; border-radius: 4px;
+        border: 1px solid var(--siem-border); font-size: 0.72rem;
+    }
+    .threat-indicator .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        animation: pulse-dot 2s infinite;
+    }
+    .threat-indicator .dot.guard { background: var(--siem-accent); box-shadow: 0 0 6px var(--siem-accent); }
+    .threat-indicator .dot.low { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+    .threat-indicator .dot.med { background: var(--siem-warn); box-shadow: 0 0 6px var(--siem-warn); }
+    .threat-indicator .dot.high { background: #ff6d00; box-shadow: 0 0 6px #ff6d00; }
+    .threat-indicator .dot.crit { background: var(--siem-alert); box-shadow: 0 0 6px var(--siem-alert); animation: pulse-dot .5s infinite; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .siem-clock { color: var(--siem-dim); }
+    .siem-clock .time { color: var(--siem-text); }
+
+    /* ── Sidebar ── */
+    .siem-sidebar {
+        width: 200px; flex-shrink: 0;
+        background: var(--siem-surface);
+        border-right: 1px solid var(--siem-border);
+        padding: 0.75rem 0; display: flex; flex-direction: column;
+    }
+    .siem-sidebar-section {
+        padding: 0.6rem 1rem 0.3rem; font-size: 0.6rem;
+        text-transform: uppercase; letter-spacing: 0.12em;
+        color: var(--siem-dim); font-weight: 600;
+    }
+    .siem-sidebar a {
         display: flex; align-items: center; gap: 0.6rem;
-        padding: 0.6rem 1.25rem; color: var(--text-secondary);
-        text-decoration: none; font-size: 0.88rem; transition: var(--transition);
+        padding: 0.55rem 1rem; color: var(--siem-text);
+        text-decoration: none; font-size: 0.82rem; font-family: 'JetBrains Mono', monospace;
+        border-left: 2px solid transparent; transition: all 0.15s;
     }
-    .admin-sidebar a:hover { color: var(--text-primary); background: rgba(59,130,246,0.08); }
-    .admin-sidebar a.active { color: var(--accent); background: rgba(59,130,246,0.12); font-weight: 600; }
-    .admin-sidebar a .material-symbols-outlined { font-size: 1.1rem; }
-    .admin-main { flex: 1; min-width: 0; }
-    .admin-header { margin-bottom: 1.5rem; }
-    .admin-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.25rem; }
-    .admin-header p { color: var(--text-secondary); margin: 0; font-size: 0.9rem; }
-
-    .admin-table-wrap {
-        background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.05);
-        border-radius: var(--border-radius); overflow: hidden;
+    .siem-sidebar a:hover {
+        color: var(--siem-text-bright); background: rgba(0,230,118,0.04);
+        border-left-color: var(--siem-accent);
     }
-    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    .admin-table th {
-        text-align: left; padding: 0.75rem 1rem; font-weight: 600;
-        color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase;
-        letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.06);
-        background: rgba(255,255,255,0.02);
+    .siem-sidebar a.active {
+        color: var(--siem-accent); background: rgba(0,230,118,0.06);
+        border-left-color: var(--siem-accent); font-weight: 600;
     }
-    .admin-table td {
-        padding: 0.65rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03);
-        color: var(--text-primary);
-    }
-    .admin-table tr:hover td { background: rgba(59,130,246,0.04); }
-    .admin-table .cell-id { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
-    .admin-table .cell-time { color: var(--text-secondary); font-size: 0.8rem; }
-    .admin-table .cell-hash {
-        font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
-        max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    .siem-sidebar a .material-symbols-outlined { font-size: 1rem; }
+    .siem-sidebar .badge-count {
+        margin-left: auto; background: rgba(255,255,255,0.05);
+        padding: 0.05rem 0.4rem; border-radius: 4px;
+        font-size: 0.7rem; color: var(--siem-dim);
     }
 
-    .admin-toolbar {
-        display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;
+    /* ── Main Content ── */
+    .siem-main { flex: 1; padding: 1.5rem; min-width: 0; overflow-x: auto; }
+    .siem-header { margin-bottom: 1.5rem; }
+    .siem-header h1 {
+        font-size: 1.1rem; font-weight: 700; margin: 0;
+        color: var(--siem-text-bright); font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase; letter-spacing: 0.05em;
     }
-    .admin-search {
-        display: flex; gap: 0.5rem; flex: 1; max-width: 400px;
-    }
-    .admin-search input {
-        flex: 1; padding: 0.5rem 0.75rem; border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.08); background: var(--bg-tertiary);
-        color: var(--text-primary); font-size: 0.88rem;
-    }
-    .admin-search input:focus { border-color: var(--accent); outline: none; }
+    .siem-header h1 .accent { color: var(--siem-accent); }
+    .siem-header p { margin: 0.25rem 0 0; color: var(--siem-dim); font-size: 0.82rem; }
 
-    .admin-pagination {
-        display: flex; gap: 0.4rem; align-items: center; margin-top: 1rem; justify-content: center;
+    /* ── Stat Grid ── */
+    .siem-stats {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.75rem; margin-bottom: 1.5rem;
     }
-    .admin-pagination a, .admin-pagination span {
-        padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.82rem;
-        text-decoration: none; color: var(--text-secondary);
-        border: 1px solid rgba(255,255,255,0.06); transition: var(--transition);
+    .siem-stat {
+        background: var(--siem-surface); border: 1px solid var(--siem-border);
+        border-radius: 6px; padding: 1rem; position: relative; overflow: hidden;
     }
-    .admin-pagination a:hover { background: rgba(59,130,246,0.1); color: var(--accent); }
-    .admin-pagination .active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .siem-stat::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    }
+    .siem-stat:nth-child(1)::before { background: var(--siem-accent); }
+    .siem-stat:nth-child(2)::before { background: var(--siem-alert); }
+    .siem-stat:nth-child(3)::before { background: var(--siem-warn); }
+    .siem-stat:nth-child(4)::before { background: #00b0ff; }
+    .siem-stat:nth-child(5)::before { background: #ce93d8; }
+    .siem-stat:nth-child(6)::before { background: #4dd0e1; }
+    .siem-stat .label {
+        font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--siem-dim); font-weight: 600; margin-bottom: 0.3rem;
+    }
+    .siem-stat .value {
+        font-family: 'JetBrains Mono', monospace; font-size: 1.5rem;
+        font-weight: 700; color: var(--siem-text-bright); line-height: 1.2;
+    }
+    .siem-stat .sub {
+        font-size: 0.72rem; color: var(--siem-dim); margin-top: 0.2rem;
+    }
 
-    .severity-badge {
-        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 9999px;
-        font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    /* ── Table ── */
+    .siem-table-wrap {
+        background: var(--siem-surface); border: 1px solid var(--siem-border);
+        border-radius: 6px; overflow: hidden; margin-bottom: 1rem;
     }
-    .severity-critical { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .severity-high { background: rgba(249,115,22,0.15); color: #f97316; }
-    .severity-medium { background: rgba(234,179,8,0.15); color: #eab308; }
-    .severity-low { background: rgba(34,197,94,0.15); color: #22c55e; }
-
-    .admin-empty {
-        text-align: center; padding: 3rem 1rem; color: var(--text-secondary);
+    .siem-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .siem-table th {
+        text-align: left; padding: 0.6rem 1rem; font-weight: 600;
+        color: var(--siem-dim); font-size: 0.65rem; text-transform: uppercase;
+        letter-spacing: 0.08em; border-bottom: 1px solid var(--siem-border);
+        background: rgba(255,255,255,0.02); font-family: 'JetBrains Mono', monospace;
     }
-    .admin-empty .material-symbols-outlined { font-size: 3rem; margin-bottom: 0.5rem; opacity: 0.3; }
-
-    .btn-danger-sm {
-        padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid rgba(239,68,68,0.3);
-        background: rgba(239,68,68,0.08); color: #ef4444; font-size: 0.78rem; cursor: pointer;
-        transition: var(--transition);
+    .siem-table td {
+        padding: 0.55rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.02);
+        color: var(--siem-text); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
     }
-    .btn-danger-sm:hover { background: rgba(239,68,68,0.2); }
+    .siem-table tr:hover td { background: rgba(0,230,118,0.03); }
+    .siem-table .cell-id { color: var(--siem-dim); }
+    .siem-table .cell-time { color: var(--siem-dim); }
+    .siem-table .cell-hash {
+        max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .siem-table .highlight { color: var(--siem-text-bright); font-weight: 600; }
 
-    .modal-overlay {
+    /* ── Panel (half-grid) ── */
+    .siem-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .siem-panel {
+        background: var(--siem-surface); border: 1px solid var(--siem-border);
+        border-radius: 6px; overflow: hidden;
+    }
+    .siem-panel-header {
+        padding: 0.6rem 1rem; border-bottom: 1px solid var(--siem-border);
+        font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+        text-transform: uppercase; letter-spacing: 0.08em; color: var(--siem-dim);
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .siem-panel-header .material-symbols-outlined { font-size: 1rem; }
+    .siem-panel-body { padding: 0; }
+
+    /* ── Toolbar / Search ── */
+    .siem-toolbar {
+        display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; flex-wrap: wrap;
+    }
+    .siem-search { display: flex; gap: 0.4rem; }
+    .siem-search input {
+        padding: 0.45rem 0.75rem; border-radius: 4px;
+        border: 1px solid var(--siem-border); background: var(--siem-surface);
+        color: var(--siem-text); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+        min-width: 220px;
+    }
+    .siem-search input:focus { border-color: var(--siem-accent); outline: none; }
+
+    /* ── Buttons ── */
+    .siem-btn {
+        padding: 0.4rem 0.75rem; border-radius: 4px; border: 1px solid var(--siem-border);
+        background: transparent; color: var(--siem-text); font-size: 0.75rem;
+        font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.15s;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .siem-btn:hover { border-color: var(--siem-accent); color: var(--siem-accent); }
+    .siem-btn-primary { border-color: var(--siem-accent); color: var(--siem-accent); }
+    .siem-btn-primary:hover { background: rgba(0,230,118,0.1); }
+    .siem-btn-danger { border-color: var(--siem-alert); color: var(--siem-alert); }
+    .siem-btn-danger:hover { background: rgba(255,23,68,0.1); }
+
+    /* ── Severity Badges ── */
+    .sev { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace; }
+    .sev-crit { background: rgba(255,23,68,0.15); color: #ff1744; border: 1px solid rgba(255,23,68,0.2); }
+    .sev-high { background: rgba(255,109,0,0.15); color: #ff6d00; border: 1px solid rgba(255,109,0,0.2); }
+    .sev-med { background: rgba(255,171,0,0.15); color: #ffab00; border: 1px solid rgba(255,171,0,0.2); }
+    .sev-low { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.2); }
+
+    /* ── Pagination ── */
+    .siem-pages {
+        display: flex; gap: 0.3rem; align-items: center; justify-content: center; margin-top: 1rem;
+    }
+    .siem-pages a, .siem-pages span {
+        padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.75rem;
+        text-decoration: none; color: var(--siem-dim);
+        border: 1px solid var(--siem-border); font-family: 'JetBrains Mono', monospace;
+        transition: all 0.15s;
+    }
+    .siem-pages a:hover { border-color: var(--siem-accent); color: var(--siem-accent); }
+    .siem-pages .active { background: var(--siem-accent); color: #000; border-color: var(--siem-accent); font-weight: 700; }
+
+    /* ── Flash messages ── */
+    .siem-flash {
+        padding: 0.5rem 0.75rem; margin-bottom: 1rem; border-radius: 4px;
+        border-left: 3px solid; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .siem-flash.success { background: rgba(0,230,118,0.08); border-color: var(--siem-accent); color: var(--siem-accent); }
+    .siem-flash.error { background: rgba(255,23,68,0.08); border-color: var(--siem-alert); color: var(--siem-alert); }
+    .siem-flash.info { background: rgba(0,176,255,0.08); border-color: var(--siem-info); color: var(--siem-info); }
+    .siem-flash .dismiss { margin-left: auto; cursor: pointer; opacity: 0.4; background: none; border: none; color: inherit; font-size: 1rem; }
+    .siem-flash .dismiss:hover { opacity: 1; }
+
+    /* ── Empty State ── */
+    .siem-empty {
+        text-align: center; padding: 2.5rem 1rem; color: var(--siem-dim);
+    }
+    .siem-empty .material-symbols-outlined { font-size: 2.5rem; opacity: 0.2; margin-bottom: 0.5rem; }
+
+    /* ── Modal ── */
+    .siem-modal-overlay {
         display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;
     }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-        background: var(--bg-secondary); border: 1px solid rgba(255,255,255,0.08);
-        border-radius: var(--border-radius); padding: 1.5rem; width: 90%; max-width: 480px;
+    .siem-modal-overlay.open { display: flex; }
+    .siem-modal {
+        background: var(--siem-surface); border: 1px solid var(--siem-border);
+        border-radius: 6px; padding: 1.5rem; width: 90%; max-width: 480px;
     }
-    .modal-box h3 { margin: 0 0 1rem; font-size: 1.1rem; }
-    .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+    .siem-modal h3 { margin: 0 0 1rem; font-size: 0.9rem; color: var(--siem-text-bright); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+    .siem-modal label { font-size: 0.72rem; color: var(--siem-dim); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.3rem; }
+    .siem-modal input, .siem-modal select, .siem-modal textarea {
+        width: 100%; padding: 0.45rem 0.65rem; border-radius: 4px;
+        border: 1px solid var(--siem-border); background: var(--siem-bg);
+        color: var(--siem-text); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace;
+        margin-bottom: 0.75rem; box-sizing: border-box;
+    }
+    .siem-modal input:focus, .siem-modal select:focus, .siem-modal textarea:focus { border-color: var(--siem-accent); outline: none; }
+    .siem-modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 0.5rem; }
 
+    /* ── Event ticker ── */
+    .siem-ticker {
+        background: var(--siem-surface); border: 1px solid var(--siem-border);
+        border-radius: 4px; padding: 0.4rem 1rem; margin-bottom: 1rem;
+        display: flex; align-items: center; gap: 0.75rem; overflow: hidden;
+        font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    }
+    .siem-ticker .ticker-label {
+        color: var(--siem-dim); text-transform: uppercase; font-size: 0.6rem;
+        letter-spacing: 0.1em; white-space: nowrap;
+    }
+    .siem-ticker .ticker-msg {
+        color: var(--siem-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ── Responsive ── */
     @media (max-width: 900px) {
-        .admin-layout { flex-direction: column; padding: 1rem; }
-        .admin-sidebar { width: 100%; position: static; display: flex; flex-wrap: wrap; gap: 0; padding: 0.5rem; }
-        .admin-sidebar-title { width: 100%; padding: 0 0.75rem 0.5rem; }
-        .admin-sidebar a { padding: 0.4rem 0.75rem; }
-        .admin-table-wrap { overflow-x: auto; }
+        .siem-layout { flex-direction: column; }
+        .siem-sidebar { width: 100%; display: flex; flex-wrap: wrap; padding: 0.5rem; border-right: none; border-bottom: 1px solid var(--siem-border); }
+        .siem-sidebar-section { display: none; }
+        .siem-sidebar a { padding: 0.35rem 0.6rem; border-left: none; font-size: 0.75rem; }
+        .siem-sidebar a.active { border-left: none; border-bottom: 2px solid var(--siem-accent); }
+        .siem-panels { grid-template-columns: 1fr; }
+        .siem-stats { grid-template-columns: repeat(2, 1fr); }
+        .siem-topbar { flex-wrap: wrap; gap: 0.5rem; }
+        .siem-main { padding: 1rem; }
+        .siem-table-wrap { overflow-x: auto; }
+    }
+    @media (max-width: 500px) {
+        .siem-stats { grid-template-columns: 1fr; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="admin-layout">
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar-title">Admin Panel</div>
+<!-- SIEM Top Bar -->
+<div class="siem-topbar">
+    <div class="siem-topbar-left">
+        <div class="logo">Securix<span>·SOC</span></div>
+        <div class="threat-indicator">
+            <span class="dot guard"></span> THREAT LEVEL: GUARDED
+        </div>
+        <div class="threat-indicator">
+            <span class="dot low"></span> SYSTEM: NOMINAL
+        </div>
+    </div>
+    <div class="siem-clock">
+        <span class="time" id="siemClock"></span>
+    </div>
+</div>
+
+<div class="siem-layout">
+    <aside class="siem-sidebar">
+        <div class="siem-sidebar-section">SOC Navigation</div>
         <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
             <span class="material-symbols-outlined">dashboard</span> Dashboard
         </a>
         <a href="{{ url_for('admin.users') }}" class="{% if request.endpoint == 'admin.users' %}active{% endif %}">
-            <span class="material-symbols-outlined">people</span> Users
+            <span class="material-symbols-outlined">devices</span> Endpoints
         </a>
         <a href="{{ url_for('admin.signatures') }}" class="{% if request.endpoint == 'admin.signatures' %}active{% endif %}">
-            <span class="material-symbols-outlined">signature</span> Signatures
+            <span class="material-symbols-outlined">shield</span> Signatures
         </a>
         <a href="{{ url_for('admin.badges') }}" class="{% if request.endpoint == 'admin.badges' %}active{% endif %}">
-            <span class="material-symbols-outlined">military_tech</span> Badges
+            <span class="material-symbols-outlined">military_tech</span> Achievements
         </a>
         <a href="{{ url_for('admin.phishing_stats') }}" class="{% if request.endpoint == 'admin.phishing_stats' %}active{% endif %}">
-            <span class="material-symbols-outlined">analytics</span> Phishing Stats
+            <span class="material-symbols-outlined">analytics</span> Telemetry
         </a>
         <a href="{{ url_for('admin.conversations') }}" class="{% if request.endpoint == 'admin.conversations' %}active{% endif %}">
-            <span class="material-symbols-outlined">forum</span> Conversations
+            <span class="material-symbols-outlined">forum</span> Comms Log
         </a>
     </aside>
-    <div class="admin-main">
+    <div class="siem-main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}" style="margin-bottom:1rem;">
-                        <span class="material-symbols-outlined flash-icon">{% if category == 'success' %}verified{% elif category == 'info' %}info{% else %}error{% endif %}</span>
-                        <span class="flash-text">{{ message }}</span>
-                        <button class="flash-dismiss" onclick="this.parentElement.remove()" title="Dismiss">✕</button>
+                    <div class="siem-flash {{ category }}">
+                        <span>{% if category == 'success' %}[ OK ]{% elif category == 'info' %}[ INF ]{% else %}[ ERR ]{% endif %}</span>
+                        <span>{{ message }}</span>
+                        <button class="dismiss" onclick="this.parentElement.remove()">✕</button>
                     </div>
                 {% endfor %}
             {% endif %}
@@ -156,4 +335,15 @@
         {% block admin_content %}{% endblock %}
     </div>
 </div>
+
+<script>
+function updateSiemClock() {
+    const now = new Date();
+    const utc = now.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    const local = now.toLocaleString('en-KE', { hour12: false, timeZone: 'Africa/Nairobi' });
+    document.getElementById('siemClock').textContent = local + ' EAT  |  ' + utc;
+}
+updateSiemClock();
+setInterval(updateSiemClock, 1000);
+</script>
 {% endblock %}

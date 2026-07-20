@@ -1,78 +1,88 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Admin Dashboard — Securix{% endblock %}
+{% block title %}SOC Dashboard — Securix{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <h1>Dashboard</h1>
-    <p>Overview of all system data.</p>
+<div class="siem-header">
+    <h1><span class="accent">#</span> SOC Dashboard</h1>
+    <p>Real-time threat summary &amp; endpoint telemetry</p>
 </div>
 
-<div class="stats-grid" style="margin-bottom:2rem;">
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:var(--accent);">people</span>
-        <span class="stat-number">{{ stats.users }}</span>
-        <span class="stat-label">Users</span>
+<!-- Event ticker -->
+<div class="siem-ticker">
+    <span class="ticker-label">Live Feed</span>
+    <span class="ticker-msg">[{{ stats.signatures }}] signatures loaded &nbsp;·&nbsp; [{{ stats.users }}] endpoints tracked &nbsp;·&nbsp; [{{ stats.phishing_stats }}] phishing events logged &nbsp;·&nbsp; [{{ stats.badges }}] achievements awarded &nbsp;·&nbsp; [{{ stats.conversations }}] comms channels active</span>
+</div>
+
+<div class="siem-stats">
+    <div class="siem-stat">
+        <div class="label">Endpoints</div>
+        <div class="value">{{ stats.users }}</div>
+        <div class="sub">registered users</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:#ef4444;">signature</span>
-        <span class="stat-number">{{ stats.signatures }}</span>
-        <span class="stat-label">Malware Signatures</span>
+    <div class="siem-stat">
+        <div class="label">Threat Signatures</div>
+        <div class="value">{{ stats.signatures }}</div>
+        <div class="sub">malware hashes</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:#f97316;">shield</span>
-        <span class="stat-number">{{ stats.phishing_stats }}</span>
-        <span class="stat-label">Phishing Attempts</span>
+    <div class="siem-stat">
+        <div class="label">Phishing Events</div>
+        <div class="value">{{ stats.phishing_stats }}</div>
+        <div class="sub">total attempts</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:#22c55e;">military_tech</span>
-        <span class="stat-number">{{ stats.badges }}</span>
-        <span class="stat-label">Badges Awarded</span>
+    <div class="siem-stat">
+        <div class="label">Achievements</div>
+        <div class="value">{{ stats.badges }}</div>
+        <div class="sub">badges awarded</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:#a855f7;">forum</span>
-        <span class="stat-number">{{ stats.conversations }}</span>
-        <span class="stat-label">Conversations</span>
+    <div class="siem-stat">
+        <div class="label">Comms Channels</div>
+        <div class="value">{{ stats.conversations }}</div>
+        <div class="sub">conversations</div>
     </div>
-    <div class="stat-card">
-        <span class="stat-icon material-symbols-outlined" style="color:#06b6d4;">chat</span>
-        <span class="stat-number">{{ stats.messages }}</span>
-        <span class="stat-label">Chat Messages</span>
+    <div class="siem-stat">
+        <div class="label">Chat Messages</div>
+        <div class="value">{{ stats.messages }}</div>
+        <div class="sub">total messages</div>
     </div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-    <div>
-        <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">Top Players</h2>
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead><tr><th>Username</th><th>Attempts</th><th>Correct</th></tr></thead>
+<div class="siem-panels">
+    <div class="siem-panel">
+        <div class="siem-panel-header">
+            <span class="material-symbols-outlined">person_search</span> Top Threat Hunters
+        </div>
+        <div class="siem-panel-body">
+            <table class="siem-table">
+                <thead><tr><th>Analyst</th><th>Attempts</th><th>Correct</th></tr></thead>
                 <tbody>
                 {% for p in top_players %}
                 <tr>
-                    <td>{{ p.username }}</td>
+                    <td class="highlight">{{ p.username }}</td>
                     <td>{{ p.attempts }}</td>
-                    <td>{{ p.correct or 0 }}</td>
+                    <td class="highlight">{{ p.correct or 0 }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="3" class="admin-empty">No data yet.</td></tr>
+                <tr><td colspan="3" class="siem-empty">No telemetry data yet.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    <div>
-        <h2 style="font-size:1.1rem;margin-bottom:0.75rem;">Recent Users</h2>
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead><tr><th>Username</th><th>Joined</th></tr></thead>
+    <div class="siem-panel">
+        <div class="siem-panel-header">
+            <span class="material-symbols-outlined">new_releases</span> New Endpoints
+        </div>
+        <div class="siem-panel-body">
+            <table class="siem-table">
+                <thead><tr><th>Endpoint</th><th>Registered</th></tr></thead>
                 <tbody>
                 {% for u in recent_users %}
                 <tr>
-                    <td>{{ u.username }}</td>
+                    <td class="highlight">{{ u.username }}</td>
                     <td class="cell-time">{{ u.created_at }}</td>
                 </tr>
                 {% else %}
-                <tr><td colspan="2" class="admin-empty">No users.</td></tr>
+                <tr><td colspan="2" class="siem-empty">No endpoints.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

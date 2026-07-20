@@ -1,19 +1,19 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Conversations — Admin{% endblock %}
+{% block title %}Comms Log — SOC{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <h1>Chat Conversations</h1>
-    <p>{{ total }} conversation{{ 's' if total != 1 else '' }}.</p>
+<div class="siem-header">
+    <h1><span class="accent">#</span> Communications Log</h1>
+    <p>{{ total }} channel{{ 's' if total != 1 else '' }} monitored</p>
 </div>
 
-<div class="admin-table-wrap">
-    <table class="admin-table">
+<div class="siem-table-wrap">
+    <table class="siem-table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Username</th>
-                <th>Title</th>
+                <th>Endpoint</th>
+                <th>Channel</th>
                 <th>Messages</th>
                 <th>Created</th>
                 <th>Updated</th>
@@ -24,22 +24,22 @@
         {% for c in conversations %}
         <tr>
             <td class="cell-id">{{ c.id }}</td>
-            <td><strong>{{ c.username }}</strong></td>
-            <td>{{ c.title or '(untitled)' }}</td>
+            <td class="highlight">{{ c.username }}</td>
+            <td style="color:var(--siem-dim);">{{ c.title or '(untitled)' }}</td>
             <td class="cell-id">{{ c.msg_count }}</td>
             <td class="cell-time">{{ c.created_at }}</td>
             <td class="cell-time">{{ c.updated_at }}</td>
             <td>
                 <form method="post" action="{{ url_for('admin.delete_conversation', conv_id=c.id) }}" style="display:inline;"
-                      onsubmit="return confirm('Delete this conversation and all its messages?');">
+                      onsubmit="return confirm('Delete this channel and all its messages?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="btn-danger-sm">Delete</button>
+                    <button type="submit" class="siem-btn siem-btn-danger">Purge</button>
                 </form>
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="admin-empty">
-            <span class="material-symbols-outlined">forum</span><br>No conversations yet.
+        <tr><td colspan="7" class="siem-empty">
+            <span class="material-symbols-outlined">forum</span><br>No communications channels active.
         </td></tr>
         {% endfor %}
         </tbody>

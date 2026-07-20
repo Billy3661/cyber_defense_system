@@ -1,30 +1,30 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Manage Signatures — Admin{% endblock %}
+{% block title %}Threat Signatures — SOC{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <h1>Malware Signatures</h1>
-    <p>{{ total }} signature{{ 's' if total != 1 else '' }} in database.</p>
+<div class="siem-header">
+    <h1><span class="accent">#</span> Threat Signature Database</h1>
+    <p>{{ total }} signature{{ 's' if total != 1 else '' }} in active threat intelligence feed</p>
 </div>
 
-<div class="admin-toolbar">
-    <form class="admin-search" method="get">
+<div class="siem-toolbar">
+    <form class="siem-search" method="get">
         <input type="text" name="q" value="{{ search }}" placeholder="Search by name or hash..." />
-        <button type="submit" class="btn btn-outline" style="white-space:nowrap;">Search</button>
+        <button type="submit" class="siem-btn siem-btn-primary">Search</button>
     </form>
     {% if search %}
-    <a href="{{ url_for('admin.signatures') }}" class="btn btn-outline" style="font-size:0.82rem;">Clear</a>
+    <a href="{{ url_for('admin.signatures') }}" class="siem-btn">Clear</a>
     {% endif %}
-    <button class="btn btn-primary" onclick="document.getElementById('addSigModal').classList.add('open')" style="margin-left:auto;">+ Add Signature</button>
+    <button class="siem-btn siem-btn-primary" onclick="document.getElementById('addSigModal').classList.add('open')" style="margin-left:auto;">+ New Signature</button>
 </div>
 
-<div class="admin-table-wrap">
-    <table class="admin-table">
+<div class="siem-table-wrap">
+    <table class="siem-table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Hash</th>
-                <th>Threat Name</th>
+                <th>Threat</th>
                 <th>Severity</th>
                 <th>Details</th>
                 <th>Actions</th>
@@ -35,20 +35,20 @@
         <tr>
             <td class="cell-id">{{ s.id }}</td>
             <td class="cell-hash" title="{{ s.hash_value }}">{{ s.hash_value }}</td>
-            <td><strong>{{ s.threat_name }}</strong></td>
-            <td><span class="severity-badge severity-{{ s.severity|lower }}">{{ s.severity }}</span></td>
-            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.details }}</td>
+            <td class="highlight">{{ s.threat_name }}</td>
+            <td><span class="sev sev-{{ s.severity|lower }}">{{ s.severity }}</span></td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--siem-dim);">{{ s.details }}</td>
             <td>
                 <form method="post" action="{{ url_for('admin.delete_signature', sig_id=s.id) }}" style="display:inline;"
-                      onsubmit="return confirm('Delete this signature?');">
+                      onsubmit="return confirm('Remove this signature from the threat feed?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="btn-danger-sm">Delete</button>
+                    <button type="submit" class="siem-btn siem-btn-danger">Remove</button>
                 </form>
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" class="admin-empty">
-            <span class="material-symbols-outlined">search_off</span><br>No signatures found.
+        <tr><td colspan="6" class="siem-empty">
+            <span class="material-symbols-outlined">shield_off</span><br>No signatures in threat feed.
         </td></tr>
         {% endfor %}
         </tbody>
@@ -56,7 +56,7 @@
 </div>
 
 {% if total_pages > 1 %}
-<div class="admin-pagination">
+<div class="siem-pages">
     {% if page > 1 %}
     <a href="?page={{ page - 1 }}&q={{ search }}">&laquo;</a>
     {% endif %}
@@ -75,35 +75,27 @@
 </div>
 {% endif %}
 
-<div class="modal-overlay" id="addSigModal">
-    <div class="modal-box">
-        <h3>Add Malware Signature</h3>
+<div class="siem-modal-overlay" id="addSigModal">
+    <div class="siem-modal">
+        <h3>+ New Signature</h3>
         <form method="post" action="{{ url_for('admin.add_signature') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <div class="form-group" style="margin-bottom:0.75rem;">
-                <label>Hash Value</label>
-                <input type="text" name="hash_value" required placeholder="SHA-256 hash..." style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);font-family:'JetBrains Mono',monospace;font-size:0.82rem;" />
-            </div>
-            <div class="form-group" style="margin-bottom:0.75rem;">
-                <label>Threat Name</label>
-                <input type="text" name="threat_name" required placeholder="e.g. Emotet Downloader" style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);" />
-            </div>
-            <div class="form-group" style="margin-bottom:0.75rem;">
-                <label>Severity</label>
-                <select name="severity" style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);">
-                    <option value="Critical">Critical</option>
-                    <option value="High">High</option>
-                    <option value="Medium" selected>Medium</option>
-                    <option value="Low">Low</option>
-                </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0.75rem;">
-                <label>Details</label>
-                <textarea name="details" rows="3" placeholder="Description..." style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:var(--bg-tertiary);color:var(--text-primary);resize:vertical;"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('addSigModal').classList.remove('open')">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add Signature</button>
+            <label>Hash Value</label>
+            <input type="text" name="hash_value" required placeholder="SHA-256..." />
+            <label>Threat Name</label>
+            <input type="text" name="threat_name" required placeholder="e.g. Emotet Downloader" />
+            <label>Severity</label>
+            <select name="severity">
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <label>Details</label>
+            <textarea name="details" rows="3" placeholder="Description..."></textarea>
+            <div class="siem-modal-actions">
+                <button type="button" class="siem-btn" onclick="document.getElementById('addSigModal').classList.remove('open')">Cancel</button>
+                <button type="submit" class="siem-btn siem-btn-primary">Submit</button>
             </div>
         </form>
     </div>

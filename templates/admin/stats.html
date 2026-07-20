@@ -1,33 +1,33 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Phishing Stats — Admin{% endblock %}
+{% block title %}Phishing Telemetry — SOC{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <h1>Phishing Stats</h1>
-    <p>{{ total }} record{{ 's' if total != 1 else '' }}.</p>
+<div class="siem-header">
+    <h1><span class="accent">#</span> Phishing Telemetry</h1>
+    <p>{{ total }} event{{ 's' if total != 1 else '' }} logged</p>
 </div>
 
-<div class="admin-toolbar">
-    <form class="admin-search" method="get">
-        <input type="text" name="q" value="{{ search }}" placeholder="Search by username..." />
-        <button type="submit" class="btn btn-outline" style="white-space:nowrap;">Search</button>
+<div class="siem-toolbar">
+    <form class="siem-search" method="get">
+        <input type="text" name="q" value="{{ search }}" placeholder="Filter by analyst..." />
+        <button type="submit" class="siem-btn siem-btn-primary">Search</button>
     </form>
     {% if search %}
-    <a href="{{ url_for('admin.phishing_stats') }}" class="btn btn-outline" style="font-size:0.82rem;">Clear</a>
+    <a href="{{ url_for('admin.phishing_stats') }}" class="siem-btn">Clear</a>
     {% endif %}
 </div>
 
-<div class="admin-table-wrap">
-    <table class="admin-table">
+<div class="siem-table-wrap">
+    <table class="siem-table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Username</th>
+                <th>Analyst</th>
                 <th>Email ID</th>
                 <th>Phishing?</th>
                 <th>Correct?</th>
-                <th>Time (ms)</th>
-                <th>Red Flags</th>
+                <th>RT (ms)</th>
+                <th>Flags</th>
                 <th>Session</th>
                 <th>Created</th>
             </tr>
@@ -36,18 +36,18 @@
         {% for s in stats %}
         <tr>
             <td class="cell-id">{{ s.id }}</td>
-            <td><strong>{{ s.username }}</strong></td>
-            <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ s.email_id or '—' }}</td>
-            <td>{% if s.is_phishing %}<span style="color:#ef4444;">Yes</span>{% else %}<span style="color:#22c55e;">No</span>{% endif %}</td>
-            <td>{% if s.identified_correctly %}<span style="color:#22c55e;">✓</span>{% else %}<span style="color:#ef4444;">✗</span>{% endif %}</td>
+            <td class="highlight">{{ s.username }}</td>
+            <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--siem-dim);">{{ s.email_id or '—' }}</td>
+            <td>{% if s.is_phishing %}<span style="color:var(--siem-alert);">YES</span>{% else %}<span style="color:var(--siem-accent);">NO</span>{% endif %}</td>
+            <td>{% if s.identified_correctly %}<span style="color:var(--siem-accent);">✓</span>{% else %}<span style="color:var(--siem-alert);">✗</span>{% endif %}</td>
             <td class="cell-id">{{ s.response_time_ms }}</td>
             <td>{{ s.red_flags_identified }}/{{ s.total_red_flags }}</td>
             <td class="cell-hash" title="{{ s.session_id }}">{{ s.session_id[:8] if s.session_id else '—' }}</td>
             <td class="cell-time">{{ s.created_at }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="9" class="admin-empty">
-            <span class="material-symbols-outlined">analytics</span><br>No records found.
+        <tr><td colspan="9" class="siem-empty">
+            <span class="material-symbols-outlined">analytics</span><br>No telemetry records found.
         </td></tr>
         {% endfor %}
         </tbody>
@@ -55,7 +55,7 @@
 </div>
 
 {% if total_pages > 1 %}
-<div class="admin-pagination">
+<div class="siem-pages">
     {% if page > 1 %}
     <a href="?page={{ page - 1 }}&q={{ search }}">&laquo;</a>
     {% endif %}

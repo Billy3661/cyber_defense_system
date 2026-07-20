@@ -1,20 +1,20 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Manage Badges — Admin{% endblock %}
+{% block title %}Achievements — SOC{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <h1>User Badges</h1>
-    <p>{{ total }} badge{{ 's' if total != 1 else '' }} awarded.</p>
+<div class="siem-header">
+    <h1><span class="accent">#</span> Achievement Log</h1>
+    <p>{{ total }} badge{{ 's' if total != 1 else '' }} awarded to analysts</p>
 </div>
 
-<div class="admin-table-wrap">
-    <table class="admin-table">
+<div class="siem-table-wrap">
+    <table class="siem-table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Username</th>
-                <th>Badge ID</th>
-                <th>Awarded At</th>
+                <th>Analyst</th>
+                <th>Badge</th>
+                <th>Awarded</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -22,19 +22,19 @@
         {% for b in badges %}
         <tr>
             <td class="cell-id">{{ b.id }}</td>
-            <td><strong>{{ b.username }}</strong></td>
-            <td><span style="padding:0.2rem 0.5rem;border-radius:6px;background:rgba(59,130,246,0.1);font-size:0.82rem;">{{ b.badge_id }}</span></td>
+            <td class="highlight">{{ b.username }}</td>
+            <td><span style="padding:0.15rem 0.4rem;border-radius:3px;border:1px solid var(--siem-border);font-size:0.75rem;color:var(--siem-accent);">{{ b.badge_id }}</span></td>
             <td class="cell-time">{{ b.awarded_at }}</td>
             <td>
                 <form method="post" action="{{ url_for('admin.delete_badge', badge_id=b.id) }}" style="display:inline;"
-                      onsubmit="return confirm('Remove this badge?');">
+                      onsubmit="return confirm('Revoke this badge?');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="btn-danger-sm">Remove</button>
+                    <button type="submit" class="siem-btn siem-btn-danger">Revoke</button>
                 </form>
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="admin-empty">
+        <tr><td colspan="5" class="siem-empty">
             <span class="material-symbols-outlined">military_tech</span><br>No badges awarded yet.
         </td></tr>
         {% endfor %}
