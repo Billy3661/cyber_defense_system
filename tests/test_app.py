@@ -964,7 +964,7 @@ class TestSecurityHeaders:
         assert resp.headers.get("X-Frame-Options") == "DENY"
         assert resp.headers.get("X-XSS-Protection") == "1; mode=block"
         assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
-        assert "camera=()" in resp.headers.get("Permissions-Policy", "")
+        assert "camera=(self)" in resp.headers.get("Permissions-Policy", "")
 
 
 class TestSessionSecurity:
