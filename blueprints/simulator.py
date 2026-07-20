@@ -320,7 +320,7 @@ def api_boss_battle():
     progress = database.get_or_create_user_xp(username)
     all_completed = len(json.loads(progress["campaigns_completed"])) >= len(CAMPAIGN_DATA)
     if not all_completed:
-        return jsonify({"error": "Complete all 5 campaigns to unlock the boss battle."}), 403
+        return jsonify({"error": "Complete all 6 campaigns to unlock the boss battle."}), 403
     return jsonify({"email": BOSS_BATTLE_EMAIL})
 
 

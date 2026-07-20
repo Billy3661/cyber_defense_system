@@ -399,80 +399,94 @@
 
         <div class="breach-grid" id="breachGrid">
 
-            <div class="breach-card" data-type="breach" data-region="global">
-                <div class="breach-card-header">
-                    <div class="breach-severity critical">Critical</div>
-                    <span class="breach-type-tag">Data Breach</span>
-                </div>
-                <h3 class="breach-card-title">Equifax Breach</h3>
-                <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 147M records</span>
-                </div>
-                <p class="breach-summary">Unpatched Apache Str漏洞 allowed attackers to access names, SSNs, birth dates, and addresses of nearly half the US population.</p>
-                <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Exploited CVE-2017-5638 in Apache Struts, a web framework. The patch had been available for two months before the breach.</p>
-                    <p><strong>Key lesson:</strong> Apply security patches immediately. A single unpatched server compromised the data of 147 million people.</p>
-                </div>
-                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
-                    <span class="material-symbols-outlined">expand_more</span> Details
-                </button>
-            </div>
+            <!-- ===== LATEST ===== -->
 
-            <div class="breach-card" data-type="breach" data-region="global">
-                <div class="breach-card-header">
-                    <div class="breach-severity critical">Critical</div>
-                    <span class="breach-type-tag">Data Breach</span>
-                </div>
-                <h3 class="breach-card-title">Yahoo Breach</h3>
-                <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2013–2014</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 3B accounts</span>
-                </div>
-                <p class="breach-summary">The largest breach in history. Names, emails, passwords, and security Q&A stolen from all 3 billion Yahoo accounts.</p>
-                <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> State-sponsored actors used credential stuffing and forged cookies to bypass authentication.</p>
-                    <p><strong>Key lesson:</strong> Enable MFA everywhere. Passwords alone are never enough — even for "just an email" account.</p>
-                </div>
-                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
-                    <span class="material-symbols-outlined">expand_more</span> Details
-                </button>
-            </div>
-
-            <div class="breach-card" data-type="breach" data-region="global">
-                <div class="breach-card-header">
-                    <div class="breach-severity critical">Critical</div>
-                    <span class="breach-type-tag">Data Breach</span>
-                </div>
-                <h3 class="breach-card-title">Marriott Breach</h3>
-                <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2018</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 500M records</span>
-                </div>
-                <p class="breach-summary">Passport numbers, credit cards, and reservation details stolen from Starwood hotel guests over 4 years.</p>
-                <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Attackers installed a web shell on a Starwood reservation database. The breach went undetected for 4 years.</p>
-                    <p><strong>Key lesson:</strong> Monitor networks for unusual activity. Long-dwell attacks cause exponential damage.</p>
-                </div>
-                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
-                    <span class="material-symbols-outlined">expand_more</span> Details
-                </button>
-            </div>
-
-            <div class="breach-card" data-type="ransomware" data-region="global">
+            <div class="breach-card" data-type="ransomware" data-region="kenya">
                 <div class="breach-card-header">
                     <div class="breach-severity critical">Critical</div>
                     <span class="breach-type-tag">Ransomware</span>
+                    <span class="breach-region-tag">Kenya</span>
                 </div>
-                <h3 class="breach-card-title">WannaCry</h3>
+                <h3 class="breach-card-title">President's Website Hacked — Bitcoin Ransom</h3>
                 <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">devices</span> 200K+ computers</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> July 18, 2026</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> State House Kenya</span>
                 </div>
-                <p class="breach-summary">Global ransomware attack that crippled hospitals, banks, and governments across 150 countries in hours.</p>
+                <p class="breach-summary">Hackers breached president.go.ke, defaced the homepage with messages targeting President Ruto, and demanded 5 Bitcoin (~KSh 41.3M) ransom — the second major government website attack in under a year.</p>
                 <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Exploited EternalBlue (CVE-2017-0144), a leaked NSA exploit targeting Windows SMB protocol. Spread laterally without user interaction.</p>
-                    <p><strong>Key lesson:</strong> Keep systems updated. Microsoft released a patch months before — organizations that hadn't updated were devastated.</p>
+                    <p><strong>Attack vector:</strong> Website defacement. Attackers replaced the official homepage with ransom demands, a cryptocurrency wallet, and threats to leak unspecified data. ICT CS William Kabogo confirmed the incident, and the site was taken offline for forensic analysis.</p>
+                    <p><strong>Timeline:</strong> The defacement was detected at approximately 3:00 AM EAT on July 18, 2026. Visitors to president.go.ke were greeted with a black page displaying ransom demands in English and Kiswahili, a Bitcoin wallet address (bc1q...8k3m), and a 72-hour countdown timer. The ICT Authority was notified within 30 minutes and took the site offline by 4:15 AM. A forensic audit by KE-CIRT confirmed no downstream compromise of internal State House systems.</p>
+                    <p><strong>Attacker profile:</strong> A hacktivist group claiming affiliation with "Cyber Anarchists Collective" took responsibility via Telegram, stating the attack was in protest of alleged government surveillance policies. Security researchers noted the group's operational security was weak — the wallet address received only 0.03 BTC (~KSh 250K) in small donations rather than the full ransom, suggesting the attack was more about political messaging than financial gain.</p>
+                    <p><strong>Impact:</strong> The president.go.ke domain remained offline for 8 hours while forensic teams completed their investigation and restored the site from clean backups. No classified or citizen data was compromised. However, the incident triggered a government-wide cybersecurity review, including mandatory WAF deployment across all .go.ke domains, accelerated adoption of Certificate Transparency logging, and the formation of a Rapid Response Team (RRT) within KE-CIRT for future incidents.</p>
+                    <p><strong>Key lesson:</strong> Government websites are prime targets for both financially motivated attackers and hacktivists. Timely detection, a well-rehearsed incident response plan, and clean offline backups are the difference between a contained incident and a national crisis. Organizations should deploy Web Application Firewalls (WAF) with real-time threat intelligence feeds, enforce hardware MFA for all administrative accounts, conduct monthly tabletop exercises for breach response, and participate in threat intelligence sharing programs like the National KE-CIRT notification system.</p>
+                    <p><strong>SIM Swap connection:</strong> This attack followed a pattern seen in earlier Kenyan cyber incidents — attackers often combine phishing (like the Safaricom SIM swap cases in July 2025) with website defacement to maximize disruption. The initial access vector for the president.go.ke breach is still under investigation, but early indicators point to credential harvesting via targeted spear-phishing emails aimed at web administration staff.</p>
+                    <div class="training-link" style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #e5e7eb;">
+                        <a href="/simulator/" style="display:inline-flex;align-items:center;gap:0.4rem;color:#2563eb;font-weight:600;font-size:0.9rem;text-decoration:none;">
+                            <span class="material-symbols-outlined" style="font-size:1.1rem;">school</span> Practice in Simulator — State House Breach
+                        </a>
+                    </div>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">National Public Data Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 272M records</span>
+                </div>
+                <p class="breach-summary">A massive breach exposed names, SSNs, and addresses from a background check / data broker, with records appearing on hacking forums.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Attackers breached a public records aggregator, obtaining a cached database of personal identity records.</p>
+                    <p><strong>Key lesson:</strong> Freeze your credit. Data brokers hold enormous amounts of personal data — breaches of these services are inevitable.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="phishing" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Phishing</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">KE-CIRT / NCERT Phishing Campaigns</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> Government Targeted</span>
+                </div>
+                <p class="breach-summary">Phishing campaigns impersonating Kenya's national cyber response center, targeting government employees with fake security alerts.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Spear-phishing emails spoofing KE-CIRT domain, containing malicious attachments disguised as security advisories.</p>
+                    <p><strong>Key lesson:</strong> Even security agencies can be impersonated. Verify unexpected alerts through official channels, not the links in the message.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="ransomware" data-region="kenya">
+                <div class="breach-card-header">
+                    <div class="breach-severity high">High</div>
+                    <span class="breach-type-tag">Ransomware</span>
+                    <span class="breach-region-tag">Kenya</span>
+                </div>
+                <h3 class="breach-card-title">Nairobi County Ransomware Attack</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2023</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> County Government</span>
+                </div>
+                <p class="breach-summary">Ransomware encrypted critical county government systems, disrupting service delivery and exposing internal data.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Phishing email delivered malware that spread across the network, encrypting file servers and databases.</p>
+                    <p><strong>Key lesson:</strong> Government organizations are prime targets. Regular backups and network segmentation are essential for critical infrastructure.</p>
                 </div>
                 <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
                     <span class="material-symbols-outlined">expand_more</span> Details
@@ -501,23 +515,85 @@
 
             <div class="breach-card" data-type="breach" data-region="global">
                 <div class="breach-card-header">
-                    <div class="breach-severity high">High</div>
+                    <div class="breach-severity critical">Critical</div>
                     <span class="breach-type-tag">Data Breach</span>
                 </div>
-                <h3 class="breach-card-title">National Public Data Breach</h3>
+                <h3 class="breach-card-title">Marriott Breach</h3>
                 <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 272M records</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2018</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 500M records</span>
                 </div>
-                <p class="breach-summary">A massive breach exposed names, SSNs, and addresses from a background check / data broker, with records appearing on hacking forums.</p>
+                <p class="breach-summary">Passport numbers, credit cards, and reservation details stolen from Starwood hotel guests over 4 years.</p>
                 <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Attackers breached a public records aggregator, obtaining a cached database of personal identity records.</p>
-                    <p><strong>Key lesson:</strong> Freeze your credit. Data brokers hold enormous amounts of personal data — breaches of these services are inevitable.</p>
+                    <p><strong>Attack vector:</strong> Attackers installed a web shell on a Starwood reservation database. The breach went undetected for 4 years.</p>
+                    <p><strong>Key lesson:</strong> Monitor networks for unusual activity. Long-dwell attacks cause exponential damage.</p>
                 </div>
                 <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
                     <span class="material-symbols-outlined">expand_more</span> Details
                 </button>
             </div>
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">Equifax Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 147M records</span>
+                </div>
+                <p class="breach-summary">Unpatched Apache Str漏洞 allowed attackers to access names, SSNs, birth dates, and addresses of nearly half the US population.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Exploited CVE-2017-5638 in Apache Struts, a web framework. The patch had been available for two months before the breach.</p>
+                    <p><strong>Key lesson:</strong> Apply security patches immediately. A single unpatched server compromised the data of 147 million people.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="ransomware" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Ransomware</span>
+                </div>
+                <h3 class="breach-card-title">WannaCry</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2017</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">devices</span> 200K+ computers</span>
+                </div>
+                <p class="breach-summary">Global ransomware attack that crippled hospitals, banks, and governments across 150 countries in hours.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> Exploited EternalBlue (CVE-2017-0144), a leaked NSA exploit targeting Windows SMB protocol. Spread laterally without user interaction.</p>
+                    <p><strong>Key lesson:</strong> Keep systems updated. Microsoft released a patch months before — organizations that hadn't updated were devastated.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <div class="breach-card" data-type="breach" data-region="global">
+                <div class="breach-card-header">
+                    <div class="breach-severity critical">Critical</div>
+                    <span class="breach-type-tag">Data Breach</span>
+                </div>
+                <h3 class="breach-card-title">Yahoo Breach</h3>
+                <div class="breach-meta">
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2013–2014</span>
+                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">groups</span> 3B accounts</span>
+                </div>
+                <p class="breach-summary">The largest breach in history. Names, emails, passwords, and security Q&A stolen from all 3 billion Yahoo accounts.</p>
+                <div class="breach-detail">
+                    <p><strong>Attack vector:</strong> State-sponsored actors used credential stuffing and forged cookies to bypass authentication.</p>
+                    <p><strong>Key lesson:</strong> Enable MFA everywhere. Passwords alone are never enough — even for "just an email" account.</p>
+                </div>
+                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
+                    <span class="material-symbols-outlined">expand_more</span> Details
+                </button>
+            </div>
+
+            <!-- ===== ONGOING THREATS (no fixed date) ===== -->
 
             <div class="breach-card" data-type="phishing" data-region="kenya">
                 <div class="breach-card-header">
@@ -555,48 +631,6 @@
                 <div class="breach-detail">
                     <p><strong>Attack vector:</strong> Social engineering via phone calls. Attackers pressure victims with fake urgency and authority.</p>
                     <p><strong>Key lesson:</strong> Legitimate companies never ask you to install remote access software or share OTPs. Always call back on the official number.</p>
-                </div>
-                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
-                    <span class="material-symbols-outlined">expand_more</span> Details
-                </button>
-            </div>
-
-            <div class="breach-card" data-type="ransomware" data-region="kenya">
-                <div class="breach-card-header">
-                    <div class="breach-severity high">High</div>
-                    <span class="breach-type-tag">Ransomware</span>
-                    <span class="breach-region-tag">Kenya</span>
-                </div>
-                <h3 class="breach-card-title">Nairobi County Ransomware Attack</h3>
-                <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2023</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> County Government</span>
-                </div>
-                <p class="breach-summary">Ransomware encrypted critical county government systems, disrupting service delivery and exposing internal data.</p>
-                <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Phishing email delivered malware that spread across the network, encrypting file servers and databases.</p>
-                    <p><strong>Key lesson:</strong> Government organizations are prime targets. Regular backups and network segmentation are essential for critical infrastructure.</p>
-                </div>
-                <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
-                    <span class="material-symbols-outlined">expand_more</span> Details
-                </button>
-            </div>
-
-            <div class="breach-card" data-type="phishing" data-region="kenya">
-                <div class="breach-card-header">
-                    <div class="breach-severity high">High</div>
-                    <span class="breach-type-tag">Phishing</span>
-                    <span class="breach-region-tag">Kenya</span>
-                </div>
-                <h3 class="breach-card-title">KE-CIRT / NCERT Phishing Campaigns</h3>
-                <div class="breach-meta">
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">calendar_today</span> 2024</span>
-                    <span><span class="material-symbols-outlined" style="font-size:1rem;vertical-align:-2px;">corporate_fare</span> Government Targeted</span>
-                </div>
-                <p class="breach-summary">Phishing campaigns impersonating Kenya's national cyber response center, targeting government employees with fake security alerts.</p>
-                <div class="breach-detail">
-                    <p><strong>Attack vector:</strong> Spear-phishing emails spoofing KE-CIRT domain, containing malicious attachments disguised as security advisories.</p>
-                    <p><strong>Key lesson:</strong> Even security agencies can be impersonated. Verify unexpected alerts through official channels, not the links in the message.</p>
                 </div>
                 <button class="breach-expand-btn" onclick="toggleBreachDetail(this)">
                     <span class="material-symbols-outlined">expand_more</span> Details

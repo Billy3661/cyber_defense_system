@@ -1470,6 +1470,156 @@ CAMPAIGN_DATA = [
                 "explanation": "This is an APT attack impersonating a security vendor. The attacker cloned ThreatGuard's branding and created a convincing license renewal notice. The goal is to redirect a KSH 6,200,000 payment to attacker-controlled accounts and harvest payment information. Always verify vendor renewal notices by logging into the vendor's portal directly or contacting your account manager through known contact information — never through email links."
             }
         ]
+    },
+    {
+        "id": "state_ransomware",
+        "title": "State House Breach",
+        "difficulty": "Hard",
+        "narrative": "You're the lead security analyst for the Kenyan State House ICT team. Suspicious emails have been targeting the president.go.ke web team. Your mission: identify the phishing emails before attackers breach the presidency's digital infrastructure.",
+        "threat_type": "Ransomware / Website Defacement",
+        "xp_reward": 175,
+        "emails": [
+            {
+                "id": "sr_phish_1",
+                "sender_name": "Kenya Computer Incident Response Team",
+                "sender_email": "advisories@ke-cirt-security.org",
+                "subject": "CRITICAL: Zero-Day Vulnerability in Government Web Platforms — Immediate Action Required",
+                "date": "Today, 6:30 AM",
+                "body_html": """
+                    <p>Dear State House ICT Security Team,</p>
+                    <p>KE-CIRT has identified a <strong>critical zero-day vulnerability</strong> (CVE-2026-4417) affecting Apache HTTP Server versions 2.4.41 through 2.4.59, which powers the government web platform at president.go.ke.</p>
+                    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-size:0.9rem;">
+                        <p style="margin:0;"><strong>CVSS Score:</strong> 9.8 (Critical)</p>
+                        <p style="margin:0;"><strong>Impact:</strong> Remote code execution — unauthenticated</p>
+                        <p style="margin:0;"><strong>Exploit Status:</strong> Actively exploited in the wild</p>
+                    </div>
+                    <p>All government agencies must apply the emergency patch immediately. Download the security patch from the KE-CIRT advisory portal:</p>
+                    <p style="margin:1rem 0;"><a href="https://ke-cirt-security.org/advisory/CVE-2026-4417/patch" class="sim-btn" onclick="event.preventDefault();">Download Emergency Patch</a></p>
+                    <p>After applying the patch, verify your server status using the link below:</p>
+                    <p style="margin:1rem 0;"><a href="https://ke-cirt-security.org/verify?org=president.go.ke" class="sim-btn" onclick="event.preventDefault();">Verify Server Status</a></p>
+                    <p>Non-compliance must be reported to the National Cybersecurity Coordination Committee within 24 hours.</p>
+                    <p>This advisory is issued under the Cybersecurity Framework (2025) Section 12.3.</p>
+                    <p>Dr. James Mwangi<br>Director, KE-CIRT</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "ke-cirt-security.org", "reason": "Fake government domain: Real KE-CIRT uses 'ke-cirt.go.ke' — Kenyan government agencies always use the '.go.ke' TLD, never '.org'."},
+                    {"target": "Download Emergency Patch", "reason": "Malicious payload: The 'security patch' is a remote access trojan (RAT) designed to give attackers control over government web servers."},
+                    {"target": "Verify Server Status", "reason": "Credential harvesting: The verification link leads to a fake portal that captures server admin credentials."},
+                    {"target": "CVSS Score: 9.8 (Critical)", "reason": "Exaggerated severity: Inflated CVSS scores are used to create panic and bypass critical thinking."},
+                    {"target": "24 hours", "reason": "Artificial deadline: Government advisories provide reasonable compliance windows — 24-hour ultimatums are designed to prevent verification."}
+                ],
+                "explanation": "This phishing email impersonates KE-CIRT to deliver malware to government web administrators. The domain 'ke-cirt-security.org' is fake — real Kenyan government agencies use the '.go.ke' TLD exclusively. The 'security patch' download is a remote access trojan designed to give attackers control over government servers. This is exactly the kind of initial access vector that led to the president.go.ke defacement. Always verify government cybersecurity advisories through official channels, never through unsolicited email links."
+            },
+            {
+                "id": "sr_legit_1",
+                "sender_name": "ICT Authority",
+                "sender_email": "ict.admin@president.go.ke",
+                "subject": "Scheduled SSL Certificate Renewal — July 22",
+                "date": "Yesterday, 2:00 PM",
+                "body_html": """
+                    <p>Hi team,</p>
+                    <p>This is to inform you that our SSL/TLS certificate for president.go.ke is due for renewal on <strong>July 22, 2026</strong>. The new certificate has been issued by the ICT Authority's approved certificate authority.</p>
+                    <p>The certificate installation window is scheduled for <strong>Saturday, July 19 from 1:00 AM to 3:00 AM EAT</strong>. During this window, the website will be briefly unavailable as we apply the new certificate.</p>
+                    <p>No action is required from your end. The ICT infrastructure team will handle the installation. If you experience any SSL-related errors after the maintenance window, please report them to the ICT Service Desk at ext. 4400.</p>
+                    <p>Best regards,<br>ICT Authority<br>ict.admin@president.go.ke</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'president.go.ke' government domain, provides clear details about routine SSL certificate maintenance, and does not request any credentials, payments, or sensitive actions. The tone is professional and the information follows standard operational procedure."
+            },
+            {
+                "id": "sr_phish_2",
+                "sender_name": "John Kamau",
+                "sender_email": "j.kamau@safaricom-invoice.co.ke",
+                "subject": "URGENT: Outstanding Invoice #INV-2026-4417 — Service Interruption Warning",
+                "date": "Today, 8:00 AM",
+                "body_html": """
+                    <p>Dear ICT Officer,</p>
+                    <p>This is a final reminder regarding the <strong>outstanding invoice #INV-2026-4417</strong> for web hosting and content delivery services for the period April–June 2026.</p>
+                    <div style="background:#fef2f2;border-left:4px solid #dc2626;padding:1rem 1.25rem;margin:1rem 0;border-radius:4px;font-size:0.9rem;">
+                        <p style="margin:0;"><strong>Invoice:</strong> INV-2026-4417</p>
+                        <p style="margin:0;"><strong>Amount Due:</strong> KSH 2,850,000</p>
+                        <p style="margin:0;"><strong>Due Date:</strong> July 15, 2026 (OVERDUE)</p>
+                        <p style="margin:0;"><strong>Vendor:</strong> Safaricom Business Solutions</p>
+                    </div>
+                    <p>Our records show this invoice remains unpaid. To avoid service interruption to president.go.ke and related government web services, please process payment immediately.</p>
+                    <p style="margin:1rem 0;"><a href="https://safaricom-invoice.co.ke/presidency/pay?id=INV-2026-4417" class="sim-btn" onclick="event.preventDefault();">Review &amp; Pay Invoice</a></p>
+                    <p>Alternatively, download the detailed invoice attachment below and forward it to the Finance department for processing.</p>
+                    <p>John Kamau<br>Accounts Receivable<br>Safaricom Business Solutions</p>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "safaricom-invoice.co.ke", "reason": "Impersonation domain: Safaricom uses 'safaricom.co.ke', not 'safaricom-invoice.co.ke'. The added hyphen and 'invoice' subpath are typosquatting tricks."},
+                    {"target": "Review & Pay Invoice", "reason": "Payment redirection: The link leads to a fake payment portal designed to capture government payment credentials or redirect funds to attacker accounts."},
+                    {"target": "KSH 2,850,000", "reason": "Financial pressure: A large overdue amount with threat of service interruption creates panic that bypasses normal verification procedures."},
+                    {"target": "OVERDUE", "reason": "Urgency escalation: Red-styled overdue labels and threat of disconnection pressure the target to act without verifying through established procurement channels."},
+                    {"target": "John Kamau", "reason": "Impersonated vendor contact: Using a fabricated but realistic name adds false legitimacy. Real vendor invoices arrive through established procurement workflows, not unsolicited email."}
+                ],
+                "explanation": "This is a spear-phishing attack targeting government payment processes. The attacker impersonates Safaricom Business Solutions with a fabricated overdue invoice. The domain 'safaricom-invoice.co.ke' mimics the legitimate 'safaricom.co.ke' but is attacker-controlled. Real government procurement follows established channels — unsolicited invoice emails with payment links should always be verified through your procurement department before any action."
+            },
+            {
+                "id": "sr_phish_3",
+                "sender_name": "Cloudflare Security",
+                "sender_email": "alerts@cloudflare-security-verify.com",
+                "subject": "DDoS Attack Detected — president.go.ke at Risk of Immediate Takedown",
+                "date": "Today, 9:30 AM",
+                "body_html": """
+                    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:1.5rem;max-width:520px;margin:0 auto;">
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <div style="width:40px;height:40px;background:#f38020;border-radius:50%;margin-right:12px;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:1.2rem;">C</div>
+                            <div>
+                                <p style="margin:0;font-weight:600;">Cloudflare Security Alert</p>
+                                <p style="margin:0;font-size:0.8rem;color:#6b7280;">president.go.ke</p>
+                            </div>
+                        </div>
+                        <p style="color:#dc2626;font-weight:bold;">⚠ DDoS Attack Detected — Automated Mitigation Failing</p>
+                        <p>Cloudflare's automated DDoS mitigation systems have detected a <strong>Layer 7 HTTP flood</strong> targeting president.go.ke. Traffic has reached <strong>1.2 Tbps</strong> from a global botnet.</p>
+                        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:0.75rem 1rem;margin:0.75rem 0;">
+                            <p style="margin:0;"><strong>Attack Type:</strong> HTTP/2 Rapid Reset DDoS</p>
+                            <p style="margin:0;"><strong>Duration:</strong> 47 minutes and escalating</p>
+                            <p style="margin:0;"><strong>Status:</strong> Rate limiting bypassed — manual intervention required</p>
+                        </div>
+                        <p>Automated mitigation has been unable to stop the attack. <strong>Manual intervention is required within 30 minutes</strong> to prevent a complete takedown of president.go.ke.</p>
+                        <p style="margin:1rem 0;"><a href="https://cloudflare-security-verify.com/dashboard?domain=president.go.ke" class="sim-btn" style="display:block;text-align:center;padding:0.75rem;background:#f38020;color:white;border-radius:6px;text-decoration:none;font-weight:600;" onclick="event.preventDefault();">Open Cloudflare Dashboard &amp; Mitigate</a></p>
+                        <p style="font-size:0.85rem;color:#6b7280;">Cloudflare, Inc. | 101 Townsend St, San Francisco, CA 94107</p>
+                    </div>
+                """,
+                "is_phishing": True,
+                "red_flags": [
+                    {"target": "cloudflare-security-verify.com", "reason": "Fake Cloudflare domain: Real Cloudflare uses 'cloudflare.com'. 'cloudflare-security-verify.com' is a typosquatting domain registered by attackers."},
+                    {"target": "30 minutes", "reason": "Extreme urgency: Claiming that a government website will be taken down within 30 minutes creates panic that bypasses verification protocols."},
+                    {"target": "Cloudflare Security Alert branding", "reason": "Visual cloning: The attacker perfectly replicated Cloudflare's brand colors, logo, and interface to appear authentic — a common APT technique."},
+                    {"target": "1.2 Tbps", "reason": "Technical persuasion: Realistic-sounding metrics make the attack seem authentic to technically-savvy security professionals."},
+                    {"target": "Open Cloudflare Dashboard & Mitigate", "reason": "Credential harvesting: This link leads to a fake Cloudflare login page designed to capture the government's CDN/WAF console credentials."}
+                ],
+                "explanation": "This phishing attack impersonates Cloudflare to harvest credentials for the government's web infrastructure console. The domain 'cloudflare-security-verify.com' is attacker-controlled. Real Cloudflare DDoS notifications appear in the Cloudflare dashboard and from '@cloudflare.com' email addresses. Credential harvesting targeting CDN/WAF consoles is a common initial access vector for website defacement attacks — never click links in unsolicited security alerts; always navigate directly to the service provider's website."
+            },
+            {
+                "id": "sr_legit_2",
+                "sender_name": "State House Communications",
+                "sender_email": "comms@president.go.ke",
+                "subject": "Weekly Security Briefing — Thursday 10 AM",
+                "date": "Yesterday, 11:00 AM",
+                "body_html": """
+                    <p>Hi team,</p>
+                    <p>This is a reminder that our weekly security briefing is scheduled for <strong>Thursday at 10:00 AM</strong> in the State House ICT Conference Room.</p>
+                    <p>Agenda items for this week:</p>
+                    <ol>
+                        <li>Review of July firewall logs and intrusion attempts</li>
+                        <li>Update on the SSL certificate renewal for president.go.ke</li>
+                        <li>Q3 penetration testing schedule and scope</li>
+                        <li>Security awareness training completion status</li>
+                    </ol>
+                    <p>Please come prepared with your team's incident reports for the past week. Additional agenda items can be sent to comms@president.go.ke by end of day Wednesday.</p>
+                    <p>See you there.</p>
+                    <p>Best,<br>Communications Office<br>State House, Nairobi</p>
+                """,
+                "is_phishing": False,
+                "red_flags": [],
+                "explanation": "This email is legitimate. It comes from the verified 'president.go.ke' government domain, references a recurring meeting with standard agenda items, and provides reasonable lead time. No suspicious links, urgency tactics, or credential requests are present."
+            }
+        ]
     }
 ]
 
